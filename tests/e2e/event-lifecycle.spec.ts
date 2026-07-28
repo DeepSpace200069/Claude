@@ -36,6 +36,11 @@ test.describe('organizator i njegovi događaji', () => {
     await page.getByLabel('Vreme početka').fill('13:00');
     await page.getByLabel('Grad').fill('Beograd');
     await page.getByLabel('Glavna lokacija').fill('Restoran Dunavski kej');
+    await page.getByRole('button', { name: 'Dalje' }).click();
+
+    // Korak 3: izbor šablona. Podrazumevano je prazna pozivnica.
+    await expect(page.getByRole('heading', { name: 'Izaberite izgled' })).toBeVisible();
+    await page.getByRole('button', { name: /Editorial minimal/ }).first().click();
 
     await page.getByRole('button', { name: 'Napravi nacrt' }).click();
 
@@ -73,6 +78,7 @@ test.describe('organizator i njegovi događaji', () => {
     await page.getByText('Rođendan', { exact: true }).click();
     await page.getByRole('button', { name: 'Dalje' }).click();
     await page.getByLabel('Interni naziv').fill('Rođendan za brisanje');
+    await page.getByRole('button', { name: 'Dalje' }).click();
     await page.getByRole('button', { name: 'Napravi nacrt' }).click();
 
     await expect(page).toHaveURL(/\/app\/dogadjaji\/[0-9a-f-]{36}$/);
@@ -89,6 +95,23 @@ test.describe('organizator i njegovi događaji', () => {
 
     await expect(page).toHaveURL(/\/app\/dogadjaji$/);
     await expect(page.getByText('Još nemate nijedan događaj')).toBeVisible();
+  });
+
+  test('šablon izabran sa galerije je unapred označen u čarobnjaku', async ({
+    signedInPage: page,
+  }) => {
+    // Detaljna stranica šablona vodi ovamo sa `?sablon=`.
+    await page.goto('/app/dogadjaji/novi?sablon=vencanje-editorial-minimal');
+
+    await page.getByText('Venčanje', { exact: true }).click();
+    await page.getByRole('button', { name: 'Dalje' }).click();
+    await page.getByLabel('Interni naziv').fill('Test preselekcije');
+    await page.getByRole('button', { name: 'Dalje' }).click();
+
+    // Šablon iz URL-a je već izabran, korisnik ne mora ponovo da ga traži.
+    await expect(
+      page.getByRole('button', { name: /Editorial minimal/ }).first(),
+    ).toHaveAttribute('aria-pressed', 'true');
   });
 
   test('tuđi događaj nije dostupan', async ({ signedInPage: page }) => {

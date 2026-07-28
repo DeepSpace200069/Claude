@@ -176,6 +176,11 @@ const messages: Messages = {
     step2Subtitle: 'Sie können alles später noch ändern.',
     step3Title: 'Aussehen wählen',
     step3Subtitle: 'Eine Vorlage ist ein Startpunkt, keine endgültige Wahl.',
+    blankTemplate: 'Leere Einladung',
+    blankTemplateDescription:
+      'Beginnen Sie bei null und stellen Sie die Abschnitte selbst zusammen. Eine Vorlage können Sie später wählen.',
+    noTemplates: 'Für diesen Anlass gibt es noch keine Vorlagen. Fahren Sie mit einer leeren Einladung fort.',
+
     createDraft: 'Entwurf erstellen',
     creating: 'Einladung wird erstellt…',
   },
@@ -293,6 +298,202 @@ const messages: Messages = {
     rateLimited:
       'Zu viele Versuche. Bitte warten Sie kurz und versuchen Sie es erneut.',
     unauthorized: 'Bitte melden Sie sich an, um fortzufahren.',
+  },
+
+  sections: {
+    hero: {
+      label: "Titelbereich",
+      description:
+        "Der erste Bildschirm: Übertitel, Namen und Titelbild.",
+    },
+    names: {
+      label: "Namen",
+      description:
+        "Die Namen des Brautpaars oder des Geburtstagskindes, groß gesetzt.",
+    },
+    dateTime: {
+      label: "Datum und Uhrzeit",
+      description:
+        "Das Datum in mehreren eleganten Layouts.",
+    },
+    countdown: {
+      label: "Countdown",
+      description:
+        "Zählt die Tage bis zur Feier.",
+    },
+    message: {
+      label: "Nachricht",
+      description:
+        "Ein Gruß- oder Schlusswort der Gastgeber.",
+    },
+    calendar: {
+      label: "Zum Kalender hinzufügen",
+      description:
+        "Ein Button, der den Termin in den Kalender Ihrer Gäste legt.",
+    },
+    locations: {
+      label: "Orte",
+      description:
+        "Alle Adressen mit Uhrzeiten, Parkhinweisen und Navigation.",
+    },
+    schedule: {
+      label: "Ablauf",
+      description:
+        "Wie der Tag verläuft, vom Ankleiden bis zum letzten Lied.",
+    },
+    infoCards: {
+      label: "Nützliche Hinweise",
+      description:
+        "Karten für Parken, Unterkunft, Dresscode, Geschenke, Kinder…",
+    },
+    people: {
+      label: "Wichtige Personen",
+      description:
+        "Trauzeugen, Eltern und alle, die Sie hervorheben möchten.",
+    },
+    gallery: {
+      label: "Galerie",
+      description:
+        "Ihre Fotos als Raster, Streifen oder Karussell.",
+    },
+    story: {
+      label: "Geschichte",
+      description:
+        "Ein Zeitstrahl: Ihr Kennenlernen oder das erste Jahr Ihres Kindes.",
+    },
+    music: {
+      label: "Musik",
+      description:
+        "Ein Lied zur Einladung, immer mit Kontrolle für den Gast.",
+    },
+    rsvp: {
+      label: "Zusage",
+      description:
+        "Das Formular, über das Gäste zu- oder absagen.",
+    },
+    guestbook: {
+      label: "Gästebuch",
+      description:
+        "Gäste hinterlassen eine Nachricht; Sie geben sie frei.",
+    },
+    contact: {
+      label: "Kontakt",
+      description:
+        "Telefon und E-Mail der Gastgeber — nur wenn Sie sie eintragen.",
+    },
+    customContent: {
+      label: "Eigener Inhalt",
+      description:
+        "Überschrift, Text, Foto und ein Button, ganz nach Wunsch.",
+    },
+    footer: {
+      label: "Fußbereich",
+      description:
+        "Ein Schlusswort und das Kleingedruckte ganz unten.",
+    },
+  },
+
+  templates: {
+    title: 'Vorlagengalerie',
+    subtitle: 'Wählen Sie einen Ausgangspunkt. Alles lässt sich später ändern.',
+    countLabel: {
+      one: '{count} Vorlage',
+      other: '{count} Vorlagen',
+    },
+    preview: 'Ansehen',
+    featured: 'Empfohlen',
+    withPhotos: 'Mit Fotos',
+    filterStyle: 'Stil',
+    filterColor: 'Farbe',
+    filterPhotos: 'Fotos',
+    photosWith: 'Mit Fotos',
+    photosWithout: 'Ohne Fotos',
+    sort: 'Sortierung',
+    sortRecommended: 'Empfohlen',
+    sortNewest: 'Neueste',
+    sortName: 'Nach Name',
+    applyFilters: 'Anwenden',
+    clearFilters: 'Filter zurücksetzen',
+    onlyFavorites: 'Nur Favoriten',
+    emptyFavorites: 'Sie haben noch keine Vorlage gespeichert. Tippen Sie auf das Herz.',
+    emptyTitle: 'Keine Vorlagen für diese Filter',
+    emptyText: 'Entfernen Sie einen Filter oder sehen Sie sich alle Vorlagen an.',
+    favoriteAdd: 'Zu Favoriten hinzufügen',
+    favoriteRemove: 'Aus Favoriten entfernen',
+    useTemplate: 'Einladung mit dieser Vorlage erstellen',
+    viewDemo: 'Demo öffnen',
+    backToGallery: 'Zurück zur Galerie',
+    aboutTemplate: 'Über diese Vorlage',
+    includedSections: 'Abschnitte in dieser Vorlage',
+    demoNote: 'Dies ist eine Demo mit erfundenen Daten. Antworten werden nicht gespeichert.',
+    deviceDesktop: 'Desktop',
+    deviceTablet: 'Tablet',
+    devicePhone: 'Handy',
+    openFullscreen: 'Im Vollbild öffnen',
+    availableIn: 'Verfügbar im Paket {plan}',
+    style: 'Stil',
+    color: 'Dominante Farbe',
+  },
+
+  templateStyles: {
+    minimal: 'Minimalistisch',
+    romantic: 'Romantisch',
+    luxury: 'Luxuriös',
+    playful: 'Verspielt',
+    soft: 'Zart',
+    modern: 'Modern',
+  },
+
+  templateColors: {
+    svetla: 'Hell',
+    topla: 'Warm',
+    hladna: 'Kühl',
+    tamna: 'Dunkel',
+  },
+
+  features: {
+    publish: "Öffentlicher Einladungslink",
+    customQuestions: "Eigene Gästefragen",
+    seating: "Sitzplan",
+    collaborators: "Mitwirkende",
+    export: "Datenexport",
+    guestbook: "Gästebuch",
+    music: "Musik zur Einladung",
+    story: "Abschnitt „Unsere Geschichte“",
+    customSubdomain: "Eigene Subdomain",
+    removeBranding: "Ohne unser Branding",
+    allTemplates: "Alle Vorlagen",
+    advancedAnalytics: "Erweiterte Statistik",
+  },
+
+  limits: {
+    maxEvents: "Anzahl der Feiern",
+    maxPhotos: "Anzahl der Fotos",
+    maxGuests: "Anzahl der Gäste",
+  },
+
+  pages: {
+    howItWorksTitle: 'So funktioniert es',
+    howItWorksSubtitle: 'Von der ersten Idee bis zum Link für Ihre Gäste.',
+    pricingTitle: 'Preise',
+    pricingSubtitle: 'Einmal zahlen, pro Feier. Kein Abo, keine versteckten Kosten.',
+    pricingNote: 'Erstellen und Vorschau sind kostenlos. Bezahlt wird erst die Veröffentlichung.',
+    perEvent: 'pro Feier',
+    free: 'Kostenlos',
+    choosePlan: 'Paket wählen',
+    startFree: 'Kostenlos starten',
+    mostPopular: 'Am häufigsten gewählt',
+    featuresIncluded: 'Enthalten',
+    limitsTitle: 'Grenzen',
+    faqTitle: 'Häufige Fragen',
+    faqSubtitle: 'Falls Sie keine Antwort finden, schreiben Sie uns.',
+    contactTitle: 'Kontakt',
+    contactSubtitle: 'Wir antworten während der Geschäftszeiten.',
+    contactEmail: 'Schreiben Sie uns',
+    contactResponse: 'Wir antworten an Werktagen in der Regel innerhalb von 24 Stunden.',
+    legalUpdated: 'Zuletzt aktualisiert: {date}',
+    legalDraftNotice: 'Dieses Dokument ist ein Entwurf und sollte vor dem Start rechtlich geprüft werden.',
+    legalFallbackNotice: 'Dieses Dokument ist derzeit nur auf Serbisch verfügbar.',
   },
 
   plans: {

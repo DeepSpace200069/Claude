@@ -43,6 +43,22 @@ const config = [
 
   {
     /*
+     * Rendereri pozivnice namerno koriste `<img>` umesto `next/image`.
+     *
+     * Fotografije dolaze sa storage hosta koji je konfigurabilan kroz env
+     * (`STORAGE_DRIVER`, `S3_PUBLIC_URL`), pa bi `next/image` za svaki novi
+     * host tražio izmenu `next.config.ts` i redeploy. Uz `loading="lazy"`,
+     * `sizes` i `decoding="async"` efekat na performanse je isti za ovaj
+     * slučaj upotrebe. Vidi `InvitationImage` u `renderers/shared.tsx`.
+     */
+    files: ['src/features/sections/renderers/**/*.tsx'],
+    rules: {
+      '@next/next/no-img-element': 'off',
+    },
+  },
+
+  {
+    /*
      * Playwright fixture prima callback `use()`. ESLint pravilo za React hook-ove
      * prepoznaje taj naziv kao hook, iako sa Reactom nema veze - isključujemo ga
      * samo za E2E testove.

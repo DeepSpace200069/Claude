@@ -30,26 +30,26 @@ Legenda: ✅ gotovo · 🔄 u toku · ⬜ nije započeto
 | 1.17 | Testovi: 135 unit + 18 integracionih + 15 E2E | ✅ |
 | 1.18 | Dokumentacija: README, TASKS, `.env.example`, dijagrami | ✅ |
 
-## Faza 2 — Marketing i šabloni ⬜
+## Faza 2 — Marketing i šabloni ✅
 
 | # | Zadatak | Status |
 |---|---------|--------|
-| 2.1 | `/sabloni` — galerija svih šablona | ⬜ |
-| 2.2 | `/sabloni/[tip]` — galerija po vrsti proslave | ⬜ |
-| 2.3 | Filteri: stil, dominantna boja, sa/bez fotografija, sortiranje, favoriti | ⬜ |
-| 2.4 | Detaljna stranica šablona | ⬜ |
-| 2.5 | `/demo/[templateSlug]` — live demo sa prikazom na telefonu i desktopu | ⬜ |
-| 2.6 | Korak 3 čarobnjaka: izbor šablona | ⬜ |
-| 2.7 | Stranice: kako funkcioniše, cenovnik, česta pitanja, kontakt | ⬜ |
-| 2.8 | Pravne stranice: uslovi korišćenja, politika privatnosti | ⬜ |
-| 2.9 | SEO: sitemap, canonical, Open Graph, structured data | ⬜ |
+| 2.1 | `/sabloni` — galerija svih šablona | ✅ |
+| 2.2 | `/sabloni/[tip]` — galerija po vrsti proslave | ✅ |
+| 2.3 | Filteri: stil, dominantna boja, sa/bez fotografija, sortiranje, favoriti | ✅ |
+| 2.4 | Detaljna stranica šablona | ✅ |
+| 2.5 | `/demo/[templateSlug]` — live demo sa prikazom na telefonu i desktopu | ✅ |
+| 2.6 | Korak 3 čarobnjaka: izbor šablona | ✅ |
+| 2.7 | Stranice: kako funkcioniše, cenovnik, česta pitanja, kontakt | ✅ |
+| 2.8 | Pravne stranice: uslovi korišćenja, politika privatnosti | ✅ |
+| 2.9 | SEO: sitemap, canonical, Open Graph, structured data | ✅ |
 
 ## Faza 3 — Modularni uređivač ⬜
 
 | # | Zadatak | Status |
 |---|---------|--------|
 | 3.1 | Editor komponente za svaki tip sekcije (lazy-loaded) | ⬜ |
-| 3.2 | Renderer komponente (deljene sa javnom stranicom, lagane) | ⬜ |
+| 3.2 | ~~Renderer komponente~~ — urađeno u Fazi 2 (trebale su demo stranici) | ✅ |
 | 3.3 | Biblioteka sekcija i dodavanje | ⬜ |
 | 3.4 | Promena redosleda: dnd-kit + pristupačna alternativa (tastatura) | ⬜ |
 | 3.5 | Uključi/isključi, dupliraj, obriši, resetuj sekciju | ⬜ |
@@ -134,15 +134,23 @@ Legenda: ✅ gotovo · 🔄 u toku · ⬜ nije započeto
 
 ---
 
-## Poznata ograničenja na kraju Faze 1
+## Poznata ograničenja na kraju Faze 2
 
 Sve navedeno je svesna odluka o obimu, a ne propust:
 
 - **Uređivač pozivnice** (`/app/dogadjaji/[id]/editor`) još ne postoji. Registar
-  sekcija, Zod šeme i migracije verzija su gotovi i pokriveni testovima; nedostaju
-  React komponente `Editor` i `Renderer` (Faza 3).
-- **Javna pozivnica** (`/p/[slug]`) se još ne renderuje. Slug se rezerviše i
-  proverava od prvog dana, pa link zaista ostaje stabilan (Faza 4).
+  sekcija, Zod šeme, migracije verzija i **svi rendereri** su gotovi i pokriveni
+  testovima; nedostaju `Editor` komponente (Faza 3).
+- **Javna pozivnica** (`/p/[slug]`) se još ne renderuje, iako je renderer gotov i
+  radi na demo stranicama. Nedostaju privatnost, keširanje i deljenje (Faza 4).
+  Slug se rezerviše i proverava od prvog dana, pa link zaista ostaje stabilan.
+- **Fotografije** još nema — upload dolazi u Fazi 3. Sekcije sa slikama su
+  napisane tako da bez fotografija izostave prazna mesta umesto da prikažu rupe.
+- **Pravni dokumenti** (uslovi, politika privatnosti) su radna verzija napisana
+  prema stvarnom ponašanju aplikacije. Pre puštanja u rad treba da ih pregleda
+  pravnik; stranice to i kažu korisniku.
+- **Prevodi dugih tekstova** (česta pitanja, pravni dokumenti) postoje na srpskoj
+  latinici i engleskom; ostali jezici padaju na njih uz vidljivu napomenu.
 - **RSVP, gosti i raspored sedenja** postoje u bazi i u modelu dozvola, ali bez
   korisničkog interfejsa (Faze 5–6).
 - **Naplata** ima adapter, model narudžbine i prelaze stanja sa testovima; tok

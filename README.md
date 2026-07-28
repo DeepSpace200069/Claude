@@ -7,11 +7,13 @@ Korisnik izabere vrstu proslave i šablon, uredi sadržaj kroz modularni uređiv
 objavi pozivnicu i podeli jedan stabilan link. Gosti odgovaraju bez naloga, a
 organizator prati potvrde dolaska i pravi raspored sedenja.
 
-> **Trenutno stanje: Faza 1 je završena.** Osnova (baza, autentifikacija,
-> autorizacija, dizajn sistem, i18n, registar sekcija, upravljanje događajima)
-> radi i pokrivena je testovima. Uređivač, javna pozivnica, RSVP, raspored
-> sedenja i naplata dolaze u fazama 3–7 — vidi [`TASKS.md`](./TASKS.md) i
-> „Poznata ograničenja” na dnu ovog dokumenta.
+> **Trenutno stanje: Faze 1 i 2 su završene.** Osnova (baza, autentifikacija,
+> autorizacija, dizajn sistem, i18n, upravljanje događajima) i marketinški deo
+> (galerija šablona sa filterima, live demo pozivnica, cenovnik iz baze, pravne
+> stranice, SEO) rade i pokriveni su testovima. **Rendereri svih 18 sekcija su
+> gotovi** — pozivnica se stvarno iscrtava na demo stranicama. Uređivač, javna
+> pozivnica, RSVP, raspored sedenja i naplata dolaze u fazama 3–7 — vidi
+> [`TASKS.md`](./TASKS.md) i „Poznata ograničenja” na dnu ovog dokumenta.
 
 ---
 
@@ -487,9 +489,9 @@ pnpm test:e2e            # Playwright
 
 | Vrsta | Broj | Pokriva |
 |-------|------|---------|
-| Unit | 135 | Zod šeme sekcija, migracije verzija, slug, tokeni, dozvole, entitlements, prelazi stanja naplate, kontrast tema, i18n i množina |
-| Integracioni | 18 | Kreiranje događaja u transakciji, jedinstvenost sluga, limiti paketa, meko brisanje, cascade pravila, `CHECK` ograničenja |
-| E2E | 15 | Marketing, prijava, zaštita ruta, čarobnjak, dashboard, izmena bez promene linka, brisanje uz potvrdu, profil |
+| Unit | 158 | Zod šeme sekcija, migracije verzija, slug, tokeni, dozvole, entitlements, prelazi stanja naplate, kontrast tema, i18n i množina, registar renderera, tokeni teme u CSS, grupisanje boja, demo kontekst, seed šabloni |
+| Integracioni | 25 | Kreiranje događaja u transakciji, jedinstvenost sluga, limiti paketa, meko brisanje, cascade pravila, `CHECK` ograničenja, **snimak verzije šablona** |
+| E2E | 60 (30 × desktop/mobilni) | Marketing, prijava, zaštita ruta, čarobnjak sa izborom šablona, dashboard, izmena bez promene linka, brisanje uz potvrdu, profil, galerija i filteri, favoriti, demo na tri veličine ekrana, cenovnik, česta pitanja, sitemap |
 
 ```bash
 pnpm test                # unit — bez baze
@@ -563,9 +565,10 @@ Iskreni pregled onoga što **još ne postoji** na kraju Faze 1. Detaljan plan je
 
 | Oblast | Stanje |
 |--------|--------|
-| Uređivač pozivnice | Registar, šeme i migracije gotovi i testirani; `Editor`/`Renderer` komponente dolaze u Fazi 3 |
-| Javna pozivnica `/p/[slug]` | Slug se rezerviše i validira od Faze 1; renderer u Fazi 4 |
-| Galerija šablona i demo stranice | Podaci u bazi (8 šablona); stranice u Fazi 2 |
+| Uređivač pozivnice | Registar, šeme, migracije i **svi rendereri** gotovi i testirani; `Editor` komponente dolaze u Fazi 3 |
+| Javna pozivnica `/p/[slug]` | Renderer radi (vidi demo stranice); nedostaju privatnost, keširanje i deljenje — Faza 4 |
+| Otpremanje fotografija | Storage adapter je gotov; interfejs za upload dolazi u Fazi 3 |
+| Pravni dokumenti | Radna verzija napisana prema stvarnom ponašanju aplikacije; traži pregled pravnika, i stranica to kaže |
 | RSVP i gosti | Kompletan model i dozvole; interfejs u Fazi 5 |
 | Raspored sedenja | Model, kapaciteti i preferencije u bazi; editor u Fazi 6 |
 | Naplata | Adapter, prelazi stanja i idempotencija testirani; tok objavljivanja u Fazi 7 |

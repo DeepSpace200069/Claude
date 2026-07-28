@@ -18,6 +18,7 @@ import type { MessageTree } from '@/i18n/translator';
 import { createEventAction } from '@/server/actions/events';
 
 import { DETAIL_FIELDS, type DetailField } from './details';
+import { TemplatePicker, type WizardTemplate } from './template-picker';
 import {
   createEventSchema,
   type CreateEventFormValues,
@@ -31,21 +32,36 @@ type EventTypeOption = {
   detailFields: string[];
 };
 
-const TOTAL_STEPS = 2;
+const TOTAL_STEPS = 3;
 
 export function CreateEventWizard(props: {
   locale: Locale;
   messages: MessageTree;
   eventTypes: EventTypeOption[];
+  templates: WizardTemplate[];
+  /** Šablon izabran sa detaljne stranice (`?sablon=slug`). */
+  preselectedTemplateSlug?: string;
 }) {
   return (
     <TranslationsProvider locale={props.locale} messages={props.messages}>
-      <WizardInner eventTypes={props.eventTypes} />
+      <WizardInner
+        eventTypes={props.eventTypes}
+        templates={props.templates}
+        preselectedTemplateSlug={props.preselectedTemplateSlug}
+      />
     </TranslationsProvider>
   );
 }
 
-function WizardInner({ eventTypes }: { eventTypes: EventTypeOption[] }) {
+function WizardInner({
+  eventTypes,
+  templates,
+  preselectedTemplateSlug,
+}: {
+  eventTypes: EventTypeOption[];
+  templates: WizardTemplate[];
+  preselectedTemplateSlug?: string;
+}) {
   const t = useTranslations();
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -64,6 +80,8 @@ function WizardInner({ eventTypes }: { eventTypes: EventTypeOption[] }) {
       city: '',
       venueName: '',
       primaryLocale: 'sr-Latn',
+      templateId:
+        templates.find((template) => template.slug === preselectedTemplateSlug)?.id,
     },
   });
 
@@ -72,9 +90,25 @@ function WizardInner({ eventTypes }: { eventTypes: EventTypeOption[] }) {
   const selectedTypeId = useWatch({ control: form.control, name: 'eventTypeId' });
   const selectedType = eventTypes.find((type) => type.id === selectedTypeId);
 
+  // Šabloni se nude samo za izabranu vrstu proslave: rođendanski šablon na
+  // krštenju nikome ne pomaže (zahtev 7, korak 3).
+  const availableTemplates = selectedType
+    ? templates.filter((template) => template.eventTypeKey === selectedType.key)
+    : [];
+
+  const selectedTemplateId =
+    useWatch({ control: form.control, name: 'templateId' }) ?? null;
+
   const goToDetails = async () => {
     const valid = await form.trigger('eventTypeId');
     if (valid) setStep(2);
+  };
+
+  const goToTemplate = async () => {
+    // Pre prelaska na izbor šablona proveravamo obavezna polja drugog koraka,
+    // da korisnik ne otkrije grešku tek pri slanju.
+    const valid = await form.trigger(['name', 'date', 'time', 'city', 'venueName']);
+    if (valid) setStep(3);
   };
 
   const onSubmit = form.handleSubmit(async (values) => {
@@ -165,7 +199,7 @@ function WizardInner({ eventTypes }: { eventTypes: EventTypeOption[] }) {
               </Button>
             </div>
           </section>
-        ) : (
+        ) : step === 2 ? (
           <section aria-labelledby="korak-2" className="space-y-5">
             <div>
               <h2 id="korak-2" className="font-display text-2xl font-semibold">
@@ -276,6 +310,46 @@ function WizardInner({ eventTypes }: { eventTypes: EventTypeOption[] }) {
 
             <div className="flex items-center justify-between pt-2">
               <Button type="button" variant="ghost" onClick={() => setStep(1)}>
+                <ArrowLeft aria-hidden />
+                {t('common.back')}
+              </Button>
+
+              <Button type="button" onClick={goToTemplate}>
+                {t('common.next')}
+                <ArrowRight aria-hidden />
+              </Button>
+            </div>
+          </section>
+        ) : (
+          <section aria-labelledby="korak-3" className="space-y-5">
+            <div>
+              <h2 id="korak-3" className="font-display text-2xl font-semibold">
+                {t('wizard.step3Title')}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t('wizard.step3Subtitle')}
+              </p>
+            </div>
+
+            <TemplatePicker
+              templates={availableTemplates}
+              value={selectedTemplateId ?? null}
+              onChange={(templateId) =>
+                form.setValue('templateId', templateId ?? undefined, {
+                  shouldDirty: true,
+                })
+              }
+              labels={{
+                blank: t('wizard.blankTemplate'),
+                blankDescription: t('wizard.blankTemplateDescription'),
+                featured: t('templates.featured'),
+                planPrefix: t('plans.currentPlan'),
+                empty: t('wizard.noTemplates'),
+              }}
+            />
+
+            <div className="flex items-center justify-between pt-2">
+              <Button type="button" variant="ghost" onClick={() => setStep(2)}>
                 <ArrowLeft aria-hidden />
                 {t('common.back')}
               </Button>

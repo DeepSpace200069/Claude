@@ -67,13 +67,44 @@ export type SectionRendererProps<TData> = {
   event: InvitationRenderContext;
 };
 
+/** Razrešena fotografija: ono što renderer stvarno treba da prikaže. */
+export type MediaResolution = {
+  url: string;
+  alt: string;
+  width: number | null;
+  height: number | null;
+  /** Sitna base64 sličica za elegantno početno stanje. */
+  placeholder: string | null;
+  focalX: number;
+  focalY: number;
+};
+
+/**
+ * Režim prikaza.
+ *
+ * `live` je prava objavljena pozivnica: interaktivne sekcije (RSVP, knjiga
+ * želja) rade i šalju podatke. `preview` je demo šablona i pregled u uređivaču:
+ * iste sekcije prikazuju kako izgledaju, ali su onemogućene i jasno označene -
+ * tako demo ne obećava nešto što ne radi.
+ */
+export type RenderMode = 'live' | 'preview';
+
 export type InvitationRenderContext = {
+  mode: RenderMode;
   eventTypeKey: string;
   startsAt: string | null;
   timeZone: string;
   city: string | null;
   venueName: string | null;
   details: Record<string, unknown>;
+  /**
+   * Fotografije razrešene po `assetId`.
+   *
+   * Sekcije čuvaju samo ID zapisa iz `media_assets`, a stranica jednim upitom
+   * razreši sve odjednom - inače bi svaka sekcija sa slikom pravila sopstveni
+   * upit i javna pozivnica bi imala N+1 problem (zahtev 32).
+   */
+  media: Record<string, MediaResolution>;
 };
 
 export type SectionEditorProps<TData> = {

@@ -175,6 +175,11 @@ const messages = {
     step2Subtitle: 'Uvek možete da ih promenite kasnije.',
     step3Title: 'Izaberite izgled',
     step3Subtitle: 'Šablon je početna tačka, a ne konačna odluka.',
+    blankTemplate: 'Prazna pozivnica',
+    blankTemplateDescription:
+      'Krenite od nule i sami složite sekcije. Šablon možete izabrati i kasnije.',
+    noTemplates: 'Za ovu vrstu proslave još nema šablona. Nastavite sa praznom pozivnicom.',
+
     createDraft: 'Napravi nacrt',
     creating: 'Pravimo pozivnicu…',
   },
@@ -290,6 +295,203 @@ const messages = {
     backHome: 'Nazad na početnu',
     rateLimited: 'Previše pokušaja. Sačekajte malo pa probajte ponovo.',
     unauthorized: 'Prijavite se da biste nastavili.',
+  },
+
+  sections: {
+    hero: {
+      label: "Naslovna",
+      description:
+        "Prvi ekran pozivnice: nadnaslov, imena i naslovna fotografija.",
+    },
+    names: {
+      label: "Imena",
+      description:
+        "Imena mladenaca ili slavljenika, istaknuta krupnim slovima.",
+    },
+    dateTime: {
+      label: "Datum i vreme",
+      description:
+        "Datum događaja u nekoliko elegantnih rasporeda.",
+    },
+    countdown: {
+      label: "Odbrojavanje",
+      description:
+        "Broji dane do proslave.",
+    },
+    message: {
+      label: "Poruka",
+      description:
+        "Uvodna ili završna reč domaćina.",
+    },
+    calendar: {
+      label: "Dodaj u kalendar",
+      description:
+        "Dugme koje gostu ubacuje događaj u kalendar telefona.",
+    },
+    locations: {
+      label: "Lokacije",
+      description:
+        "Sve adrese sa vremenima, napomenom o parkingu i navigacijom.",
+    },
+    schedule: {
+      label: "Satnica",
+      description:
+        "Kako teče dan, od pripreme do poslednje pesme.",
+    },
+    infoCards: {
+      label: "Korisne informacije",
+      description:
+        "Kartice: parking, smeštaj, dress code, pokloni, deca…",
+    },
+    people: {
+      label: "Važne osobe",
+      description:
+        "Kumovi, roditelji i svi koje želite posebno da izdvojite.",
+    },
+    gallery: {
+      label: "Galerija",
+      description:
+        "Vaše fotografije u rešetki, nizu ili karuselu.",
+    },
+    story: {
+      label: "Priča",
+      description:
+        "Vremenska linija: kako ste se upoznali ili prva godina deteta.",
+    },
+    music: {
+      label: "Muzika",
+      description:
+        "Pesma uz pozivnicu, sa kontrolom za gosta.",
+    },
+    rsvp: {
+      label: "Potvrda dolaska",
+      description:
+        "Forma kroz koju gost javlja da li dolazi i sa koliko osoba.",
+    },
+    guestbook: {
+      label: "Knjiga želja",
+      description:
+        "Gosti ostavljaju poruku, vi je odobravate pre prikaza.",
+    },
+    contact: {
+      label: "Kontakt",
+      description:
+        "Telefon i email domaćina, prikazani samo ako ih unesete.",
+    },
+    customContent: {
+      label: "Prilagođeni sadržaj",
+      description:
+        "Naslov, tekst, fotografija i jedno dugme, po vašoj meri.",
+    },
+    footer: {
+      label: "Podnožje",
+      description:
+        "Završna reč i sitan tekst na dnu pozivnice.",
+    },
+  },
+
+  templates: {
+    title: 'Galerija šablona',
+    subtitle: 'Izaberite polaznu tačku. Sve možete promeniti kasnije.',
+    countLabel: {
+      one: '{count} šablon',
+      few: '{count} šablona',
+      other: '{count} šablona',
+    },
+    preview: 'Pogledaj',
+    featured: 'Izdvojeno',
+    withPhotos: 'Sa fotografijama',
+    filterStyle: 'Stil',
+    filterColor: 'Boja',
+    filterPhotos: 'Fotografije',
+    photosWith: 'Koriste fotografije',
+    photosWithout: 'Bez fotografija',
+    sort: 'Redosled',
+    sortRecommended: 'Preporučeno',
+    sortNewest: 'Najnovije',
+    sortName: 'Po nazivu',
+    applyFilters: 'Primeni',
+    clearFilters: 'Poništi filtere',
+    onlyFavorites: 'Samo omiljeni',
+    emptyFavorites: 'Još niste sačuvali nijedan šablon. Kliknite na srce da ga izdvojite.',
+    emptyTitle: 'Nema šablona za izabrane filtere',
+    emptyText: 'Probajte da uklonite neki filter ili pogledajte sve šablone.',
+    favoriteAdd: 'Sačuvaj u omiljene',
+    favoriteRemove: 'Ukloni iz omiljenih',
+    useTemplate: 'Napravi pozivnicu sa ovim šablonom',
+    viewDemo: 'Otvori demo',
+    backToGallery: 'Nazad na galeriju',
+    aboutTemplate: 'O šablonu',
+    includedSections: 'Sekcije u šablonu',
+    demoNote: 'Ovo je demo prikaz sa izmišljenim podacima. Odgovori i poruke se ne čuvaju.',
+    deviceDesktop: 'Računar',
+    deviceTablet: 'Tablet',
+    devicePhone: 'Telefon',
+    openFullscreen: 'Otvori preko celog ekrana',
+    availableIn: 'Dostupno u paketu {plan}',
+    style: 'Stil',
+    color: 'Dominantna boja',
+  },
+
+  templateStyles: {
+    minimal: 'Minimalistički',
+    romantic: 'Romantični',
+    luxury: 'Luksuzni',
+    playful: 'Razigrani',
+    soft: 'Nežni',
+    modern: 'Moderni',
+  },
+
+  templateColors: {
+    svetla: 'Svetla',
+    topla: 'Topla',
+    hladna: 'Hladna',
+    tamna: 'Tamna',
+  },
+
+  features: {
+    publish: "Javni link za pozivnicu",
+    customQuestions: "Dodatna pitanja gostima",
+    seating: "Raspored sedenja",
+    collaborators: "Saradnici",
+    export: "Izvoz podataka",
+    guestbook: "Knjiga želja",
+    music: "Muzika uz pozivnicu",
+    story: "Sekcija „naša priča”",
+    customSubdomain: "Sopstveni poddomen",
+    removeBranding: "Bez našeg logotipa",
+    allTemplates: "Svi šabloni",
+    advancedAnalytics: "Napredna statistika",
+  },
+
+  limits: {
+    maxEvents: "Broj događaja",
+    maxPhotos: "Broj fotografija",
+    maxGuests: "Broj gostiju",
+  },
+
+  pages: {
+    howItWorksTitle: 'Kako funkcioniše',
+    howItWorksSubtitle: 'Od prve ideje do linka koji šaljete gostima.',
+    pricingTitle: 'Cenovnik',
+    pricingSubtitle: 'Plaćate jednom, po događaju. Bez pretplate i bez skrivenih troškova.',
+    pricingNote: 'Pravljenje i pregled pozivnice su besplatni. Plaća se tek objavljivanje.',
+    perEvent: 'po događaju',
+    free: 'Besplatno',
+    choosePlan: 'Izaberi paket',
+    startFree: 'Počni besplatno',
+    mostPopular: 'Najčešći izbor',
+    featuresIncluded: 'Šta je uključeno',
+    limitsTitle: 'Ograničenja',
+    faqTitle: 'Česta pitanja',
+    faqSubtitle: 'Ako ne nađete odgovor, javite nam se.',
+    contactTitle: 'Kontakt',
+    contactSubtitle: 'Odgovaramo u toku radnog dana.',
+    contactEmail: 'Pišite nam',
+    contactResponse: 'Trudimo se da odgovorimo u roku od 24 sata radnim danima.',
+    legalUpdated: 'Poslednja izmena: {date}',
+    legalDraftNotice: 'Ovaj dokument je radna verzija i pre puštanja u rad treba da ga pregleda pravnik.',
+    legalFallbackNotice: 'Ovaj dokument je za sada dostupan samo na srpskom jeziku.',
   },
 
   plans: {
