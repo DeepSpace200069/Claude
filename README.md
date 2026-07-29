@@ -7,15 +7,17 @@ Korisnik izabere vrstu proslave i šablon, uredi sadržaj kroz modularni uređiv
 objavi pozivnicu i podeli jedan stabilan link. Gosti odgovaraju bez naloga, a
 organizator prati potvrde dolaska i pravi raspored sedenja.
 
-> **Trenutno stanje: Faze 1, 2 i 3 su završene.** Osnova (baza, autentifikacija,
+> **Trenutno stanje: Faze 1–4 su završene.** Osnova (baza, autentifikacija,
 > autorizacija, dizajn sistem, i18n, upravljanje događajima), marketinški deo
 > (galerija šablona sa filterima, live demo, cenovnik iz baze, pravne stranice,
 > SEO) i **modularni uređivač pozivnice** rade i pokriveni su testovima:
 > uređivanje svih 18 tipova sekcija, promena redosleda i bez miša, poništi/ponovi,
 > automatsko čuvanje sa detekcijom sudara, uređivanje teme uz proveru kontrasta,
 > promena šablona bez gubitka sadržaja i otpremanje fotografija sa uklanjanjem
-> EXIF lokacije. Javna pozivnica, RSVP, raspored sedenja i naplata dolaze u
-> fazama 4–7 — vidi [`TASKS.md`](./TASKS.md) i „Poznata ograničenja” na dnu ovog
+> EXIF lokacije. Radi i **javna pozivnica**: četiri režima privatnosti, datum
+> isteka, PIN, personalizovani linkovi, kartica pri deljenju, QR kod i keširanje
+> koje se poništava pri svakoj izmeni. RSVP, raspored sedenja i naplata dolaze u
+> fazama 5–7 — vidi [`TASKS.md`](./TASKS.md) i „Poznata ograničenja” na dnu ovog
 > dokumenta.
 
 ---
@@ -29,6 +31,7 @@ organizator prati potvrde dolaska i pravi raspored sedenja.
 - [Model baze](#model-baze)
 - [Registar sekcija](#registar-sekcija)
 - [Uređivač pozivnice](#uređivač-pozivnice)
+- [Javna pozivnica](#javna-pozivnica)
 - [Tok kreiranja i objavljivanja](#tok-kreiranja-i-objavljivanja)
 - [Adapteri](#adapteri)
 - [Environment varijable](#environment-varijable)
@@ -105,6 +108,10 @@ Seed pravi dva naloga:
 | Forme | React Hook Form | |
 | Drag & drop | dnd-kit | Uređivač i raspored sedenja (Faze 3 i 6) |
 | Testovi | Vitest + Playwright | |
+
+Jedina zavisnost dodata van osnovnog stacka je **`qrcode-generator`** (bez
+sopstvenih zavisnosti). Obrazloženje je u odeljku [Javna
+pozivnica](#javna-pozivnica): SVG i PNG izlaz pišemo sami, ali samo kodiranje ne.
 
 ### Zašto Drizzle, a ne Prisma
 
@@ -185,8 +192,10 @@ Ključna pravila:
 │   │   │   │   ├── novi/       Čarobnjak
 │   │   │   │   └── [eventId]/  Dashboard, podešavanja, uređivač, (gosti…)
 │   │   │   └── profil/
+│   │   ├── p/[publicSlug]/     JAVNA POZIVNICA (+ /[token] za lične linkove)
 │   │   ├── api/auth/           Auth.js rute
 │   │   ├── api/uploads/local/  Prijem fotografija u razvojnom režimu
+│   │   ├── api/p/…/pregled/    Beleženje pregleda (dnevni zbir)
 │   │   ├── error.tsx           Granica greške
 │   │   └── not-found.tsx
 │   ├── components/
@@ -207,7 +216,14 @@ Ključna pravila:
 │   │   │   ├── editors/        Editori po kategoriji sekcije
 │   │   │   └── fields/         Deljena polja uređivača
 │   │   ├── events/             Šeme, detalji po tipu, čarobnjak
-│   │   ├── invitations/        Sklapanje pozivnice od sekcija
+│   │   ├── invitations/        JAVNA POZIVNICA I DELJENJE
+│   │   │   ├── invitation-renderer.tsx  Sklapanje pozivnice od sekcija
+│   │   │   ├── public-invitation-view.tsx
+│   │   │   ├── unavailable.tsx  PIN, istek, isključena, nije nađena
+│   │   │   ├── intro-overlay.tsx  Uvod koji se povlači CSS-om
+│   │   │   ├── qr.ts / qr-png.ts  QR kao SVG i kao PNG
+│   │   │   ├── share-panel.tsx  Web Share API + rezervni kanali
+│   │   │   └── publishing-form.tsx
 │   │   ├── profile/
 │   │   ├── sections/           REGISTAR SEKCIJA
 │   │   │   ├── types.ts        Ugovor `SectionDefinition`
@@ -470,6 +486,96 @@ korisnik popunio, a šablon ih nema, premeštaju se na kraj umesto da nestanu.
 
 ---
 
+## Javna pozivnica
+
+Stranica `/p/[publicSlug]` je jedino što gost vidi. Ona je i najlakši deo
+sistema za pokvariti, jer se na njoj sudaraju privatnost, keširanje i
+performanse.
+
+### Ko sme da vidi (zahtev 23)
+
+| Režim | Ponašanje |
+|-------|-----------|
+| `public` | Svako sa linkom; **jedini** režim koji dozvoljava pretraživačima |
+| `unlisted` *(podrazumevano)* | Svako sa linkom, ali `noindex` |
+| `pin` | Gost unosi PIN koji mu domaćin pošalje uz link |
+| `invite_only` | Otvara se isključivo preko `/p/<slug>/<token>` |
+
+Redosled provera je namerno ovakav: postojanje → objavljenost → istek →
+privatnost. Neobjavljena pozivnica sa PIN-om zato ne traži PIN, jer ni sa tačnim
+PIN-om ne bi imala šta da prikaže.
+
+Nijedno stanje osim „prikaži pozivnicu" ne otkriva **ništa** o sadržaju — ni
+naslov, ni imena, ni datum. Isto važi i za karticu pri deljenju i za Open Graph
+sliku: zaštićena pozivnica dobija neutralnu karticu, jer ko nema PIN ne treba ni
+iz pregleda linka da sazna ono što stranica krije.
+
+**PIN** se čuva kao SHA-256 heš i poredi funkcijom otpornom na merenje vremena.
+Nije lozinka naloga nego kratka zajednička šifra, pa je stvarna odbrana od
+pogađanja ograničenje pokušaja (deset na petnaest minuta po posetiocu i
+pozivnici). Kolačić posle uspešnog unosa ne nosi PIN nego **dokaz izveden iz
+njegovog heša**, i vezan je za putanju `/p/<slug>` — promena PIN-a automatski
+poništava sve ranije otključane sesije, a otključavanje jedne pozivnice ne
+otključava nijednu drugu.
+
+**Tokeni gostiju** se u bazi čuvaju samo kao heš, pa ni sadržaj baze ne otkriva
+linkove poslate gostima.
+
+### Indeksiranje
+
+`robots.txt` **ne** zabranjuje `/p/`, i to je namerno: zabrana obilaska bi
+sprečila pretraživač da uopšte pročita `noindex` iz stranice, pa bi URL mogao da
+završi u indeksu bez sadržaja — suprotno od željenog. Odluku nosi
+`generateMetadata`, koja je računa iz stvarnog režima privatnosti. Personalizovani
+linkovi dodatno dobijaju `X-Robots-Tag: noindex` na nivou zaglavlja.
+
+### Keširanje (zahtev 4.7)
+
+Sadržaj pozivnice se kešira po oznaci vezanoj za slug. Svako čuvanje u uređivaču,
+promena šablona, objavljivanje i izmena privatnosti poništavaju tu oznaku kroz
+`updateTag`, pa organizator koji sačuva izmenu i odmah otvori javni link vidi
+novo stanje, a ne prethodno.
+
+Odluke o pristupu se **ne** keširaju: PIN, istek i token zavise od zahteva i
+računaju se iznova. Sama stranica je zato dinamička, ali težak deo posla
+(sekcije, fotografije) se ne ponavlja za svakog gosta.
+
+Keš je ubrzanje, a ne uslov ispravnosti — van Next zahteva (seed skripta,
+zakazani posao, test) čitanje pada na direktan upit umesto da pukne.
+
+### Uvodna animacija (zahtev 4.8)
+
+Sloj se povlači **CSS animacijom**, bez čekanja na JavaScript: gost kome skripta
+ne stigne nikad ne ostane zarobljen iza uvoda. `prefers-reduced-motion` je
+pokriven u samom CSS-u. Preskakanje radi klikom bilo gde i tasterom `Esc`, a
+vidljivo dugme „preskoči" se učitava samo uz JavaScript — dugme koje ne može da
+odradi svoj posao ne treba ni da postoji na ekranu.
+
+### Statistika (zahtev 27)
+
+Broji se **samo** dnevni zbir: pregledi, različiti posetioci i deljenja. Nema IP
+adrese, korisničkog agenta ni bilo čega po čemu bi se gost prepoznao; integracioni
+test čuva i sam spisak kolona te tabele, pa dodavanje ličnog podatka obara build.
+
+Pregled prijavljuje pregledač malim `fetch`-om posle učitavanja — da bi stranica
+mogla da ostane keširana. Cena je da se posetilac bez JavaScripta ne broji; to je
+svesna zamena u korist brzine za sve ostale.
+
+### QR kod (zahtev 4.5)
+
+Kodiranje radi `qrcode-generator` — jedna od retkih gotovih zavisnosti u
+projektu. Razlog je konkretan: Reed-Solomon korekcija, osam maski sa bodovanjem i
+BCH kodovi zaglavlja su tačno vrsta posla gde suptilna greška daje kod koji jedan
+telefon pročita, a drugi ne.
+
+SVG i PNG pravimo sami. SVG spaja susedne module u jednu putanju (manji fajl,
+jedan prolaz pri crtanju), a PNG enkoder je pedesetak redova nad `node:zlib`:
+QR je crno-bela mreža bez prelaza, pa je za nju najprostiji mogući PNG — sivo,
+osam bita, bez palete. Alternativa (`ImageResponse`) bi za isti rezultat učitavala
+fontove i rasterizator.
+
+---
+
 ## Tok kreiranja i objavljivanja
 
 ```mermaid
@@ -636,9 +742,9 @@ pnpm test:e2e            # Playwright
 
 | Vrsta | Broj | Pokriva |
 |-------|------|---------|
-| Unit | 214 | Zod šeme sekcija, migracije verzija, slug, tokeni, dozvole, entitlements, prelazi stanja naplate, kontrast tema, i18n i množina, registri sekcija/renderera/editora, tokeni teme u CSS, grupisanje boja, demo kontekst, seed šabloni, **operacije nad dokumentom uređivača**, **istorija poništi/ponovi**, **spajanje pri promeni šablona**, **uklanjanje EXIF-a iz JPEG/PNG/WebP** |
-| Integracioni | 54 | Kreiranje događaja u transakciji, jedinstvenost sluga, limiti paketa, meko brisanje, cascade pravila, `CHECK` ograničenja, snimak verzije šablona, **čuvanje nacrta i sudar revizija**, **limiti i zaključane sekcije pri čuvanju**, **snimci verzija i njihovo orezivanje**, **otpremanje fotografija i odbijanje fajla sa EXIF-om** |
-| E2E | 74 (37 × desktop/mobilni) | Marketing, prijava, zaštita ruta, čarobnjak sa izborom šablona, dashboard, izmena bez promene linka, brisanje uz potvrdu, profil, galerija i filteri, favoriti, demo na tri veličine ekrana, cenovnik, česta pitanja, sitemap, **uređivač: izmena teksta uz živi pregled i autosave, biblioteka sekcija, zaključana sekcija, promena redosleda bez miša, sakrivanje sekcije, upozorenje o kontrastu, otpremanje fotografije** |
+| Unit | 235 | Zod šeme sekcija, migracije verzija, slug, tokeni, dozvole, entitlements, prelazi stanja naplate, kontrast tema, i18n i množina, registri sekcija/renderera/editora, tokeni teme u CSS, grupisanje boja, demo kontekst, seed šabloni, operacije nad dokumentom uređivača, istorija poništi/ponovi, spajanje pri promeni šablona, uklanjanje EXIF-a iz JPEG/PNG/WebP, **QR matrica i SVG/PNG izlaz**, **kraj dana u vremenskoj zoni i dan agregata** |
+| Integracioni | 78 | Kreiranje događaja u transakciji, jedinstvenost sluga, limiti paketa, meko brisanje, cascade pravila, `CHECK` ograničenja, snimak verzije šablona, čuvanje nacrta i sudar revizija, limiti i zaključane sekcije pri čuvanju, snimci verzija i orezivanje, otpremanje fotografija i odbijanje fajla sa EXIF-om, **objavljivanje i isključivanje linka**, **sva četiri režima privatnosti**, **istek do kraja dana**, **PIN i tokeni samo kao heš**, **dnevni agregat i spisak kolona statistike** |
+| E2E | 98 (49 × desktop/mobilni) | Marketing, prijava, zaštita ruta, čarobnjak sa izborom šablona, dashboard, izmena bez promene linka, brisanje uz potvrdu, profil, galerija i filteri, favoriti, demo na tri veličine ekrana, cenovnik, česta pitanja, sitemap, uređivač (živi pregled, autosave, biblioteka, redosled bez miša, kontrast, otpremanje fotografije), **javna pozivnica: nacrt i istek se ne prikazuju, PIN kapija, lični linkovi, indeksiranje po režimu, deljenje i QR, poništavanje keša posle izmene** |
 
 ```bash
 pnpm test                # unit — bez baze
@@ -689,6 +795,12 @@ Implementirano do kraja Faze 3:
   biblioteci sekcija: zahtev koji zaobiđe interfejs biva odbijen.
 - **Optimističko zaključavanje** pri čuvanju nacrta — istovremena izmena iz dve
   sesije se prijavljuje umesto da se tiho prepiše.
+- **PIN javne pozivnice** se čuva kao heš, poredi vremenski otporno i ima
+  ograničen broj pokušaja; kolačić nosi dokaz izveden iz heša, ne sam PIN.
+- **Privatnost javne pozivnice** je podrazumevano „neindeksirano"; jedini režim
+  koji dozvoljava pretraživače bira organizator svesno.
+- **Nijedno stanje nedostupne pozivnice** ne otkriva sadržaj — ni stranica, ni
+  kartica pri deljenju, ni Open Graph slika.
 - **CSRF** — mutacije idu isključivo kroz server akcije, koje imaju ugrađenu
   zaštitu; odjava radi i bez JavaScripta.
 - **Sigurnosna zaglavlja** i `X-Robots-Tag: noindex` na `/p/*`.
@@ -722,8 +834,11 @@ Iskreni pregled onoga što **još ne postoji** na kraju Faze 3. Detaljan plan je
 
 | Oblast | Stanje |
 |--------|--------|
-| Javna pozivnica `/p/[slug]` | Renderer radi (demo stranice i pregled u uređivaču); nedostaju privatnost, keširanje, deljenje i QR — Faza 4 |
-| RSVP i knjiga želja | Podešavaju se u uređivaču i u pregledu izgledaju tačno kao gostu, ali su isključene i označene; obrada odgovora u Fazi 5 |
+| Objavljivanje | Traži paket sa pravom `publish`; tok narudžbine i plaćanja je Faza 7. Na besplatnom paketu dugme postoji, ali je onemogućeno uz tačan razlog |
+| Personalizovani linkovi | Rade kao pristup i pozdrav po imenu; pravljenje, slanje i RSVP forma vezana za token dolaze u Fazi 5 |
+| RSVP i knjiga želja | Prikazuju se na javnoj pozivnici, ali su isključene i vidno označene dok Faza 5 ne doda obradu odgovora |
+| Statistika pregleda | Broji se iz pregledača da bi stranica ostala keširana; posetilac bez JavaScripta se ne broji |
+| Promena sluga | Servis postoji i proverava format i zauzetost; stranica dolazi kasnije jer je menjanje podeljenog linka opasna radnja |
 | Muzička sekcija | Podešavanja i prikaz rade; biblioteka numera još nije popunjena, a otpremanje zvuka dolazi u Fazi 8 |
 | EXIF uz S3 skladište | Uređivač uklanja metapodatke, server proverava prvih 64 KB fajla. Zaostali tekstualni komad na kraju velikog PNG-a bi promakao toj proveri; lokalni drajver obrađuje ceo fajl |
 | AVIF i HEIC | Ne primaju se pri otpremanju jer iz njih ne umemo pouzdano da uklonimo EXIF; uređivač ih prekodira u WebP, pa korisnik to ne oseti |

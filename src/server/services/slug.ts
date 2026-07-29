@@ -20,6 +20,7 @@ import { invitations } from '@/server/db/schema';
  * 23505, pa probamo sledeći kandidat. Baza je jedini arbitar.
  */
 const UNIQUE_VIOLATION = '23505';
+const FOREIGN_KEY_VIOLATION = '23503';
 const MAX_ATTEMPTS = 12;
 
 /**
@@ -30,6 +31,15 @@ const MAX_ATTEMPTS = 12;
  * kao da je nastupila nepoznata greška i pukla umesto da proba sledeći kandidat.
  */
 export function isUniqueViolation(error: unknown): boolean {
+  return hasPostgresCode(error, UNIQUE_VIOLATION);
+}
+
+/** Kršenje stranog ključa - red na koji se pozivamo je u međuvremenu obrisan. */
+export function isForeignKeyViolation(error: unknown): boolean {
+  return hasPostgresCode(error, FOREIGN_KEY_VIOLATION);
+}
+
+function hasPostgresCode(error: unknown, code: string): boolean {
   let current: unknown = error;
 
   for (let depth = 0; depth < 5 && current; depth += 1) {
@@ -37,7 +47,7 @@ export function isUniqueViolation(error: unknown): boolean {
       typeof current === 'object' &&
       current !== null &&
       'code' in current &&
-      (current as { code?: string }).code === UNIQUE_VIOLATION
+      (current as { code?: string }).code === code
     ) {
       return true;
     }

@@ -63,19 +63,19 @@ Legenda: ✅ gotovo · 🔄 u toku · ⬜ nije započeto
 | 3.13 | Mobilni raspored uređivača (tabovi, jedno stablo za sve širine) | ✅ |
 | 3.14 | Upload fotografija kroz storage adapter (uklanjanje EXIF lokacije) | ✅ |
 
-## Faza 4 — Javna pozivnica ⬜
+## Faza 4 — Javna pozivnica ✅
 
 | # | Zadatak | Status |
 |---|---------|--------|
-| 4.1 | `/p/[publicSlug]` — javni renderer (odvojen bundle od uređivača) | ⬜ |
-| 4.2 | Privatnost: javno / neindeksirano / PIN / samo personalizovani linkovi | ⬜ |
-| 4.3 | Datum isteka i ručno deaktiviranje | ⬜ |
-| 4.4 | Open Graph i podaci link preview kartice | ⬜ |
-| 4.5 | QR kod i preuzimanje | ⬜ |
-| 4.6 | Deljenje: Web Share API, WhatsApp, Viber, email, SMS | ⬜ |
-| 4.7 | Keširanje javne stranice i invalidacija posle izmene | ⬜ |
-| 4.8 | Uvodna animacija sa mogućnošću preskakanja | ⬜ |
-| 4.9 | Statistika pregleda (dnevni agregat, bez ličnih podataka) | ⬜ |
+| 4.1 | `/p/[publicSlug]` — javni renderer (odvojen bundle od uređivača) | ✅ |
+| 4.2 | Privatnost: javno / neindeksirano / PIN / samo personalizovani linkovi | ✅ |
+| 4.3 | Datum isteka i ručno deaktiviranje | ✅ |
+| 4.4 | Open Graph i podaci link preview kartice (poštuju privatnost) | ✅ |
+| 4.5 | QR kod i preuzimanje (SVG i PNG) | ✅ |
+| 4.6 | Deljenje: Web Share API, WhatsApp, Viber, email, SMS | ✅ |
+| 4.7 | Keširanje javne stranice i invalidacija posle izmene | ✅ |
+| 4.8 | Uvodna animacija sa mogućnošću preskakanja | ✅ |
+| 4.9 | Statistika pregleda (dnevni agregat, bez ličnih podataka) | ✅ |
 
 ## Faza 5 — Gosti i RSVP ⬜
 
@@ -134,43 +134,32 @@ Legenda: ✅ gotovo · 🔄 u toku · ⬜ nije započeto
 
 ---
 
-## Poznata ograničenja na kraju Faze 3
+## Poznata ograničenja na kraju Faze 4
 
 Sve navedeno je svesna odluka o obimu, a ne propust:
 
-- **Javna pozivnica** (`/p/[slug]`) se još ne renderuje, iako renderer radi na
-  demo stranicama i u pregledu uređivača. Nedostaju privatnost, keširanje,
-  deljenje i QR kod (Faza 4). Slug se rezerviše od prvog dana, pa link zaista
-  ostaje stabilan.
-- **RSVP i knjiga želja** se u uređivaču podešavaju i u pregledu izgledaju tačno
-  onako kako će izgledati gostu, ali su isključene i vidno označene: obrada
-  odgovora dolazi u Fazi 5. Demo ne obećava ništa što ne radi.
-- **Muzička sekcija** ima podešavanja i prikaz, ali biblioteka numera još nije
-  popunjena; izbor „sopstveni fajl" čeka otpremanje zvuka u Fazi 8.
-- **Uklanjanje EXIF-a sa S3 skladištem**: fotografija ide iz pregledača pravo u
-  skladište, pa metapodatke uklanja uređivač (prekodiranje kroz canvas). Server
-  posle otpremanja pročita prvih 64 KB fajla i sam proveri da metapodataka nema —
-  za JPEG i PNG su svi zanimljivi segmenti na početku fajla, a kod WebP-a
-  postojanje EXIF/XMP dela stoji u `VP8X` zaglavlju. Zaostali tekstualni komad na
-  samom kraju velikog PNG-a bi promakao toj proveri; u lokalnom režimu server
-  ionako obrađuje ceo fajl.
-- **AVIF i HEIC se ne primaju pri otpremanju**, jer iz njih ne umemo pouzdano da
-  uklonimo EXIF. Korisnik to ne oseti — uređivač svaku fotografiju prekodira u
-  WebP pre slanja, pa i slika sa iPhone-a prolazi.
-- **Istorija verzija** čuva poslednjih 20 snimaka, najviše jedan na pet minuta
-  rada. Vraćanje ubacuje verziju u uređivač kao običnu izmenu koja se može
-  poništiti — ne upisuje se prećutno.
-- **Sudar dve sesije** se ne spaja automatski. Korisnik bira: učitaj tuđu verziju
-  ili prepiši svojom. Pogađanje umesto korisnika ovde nema tačno rešenje.
-- **Pravni dokumenti** (uslovi, politika privatnosti) su radna verzija napisana
-  prema stvarnom ponašanju aplikacije. Pre puštanja u rad treba da ih pregleda
-  pravnik; stranice to i kažu korisniku.
-- **Prevodi dugih tekstova** (česta pitanja, pravni dokumenti) postoje na srpskoj
-  latinici i engleskom; ostali jezici padaju na njih uz vidljivu napomenu.
+- **Objavljivanje traži paket sa pravom `publish`.** Tok narudžbine i plaćanja
+  dolazi u Fazi 7; do tada plaćen paket evidentira administrator, kao što i
+  adapter naplate predviđa. Na besplatnom paketu dugme postoji, ali je
+  onemogućeno uz tačan razlog — nema lažnog uspeha.
+- **Personalizovani linkovi** rade kao pristup i pozdrav po imenu; sama RSVP
+  forma vezana za token dolazi u Fazi 5. Pravljenje i slanje tih linkova je deo
+  upravljanja gostima, takođe u Fazi 5.
+- **RSVP i knjiga želja** se prikazuju na javnoj pozivnici, ali su isključene i
+  vidno označene dok Faza 5 ne doda obradu odgovora.
+- **Statistika** broji preglede iz pregledača (mali `fetch` posle učitavanja), pa
+  je javna stranica keširana. Posetilac bez JavaScripta se ne broji — svesna
+  zamena: keširana stranica za sve umesto tačnog brojanja za nekolicinu.
+- **Jedinstveni posetioci** se broje po sesiji pregledača, bez kolačića i bez
+  identifikatora. Isti gost sa dva uređaja broji se dvaput; to je cena toga što
+  ne pratimo ljude.
+- **Slug se ne može menjati** iz interfejsa. Servis `changeInvitationSlug`
+  postoji i proverava format i zauzetost, ali stranica za to dolazi kasnije —
+  menjanje već podeljenog linka je opasna radnja i traži jasno upozorenje.
+- **Pravni dokumenti** su radna verzija napisana prema stvarnom ponašanju
+  aplikacije; pre puštanja u rad treba da ih pregleda pravnik, i stranica to kaže.
 - **Raspored sedenja** postoji u bazi i u modelu dozvola, ali bez korisničkog
   interfejsa (Faza 6).
-- **Naplata** ima adapter, model narudžbine i prelaze stanja sa testovima; tok
-  objavljivanja se sklapa u Fazi 7.
 - **Rate limiting** je in-memory i važi po instanci procesa. Za više instanci
   potrebna je deljena implementacija (Redis) — interfejs je već izdvojen.
 - **Preuzimanje i brisanje korisničkih podataka** su najavljeni u interfejsu, ali

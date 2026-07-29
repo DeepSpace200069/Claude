@@ -2,6 +2,7 @@ import {
   ArrowRight,
   CalendarDays,
   MapPin,
+  Send,
   Settings,
   SquarePen,
   Users,
@@ -13,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/feedback';
+import { appUrl } from '@/config/brand';
 import { daysUntil, formatDateTime } from '@/i18n/format';
 import { getRequestLocale, getTranslations } from '@/i18n/server';
 import { requireEventPageAccess } from '@/server/authz/page-guards';
@@ -63,6 +65,11 @@ export default async function EventDashboardPage({
       href: `/app/dogadjaji/${eventId}/gosti`,
       label: t('dashboard.openGuests'),
       icon: Users,
+    },
+    {
+      href: `/app/dogadjaji/${eventId}/objavljivanje`,
+      label: t('publishing.title'),
+      icon: Send,
     },
     {
       href: `/app/dogadjaji/${eventId}/podesavanja`,
@@ -123,11 +130,22 @@ export default async function EventDashboardPage({
         ) : null}
       </header>
 
-      {event.invitationStatus !== 'published' ? (
+      {event.invitationStatus === 'published' ? (
+        <Alert tone="success" title={t('publishing.statusPublished')}>
+          <a
+            href={appUrl(`/p/${event.invitationSlug}`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-sm underline underline-offset-4"
+          >
+            {appUrl(`/p/${event.invitationSlug}`)}
+          </a>
+        </Alert>
+      ) : (
         <Alert tone="info" title={t('dashboard.notPublishedTitle')}>
           {t('dashboard.notPublishedText')}
         </Alert>
-      ) : null}
+      )}
 
       <section aria-labelledby="statistika">
         <h2 id="statistika" className="sr-only">
@@ -154,7 +172,7 @@ export default async function EventDashboardPage({
           {t('dashboard.quickActions')}
         </h2>
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {shortcuts.map((shortcut) => (
             <Button
               key={shortcut.href}

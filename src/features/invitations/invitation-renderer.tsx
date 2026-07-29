@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import type { Locale } from '@/i18n/config';
 import { prepareSectionsForRender } from '@/features/sections/migrate';
 import { getSectionRenderer } from '@/features/sections/renderers';
@@ -24,12 +26,20 @@ export function InvitationRenderer({
   locale,
   context,
   className,
+  children,
 }: {
   sections: readonly InvitationSectionRecord[];
   theme: ThemeTokens;
   locale: Locale;
   context: InvitationRenderContext;
   className?: string;
+  /**
+   * Dodatni sloj unutar korena pozivnice (npr. uvodna animacija).
+   *
+   * Mora da bude **unutra** da bi nasledio CSS promenljive teme - uvod koji
+   * koristi boje aplikacije umesto boja pozivnice deluje kao tuđi ekran.
+   */
+  children?: ReactNode;
 }) {
   // Nevalidne i nepoznate sekcije se preskaču, a ne ruše stranicu: gost mora da
   // vidi pozivnicu i kada je jedna sekcija oštećena.
@@ -59,6 +69,8 @@ export function InvitationRenderer({
           />
         );
       })}
+
+      {children}
     </div>
   );
 }

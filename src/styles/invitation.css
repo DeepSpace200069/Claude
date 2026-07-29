@@ -1194,3 +1194,94 @@
 .inv-footer__branding {
   font-size: 0.8125rem;
 }
+
+/* --- Uvodna animacija ------------------------------------------------------ */
+
+/*
+ * Sloj preko pozivnice koji se sam povlači.
+ *
+ * Živi unutar `.invitation-root`, pa nasleđuje boje teme - uvod tako izgleda
+ * kao deo pozivnice, a ne kao ekran aplikacije ispred nje. Postoji samo kada
+ * JavaScript radi i kada gost nije isključio animacije (vidi `intro-overlay.tsx`).
+ */
+.invitation-root .inv-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 2rem;
+  background: var(--inv-background);
+  color: var(--inv-text);
+  cursor: pointer;
+  animation-name: inv-intro-out;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: forwards;
+}
+
+.invitation-root .inv-intro__title {
+  margin: 0;
+  font-family: var(--inv-font-display);
+  font-size: clamp(1.75rem, 6cqi, 3rem);
+  text-align: center;
+  letter-spacing: 0.02em;
+  animation: inv-intro-title 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.invitation-root .inv-intro__skip {
+  font-family: var(--inv-font-body);
+  font-size: 0.8125rem;
+  color: var(--inv-text-muted);
+  background: none;
+  border: 0;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.invitation-root .inv-intro__skip:focus-visible {
+  outline: 2px solid var(--inv-accent);
+  outline-offset: 2px;
+}
+
+@keyframes inv-intro-out {
+  0%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes inv-intro-title {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+ * Preskakanje: dugme, klik po sloju i `Esc` postavljaju atribut na korenu
+ * dokumenta. Bez JavaScripta atributa nema, ali animacija ionako sama završi u
+ * `visibility: hidden` - gost nikad ne ostane zarobljen iza uvoda.
+ */
+:root[data-uvod='preskocen'] .invitation-root .inv-intro {
+  display: none;
+}
+
+/* Ko je isključio animacije u sistemu, uvod ne vidi ni na trenutak. */
+@media (prefers-reduced-motion: reduce) {
+  .invitation-root .inv-intro {
+    display: none;
+  }
+}

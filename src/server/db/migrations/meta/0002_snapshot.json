@@ -1,6 +1,6 @@
 {
-  "id": "2873c138-f80d-4be7-8936-3ba01e79bab4",
-  "prevId": "87ff8867-9661-4cd7-87d6-a683c0508f98",
+  "id": "aa0ef67c-2099-4cee-b4b0-f4f066faf815",
+  "prevId": "2873c138-f80d-4be7-8936-3ba01e79bab4",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -4828,8 +4828,8 @@
         }
       },
       "indexes": {
-        "invitation_view_stats_invitation_day_idx": {
-          "name": "invitation_view_stats_invitation_day_idx",
+        "invitation_view_stats_day_unique": {
+          "name": "invitation_view_stats_day_unique",
           "columns": [
             {
               "expression": "invitation_id",
@@ -4844,7 +4844,7 @@
               "nulls": "last"
             }
           ],
-          "isUnique": false,
+          "isUnique": true,
           "concurrently": false,
           "method": "btree",
           "with": {}

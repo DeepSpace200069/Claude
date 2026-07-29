@@ -19,6 +19,7 @@ import {
   switchInvitationTemplate,
   type RevisionSummary,
 } from '@/server/services/invitations';
+import { revalidateInvitation } from '@/server/services/public-invitation';
 
 import {
   failure,
@@ -80,7 +81,9 @@ export async function saveInvitationAction(
       })),
     });
 
-    // Kontrolni panel prikazuje status pozivnice; javna stranica dolazi u Fazi 4.
+    // Keš javne stranice se poništava odmah: organizator koji sačuva izmenu i
+    // otvori javni link mora da vidi novo stanje, a ne prethodno (zahtev 4.7).
+    revalidateInvitation(result.slug);
     revalidatePath(`/app/dogadjaji/${parsed.data.eventId}`);
 
     return success({
@@ -123,6 +126,7 @@ export async function switchTemplateAction(
       },
     });
 
+    revalidateInvitation(result.slug);
     revalidatePath(`/app/dogadjaji/${parsed.data.eventId}`);
 
     return success({

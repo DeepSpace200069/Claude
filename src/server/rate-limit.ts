@@ -74,4 +74,14 @@ export const RATE_LIMITS = {
    * u klijentu ili automatizovano zatrpavanje.
    */
   saveInvitation: { limit: 240, windowMs: 10 * 60 * 1000 },
+  /**
+   * Unos PIN-a na javnoj pozivnici.
+   *
+   * PIN ima najviše osam cifara, pa je ograničenje broja pokušaja jedina
+   * stvarna odbrana od pogađanja: deset pokušaja na petnaest minuta po
+   * posetiocu i pozivnici.
+   */
+  pinAttempt: { limit: 10, windowMs: 15 * 60 * 1000 },
+  /** Beleženje pregleda javne pozivnice - štiti agregat od naduvavanja. */
+  invitationView: { limit: 60, windowMs: 10 * 60 * 1000 },
 } as const;

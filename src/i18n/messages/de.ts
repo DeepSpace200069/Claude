@@ -896,6 +896,122 @@ const messages: Messages = {
     },
   },
 
+  publicInvitation: {
+    greeting: 'Liebe/r {name},',
+    skipIntro: 'Intro überspringen',
+    poweredBy: 'Erstellt mit {brand}',
+
+    pinTitle: 'Diese Einladung ist geschützt',
+    pinText: 'Geben Sie die PIN ein, die Sie von den Gastgebern erhalten haben.',
+    pinLabel: 'PIN',
+    pinSubmit: 'Einladung öffnen',
+    pinWrong: 'Diese PIN stimmt nicht. Fragen Sie bei den Gastgebern nach.',
+    pinTooMany: 'Zu viele Versuche. Warten Sie ein paar Minuten und versuchen Sie es erneut.',
+
+    expiredTitle: 'Diese Einladung ist nicht mehr verfügbar',
+    expiredText: 'Sie war gültig bis {date}.',
+
+    unpublishedTitle: 'Diese Einladung ist gerade nicht aktiv',
+    unpublishedText:
+      'Die Gastgeber haben diesen Link vorübergehend abgeschaltet. Wenn Sie eingeladen sind, melden Sie sich bei ihnen.',
+
+    inviteOnlyTitle: 'Ihr persönlicher Link wird benötigt',
+    inviteOnlyText:
+      'Diese Einladung öffnet sich nur über den Link, den die Gastgeber Ihnen persönlich geschickt haben.',
+
+    notFoundTitle: 'Einladung nicht gefunden',
+    notFoundText: 'Der Link wurde vielleicht falsch kopiert oder existiert nicht mehr.',
+
+    backHome: 'Mehr über {brand} erfahren',
+  },
+
+  publishing: {
+    title: 'Veröffentlichen und teilen',
+    subtitle:
+      'Der öffentliche Link, die Privatsphäre und das, was Gäste beim Teilen sehen.',
+
+    statusLabel: 'Status',
+    statusDraft: 'Entwurf',
+    statusPublished: 'Veröffentlicht',
+    statusUnpublished: 'Abgeschaltet',
+    publishedAt: 'Veröffentlicht am {date}',
+
+    publish: 'Einladung veröffentlichen',
+    publishing: 'Wird veröffentlicht…',
+    published: 'Die Einladung ist veröffentlicht.',
+    unpublish: 'Öffentlichen Link abschalten',
+    unpublished: 'Der öffentliche Link ist abgeschaltet.',
+    unpublishHint:
+      'Der Inhalt bleibt gespeichert, und Sie können denselben Link wieder einschalten.',
+
+    planLockedTitle: 'Veröffentlichen ist nicht in Ihrem Paket',
+    planLockedText:
+      'Mit dem Paket „{plan}“ können Sie eine Einladung erstellen und ansehen. Für einen öffentlichen Link brauchen Sie ein Paket, das das Veröffentlichen enthält.',
+    seePlans: 'Pakete ansehen',
+
+    privacyTitle: 'Wer die Einladung sehen darf',
+    privacyPublic: 'Öffentlich',
+    privacyPublicHint:
+      'Für alle mit dem Link sichtbar und in Suchmaschinen erlaubt.',
+    privacyUnlisted: 'Nur mit Link',
+    privacyUnlistedHint:
+      'Für alle mit dem Link sichtbar, taucht aber nie in Suchmaschinen auf.',
+    privacyPin: 'Mit PIN geschützt',
+    privacyPinHint: 'Gäste geben die PIN ein, die Sie zusammen mit dem Link schicken.',
+    privacyInviteOnly: 'Nur persönliche Links',
+    privacyInviteOnlyHint:
+      'Öffnet sich ausschließlich über die Links, die Sie für jeden Gast erstellen.',
+
+    pinLabel: 'PIN für Gäste',
+    pinHint: 'Vier bis acht Ziffern. Leer lassen, um die bestehende PIN zu behalten.',
+    pinSet: 'Eine PIN ist gesetzt.',
+
+    expiresLabel: 'Einladung gültig bis',
+    expiresHint:
+      'Nach diesem Tag zeigt der Link einen Hinweis, dass die Einladung nicht mehr gilt.',
+
+    shareCardTitle: 'Vorschaukarte beim Teilen',
+    shareCardHint:
+      'So sieht die Einladung aus, wenn der Link in einer Nachricht verschickt wird.',
+    shareTitleLabel: 'Titel der Karte',
+    shareDescriptionLabel: 'Beschreibung der Karte',
+
+    saved: 'Einstellungen gespeichert.',
+  },
+
+  share: {
+    title: 'Einladung teilen',
+    linkLabel: 'Öffentlicher Link',
+    copy: 'Link kopieren',
+    copied: 'Link kopiert.',
+    open: 'Einladung öffnen',
+    native: 'Teilen',
+    whatsapp: 'WhatsApp',
+    viber: 'Viber',
+    email: 'E-Mail',
+    sms: 'SMS',
+    message: 'Sie sind eingeladen! Alles zur Feier finden Sie hier: {url}',
+    emailSubject: 'Einladung',
+
+    qrTitle: 'QR-Code',
+    qrHint: 'Zum Drucken auf Karte oder Dankeskarte. Gäste scannen ihn mit dem Handy.',
+    qrAlt: 'QR-Code, der zur Einladung führt',
+    downloadSvg: 'SVG herunterladen',
+    downloadPng: 'PNG herunterladen',
+
+    notPublishedTitle: 'Der Link ist noch nicht aktiv',
+    notPublishedText:
+      'Sie können die Einladung teilen, sobald Sie sie veröffentlichen. Bis dahin sehen nur Sie sie.',
+
+    statsTitle: 'Aufrufe',
+    statsToday: 'Heute',
+    statsTotal: 'Gesamt',
+    statsUnique: 'Verschiedene Besucher',
+    statsShares: 'Geteilt',
+    statsNote:
+      'Wir zählen nur Tagessummen, ohne eine einzige Angabe zu irgendeinem Gast.',
+  },
+
   plans: {
     free: 'Kostenloser Entwurf',
     standard: 'Standard',

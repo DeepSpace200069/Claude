@@ -896,6 +896,117 @@ const messages = {
     },
   },
 
+  publicInvitation: {
+    greeting: 'Dragi {name},',
+    skipIntro: 'Preskoči uvod',
+    poweredBy: 'Napravljeno na {brand}',
+
+    pinTitle: 'Pozivnica je zaštićena',
+    pinText: 'Unesite PIN koji ste dobili od domaćina.',
+    pinLabel: 'PIN',
+    pinSubmit: 'Otvori pozivnicu',
+    pinWrong: 'PIN nije tačan. Proverite ga sa domaćinom.',
+    pinTooMany: 'Previše pokušaja. Sačekajte nekoliko minuta pa probajte ponovo.',
+
+    expiredTitle: 'Pozivnica više nije dostupna',
+    expiredText: 'Ova pozivnica je prestala da važi {date}.',
+
+    unpublishedTitle: 'Pozivnica trenutno nije aktivna',
+    unpublishedText:
+      'Domaćin je privremeno isključio ovaj link. Ako ste pozvani, javite mu se.',
+
+    inviteOnlyTitle: 'Potreban je vaš lični link',
+    inviteOnlyText:
+      'Ova pozivnica se otvara samo preko linka koji je domaćin poslao lično vama.',
+
+    notFoundTitle: 'Pozivnica nije pronađena',
+    notFoundText: 'Link je možda pogrešno prekopiran ili više ne postoji.',
+
+    backHome: 'Saznajte više o {brand}',
+  },
+
+  publishing: {
+    title: 'Objavljivanje i deljenje',
+    subtitle: 'Javni link, privatnost i podaci koje gosti vide pri deljenju.',
+
+    statusLabel: 'Status',
+    statusDraft: 'Nacrt',
+    statusPublished: 'Objavljena',
+    statusUnpublished: 'Isključena',
+    publishedAt: 'Objavljena {date}',
+
+    publish: 'Objavi pozivnicu',
+    publishing: 'Objavljivanje…',
+    published: 'Pozivnica je objavljena.',
+    unpublish: 'Isključi javni link',
+    unpublished: 'Javni link je isključen.',
+    unpublishHint: 'Sadržaj ostaje sačuvan, a isti link možete ponovo uključiti.',
+
+    planLockedTitle: 'Objavljivanje nije u vašem paketu',
+    planLockedText:
+      'Paket „{plan}” omogućava pravljenje i pregled pozivnice. Za javni link potreban je paket koji uključuje objavljivanje.',
+    seePlans: 'Pogledaj pakete',
+
+    privacyTitle: 'Ko može da vidi pozivnicu',
+    privacyPublic: 'Javno',
+    privacyPublicHint: 'Vidljiva svima sa linkom i dozvoljena u pretraživačima.',
+    privacyUnlisted: 'Samo sa linkom',
+    privacyUnlistedHint:
+      'Vidljiva svima koji imaju link, ali se ne pojavljuje u pretraživačima.',
+    privacyPin: 'Zaštićena PIN-om',
+    privacyPinHint: 'Gost mora da unese PIN koji mu pošaljete uz link.',
+    privacyInviteOnly: 'Samo lični linkovi',
+    privacyInviteOnlyHint:
+      'Otvara se isključivo preko linkova koje pravite za svakog gosta.',
+
+    pinLabel: 'PIN za goste',
+    pinHint: 'Od 4 do 8 cifara. Ostavite prazno da zadržite postojeći PIN.',
+    pinSet: 'PIN je postavljen.',
+
+    expiresLabel: 'Pozivnica važi do',
+    expiresHint: 'Posle tog dana link prikazuje poruku da pozivnica više ne važi.',
+
+    shareCardTitle: 'Kartica pri deljenju',
+    shareCardHint:
+      'Ovako pozivnica izgleda kada se link pošalje u poruci ili na društvenoj mreži.',
+    shareTitleLabel: 'Naslov kartice',
+    shareDescriptionLabel: 'Opis kartice',
+
+    saved: 'Podešavanja su sačuvana.',
+  },
+
+  share: {
+    title: 'Podelite pozivnicu',
+    linkLabel: 'Javni link',
+    copy: 'Kopiraj link',
+    copied: 'Link je kopiran.',
+    open: 'Otvori pozivnicu',
+    native: 'Podeli',
+    whatsapp: 'WhatsApp',
+    viber: 'Viber',
+    email: 'Email',
+    sms: 'SMS',
+    message: 'Pozivamo vas! Sve o proslavi je ovde: {url}',
+    emailSubject: 'Pozivnica',
+
+    qrTitle: 'QR kod',
+    qrHint: 'Za štampu na pozivnici ili zahvalnici. Gost ga skenira telefonom.',
+    qrAlt: 'QR kod koji vodi na pozivnicu',
+    downloadSvg: 'Preuzmi SVG',
+    downloadPng: 'Preuzmi PNG',
+
+    notPublishedTitle: 'Link još nije aktivan',
+    notPublishedText:
+      'Pozivnicu možete podeliti čim je objavite. Do tada je vidite samo vi.',
+
+    statsTitle: 'Pregledi',
+    statsToday: 'Danas',
+    statsTotal: 'Ukupno',
+    statsUnique: 'Različitih posetilaca',
+    statsShares: 'Deljenja',
+    statsNote: 'Brojimo samo zbirno po danu, bez ijednog podatka o gostu.',
+  },
+
   plans: {
     free: 'Besplatan nacrt',
     standard: 'Standard',

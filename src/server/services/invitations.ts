@@ -207,6 +207,8 @@ export type SaveDraftInput = {
 export type SaveDraftResult = {
   revision: number;
   savedAt: Date;
+  /** Javni slug - pozivaocu treba da poništi keš javne stranice. */
+  slug: string;
 };
 
 /**
@@ -225,6 +227,7 @@ export async function saveInvitationDraft(
       id: invitations.id,
       revision: invitations.revision,
       status: invitations.status,
+      slug: invitations.publicSlug,
     })
     .from(invitations)
     .where(eq(invitations.eventId, input.eventId))
@@ -295,7 +298,7 @@ export async function saveInvitationDraft(
       now: savedAt,
     });
 
-    return { revision: invitation.revision + 1, savedAt };
+    return { revision: invitation.revision + 1, savedAt, slug: invitation.slug };
   });
 }
 

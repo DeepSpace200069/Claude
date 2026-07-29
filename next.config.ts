@@ -42,9 +42,15 @@ const nextConfig: NextConfig = {
     return [
       { source: '/:path*', headers: securityHeaders },
       {
-        // Guest-facing invitation pages must never be indexed by default;
-        // section 33 of the product spec. The public page can opt in.
-        source: '/p/:path*',
+        /*
+         * Personalizovani linkovi gostiju se nikad ne indeksiraju.
+         *
+         * Za `/p/:slug` **nema** ovakvog zaglavlja: režim privatnosti bira
+         * organizator, pa odluku donosi `generateMetadata` te stranice. Kada bi
+         * ovde stajalo bezuslovno `noindex`, opcija „javno" u interfejsu bi bila
+         * obećanje koje aplikacija ne ispunjava.
+         */
+        source: '/p/:slug/:token*',
         headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
       },
     ];

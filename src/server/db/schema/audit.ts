@@ -6,6 +6,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 
@@ -101,7 +102,13 @@ export const invitationViewStats = pgTable(
     ...timestamps,
   },
   (table) => [
-    index('invitation_view_stats_invitation_day_idx').on(
+    /*
+     * Jedan red po pozivnici i danu.
+     * Jedinstvenost je uslov, a ne optimizacija: brojač se uvećava kroz
+     * `insert ... on conflict do update`, pa bez ovog indeksa dva istovremena
+     * pregleda ne bi mogla bezbedno da se sabiraju.
+     */
+    uniqueIndex('invitation_view_stats_day_unique').on(
       table.invitationId,
       table.day,
     ),

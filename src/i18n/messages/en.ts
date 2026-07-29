@@ -885,6 +885,117 @@ const messages: Messages = {
     },
   },
 
+  publicInvitation: {
+    greeting: 'Dear {name},',
+    skipIntro: 'Skip intro',
+    poweredBy: 'Made with {brand}',
+
+    pinTitle: 'This invitation is protected',
+    pinText: 'Enter the PIN you received from the host.',
+    pinLabel: 'PIN',
+    pinSubmit: 'Open the invitation',
+    pinWrong: 'That PIN is not correct. Check it with the host.',
+    pinTooMany: 'Too many attempts. Wait a few minutes and try again.',
+
+    expiredTitle: 'This invitation is no longer available',
+    expiredText: 'It stopped being valid on {date}.',
+
+    unpublishedTitle: 'This invitation is not active right now',
+    unpublishedText:
+      'The host has temporarily turned this link off. If you were invited, get in touch with them.',
+
+    inviteOnlyTitle: 'Your personal link is required',
+    inviteOnlyText:
+      'This invitation only opens through the link the host sent to you personally.',
+
+    notFoundTitle: 'Invitation not found',
+    notFoundText: 'The link may have been copied incorrectly, or it no longer exists.',
+
+    backHome: 'Learn more about {brand}',
+  },
+
+  publishing: {
+    title: 'Publishing and sharing',
+    subtitle: 'The public link, privacy, and what guests see when the link is shared.',
+
+    statusLabel: 'Status',
+    statusDraft: 'Draft',
+    statusPublished: 'Published',
+    statusUnpublished: 'Turned off',
+    publishedAt: 'Published on {date}',
+
+    publish: 'Publish invitation',
+    publishing: 'Publishing…',
+    published: 'The invitation is published.',
+    unpublish: 'Turn the public link off',
+    unpublished: 'The public link is off.',
+    unpublishHint: 'The content stays saved and you can turn the same link back on.',
+
+    planLockedTitle: 'Publishing is not in your plan',
+    planLockedText:
+      'The “{plan}” plan lets you build and preview an invitation. A public link needs a plan that includes publishing.',
+    seePlans: 'See the plans',
+
+    privacyTitle: 'Who can see the invitation',
+    privacyPublic: 'Public',
+    privacyPublicHint: 'Visible to anyone with the link and allowed in search engines.',
+    privacyUnlisted: 'Link only',
+    privacyUnlistedHint:
+      'Visible to anyone with the link, but never listed in search engines.',
+    privacyPin: 'Protected with a PIN',
+    privacyPinHint: 'Guests enter the PIN you send them along with the link.',
+    privacyInviteOnly: 'Personal links only',
+    privacyInviteOnlyHint:
+      'Opens only through the links you create for each guest.',
+
+    pinLabel: 'PIN for guests',
+    pinHint: 'Four to eight digits. Leave empty to keep the current PIN.',
+    pinSet: 'A PIN is set.',
+
+    expiresLabel: 'Invitation valid until',
+    expiresHint: 'After that day the link shows a message that it is no longer valid.',
+
+    shareCardTitle: 'Link preview card',
+    shareCardHint:
+      'This is how the invitation looks when the link is sent in a message or posted.',
+    shareTitleLabel: 'Card title',
+    shareDescriptionLabel: 'Card description',
+
+    saved: 'Settings saved.',
+  },
+
+  share: {
+    title: 'Share the invitation',
+    linkLabel: 'Public link',
+    copy: 'Copy link',
+    copied: 'Link copied.',
+    open: 'Open the invitation',
+    native: 'Share',
+    whatsapp: 'WhatsApp',
+    viber: 'Viber',
+    email: 'Email',
+    sms: 'SMS',
+    message: 'You are invited! Everything about the celebration is here: {url}',
+    emailSubject: 'Invitation',
+
+    qrTitle: 'QR code',
+    qrHint: 'For printing on a card or thank-you note. Guests scan it with a phone.',
+    qrAlt: 'QR code leading to the invitation',
+    downloadSvg: 'Download SVG',
+    downloadPng: 'Download PNG',
+
+    notPublishedTitle: 'The link is not active yet',
+    notPublishedText:
+      'You can share the invitation as soon as you publish it. Until then only you can see it.',
+
+    statsTitle: 'Views',
+    statsToday: 'Today',
+    statsTotal: 'Total',
+    statsUnique: 'Distinct visitors',
+    statsShares: 'Shares',
+    statsNote: 'We only count daily totals, without a single detail about any guest.',
+  },
+
   plans: {
     free: 'Free draft',
     standard: 'Standard',
