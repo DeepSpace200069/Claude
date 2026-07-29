@@ -1,5 +1,5 @@
 import { createHmac, randomUUID } from 'node:crypto';
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, open, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import {
@@ -59,6 +59,23 @@ export class LocalStorageAdapter implements StorageAdapter {
     await unlink(target).catch((error: NodeJS.ErrnoException) => {
       if (error.code !== 'ENOENT') throw error;
     });
+  }
+
+  async readHead(storageKey: string, length: number): Promise<Uint8Array | null> {
+    const target = this.resolvePath(storageKey);
+    const handle = await open(target, 'r').catch((error: NodeJS.ErrnoException) => {
+      if (error.code === 'ENOENT') return null;
+      throw error;
+    });
+    if (!handle) return null;
+
+    try {
+      const buffer = Buffer.alloc(length);
+      const { bytesRead } = await handle.read(buffer, 0, length, 0);
+      return new Uint8Array(buffer.subarray(0, bytesRead));
+    } finally {
+      await handle.close();
+    }
   }
 
   /** Poziva je lokalna upload ruta pošto proveri potpis. */

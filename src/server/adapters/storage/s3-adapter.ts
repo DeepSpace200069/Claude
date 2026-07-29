@@ -61,6 +61,27 @@ export class S3StorageAdapter implements StorageAdapter {
     }
   }
 
+  /**
+   * Prvih `length` bajtova objekta preko potpisanog `GET`-a sa `Range`.
+   *
+   * `Range` se ne potpisuje - S3 ga prihvata kao običan zahtev zaglavlja, a mi
+   * time izbegavamo povlačenje cele fotografije samo da bismo pogledali njeno
+   * zaglavlje.
+   */
+  async readHead(storageKey: string, length: number): Promise<Uint8Array | null> {
+    const url = this.presign('GET', storageKey, 300, {});
+    const response = await fetch(url, {
+      headers: { Range: `bytes=0-${Math.max(length - 1, 0)}` },
+    });
+
+    if (response.status === 404) return null;
+    if (!response.ok && response.status !== 206) {
+      throw new Error(`Čitanje fajla nije uspelo (${response.status}).`);
+    }
+
+    return new Uint8Array(await response.arrayBuffer());
+  }
+
   // --- SigV4 -------------------------------------------------------------
 
   private presignPut(key: string, expiresIn: number, contentType: string): string {

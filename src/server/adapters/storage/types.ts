@@ -5,11 +5,18 @@
  * pa pregledač šalje fajl pravo u storage. Zbog toga adapter mora da validira
  * tip i veličinu **pre** izdavanja URL-a.
  */
+/**
+ * Formati koje primamo pri otpremanju.
+ *
+ * Namerno bez AVIF-a i HEIC-a: iz njih ne umemo pouzdano da uklonimo EXIF
+ * (vidi `src/lib/image-metadata.ts`), a zahtev 24 traži uklanjanje lokacije iz
+ * fotografije. Korisnik zbog toga ne gubi ništa - uređivač prekodira svaku
+ * izabranu fotografiju u WebP pre slanja, pa i AVIF sa telefona prolazi.
+ */
 export const ALLOWED_IMAGE_MIME_TYPES = [
   'image/jpeg',
   'image/png',
   'image/webp',
-  'image/avif',
 ] as const;
 
 export type AllowedMimeType = (typeof ALLOWED_IMAGE_MIME_TYPES)[number];
@@ -21,7 +28,6 @@ export const MIME_EXTENSIONS: Record<AllowedMimeType, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
   'image/webp': 'webp',
-  'image/avif': 'avif',
 };
 
 export type UploadRequest = {
@@ -47,7 +53,18 @@ export interface StorageAdapter {
   createUploadTicket(request: UploadRequest): Promise<UploadTicket>;
   getPublicUrl(storageKey: string): string;
   delete(storageKey: string): Promise<void>;
+  /**
+   * Prvih `length` bajtova otpremljenog fajla.
+   *
+   * Postoji zbog provere metapodataka posle otpremanja: pregledač šalje fajl
+   * pravo u storage, pa je ovo jedini način da server proveri šta je zaista
+   * stiglo, bez povlačenja celog fajla kroz aplikaciju (zahtev 24).
+   */
+  readHead(storageKey: string, length: number): Promise<Uint8Array | null>;
 }
+
+/** Koliko početnih bajtova čitamo pri proveri metapodataka. */
+export const METADATA_SCAN_BYTES = 64 * 1024;
 
 export type ValidationError = { code: string; message: string };
 

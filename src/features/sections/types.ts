@@ -109,10 +109,14 @@ export type InvitationRenderContext = {
 
 export type SectionEditorProps<TData> = {
   data: TData;
-  onChange: (next: TData) => void;
-  /** Greške validacije po putanji polja (`items.0.title`). */
-  errors?: Record<string, string>;
-  locale: Locale;
+  /**
+   * Izmena podataka sekcije.
+   *
+   * `fieldPath` označava koje polje se menja i služi istoriji: uzastopne izmene
+   * istog polja u kratkom roku ulaze u isti korak, pa „poništi" vraća celu reč,
+   * a ne poslednje otkucano slovo.
+   */
+  onChange: (next: TData, fieldPath?: string) => void;
 };
 
 export type SectionRendererComponent<TData> = ComponentType<

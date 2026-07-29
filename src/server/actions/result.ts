@@ -3,6 +3,7 @@ import 'server-only';
 import {
   AuthenticationError,
   AuthorizationError,
+  ConflictError,
   LimitExceededError,
   NotFoundError,
   ValidationError,
@@ -26,6 +27,7 @@ export type ActionFailure = {
     | 'validation'
     | 'limit_exceeded'
     | 'rate_limited'
+    | 'conflict'
     | 'unknown';
   message: string;
   fieldErrors?: Record<string, string[]>;
@@ -73,6 +75,10 @@ export function toActionFailure(error: unknown): ActionFailure {
 
   if (error instanceof LimitExceededError) {
     return failure('limit_exceeded', error.message, { details: error.details });
+  }
+
+  if (error instanceof ConflictError) {
+    return failure('conflict', error.message, { details: error.details });
   }
 
   console.error('[action] Neočekivana greška:', error);

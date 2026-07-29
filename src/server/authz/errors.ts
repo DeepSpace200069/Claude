@@ -56,6 +56,25 @@ export class ValidationError extends Error {
   }
 }
 
+/**
+ * Istovremena izmena istog sadržaja (zahtev 26).
+ *
+ * Nastaje kada uređivač pošalje izmenu zasnovanu na reviziji koja više nije
+ * poslednja - npr. ista pozivnica je otvorena u dva prozora. Nosi trenutnu
+ * reviziju da bi interfejs mogao da ponudi ponovno učitavanje bez pogađanja.
+ */
+export class ConflictError extends Error {
+  readonly code = 'conflict';
+
+  constructor(
+    message: string,
+    readonly details: { currentRevision: number },
+  ) {
+    super(message);
+    this.name = 'ConflictError';
+  }
+}
+
 export function isKnownError(
   error: unknown,
 ): error is
@@ -63,12 +82,14 @@ export function isKnownError(
   | AuthorizationError
   | NotFoundError
   | LimitExceededError
-  | ValidationError {
+  | ValidationError
+  | ConflictError {
   return (
     error instanceof AuthenticationError ||
     error instanceof AuthorizationError ||
     error instanceof NotFoundError ||
     error instanceof LimitExceededError ||
-    error instanceof ValidationError
+    error instanceof ValidationError ||
+    error instanceof ConflictError
   );
 }

@@ -66,4 +66,12 @@ export const RATE_LIMITS = {
   guestbookSubmit: { limit: 5, windowMs: 30 * 60 * 1000 },
   uploadTicket: { limit: 60, windowMs: 10 * 60 * 1000 },
   publish: { limit: 20, windowMs: 60 * 60 * 1000 },
+  /**
+   * Autosave uređivača.
+   *
+   * Granica je znatno iznad realnog ritma kucanja (izmene se šalju sa
+   * odloženim okidanjem, najviše nekoliko puta u minuti), pa pogađa samo petlju
+   * u klijentu ili automatizovano zatrpavanje.
+   */
+  saveInvitation: { limit: 240, windowMs: 10 * 60 * 1000 },
 } as const;

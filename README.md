@@ -7,13 +7,16 @@ Korisnik izabere vrstu proslave i šablon, uredi sadržaj kroz modularni uređiv
 objavi pozivnicu i podeli jedan stabilan link. Gosti odgovaraju bez naloga, a
 organizator prati potvrde dolaska i pravi raspored sedenja.
 
-> **Trenutno stanje: Faze 1 i 2 su završene.** Osnova (baza, autentifikacija,
-> autorizacija, dizajn sistem, i18n, upravljanje događajima) i marketinški deo
-> (galerija šablona sa filterima, live demo pozivnica, cenovnik iz baze, pravne
-> stranice, SEO) rade i pokriveni su testovima. **Rendereri svih 18 sekcija su
-> gotovi** — pozivnica se stvarno iscrtava na demo stranicama. Uređivač, javna
-> pozivnica, RSVP, raspored sedenja i naplata dolaze u fazama 3–7 — vidi
-> [`TASKS.md`](./TASKS.md) i „Poznata ograničenja” na dnu ovog dokumenta.
+> **Trenutno stanje: Faze 1, 2 i 3 su završene.** Osnova (baza, autentifikacija,
+> autorizacija, dizajn sistem, i18n, upravljanje događajima), marketinški deo
+> (galerija šablona sa filterima, live demo, cenovnik iz baze, pravne stranice,
+> SEO) i **modularni uređivač pozivnice** rade i pokriveni su testovima:
+> uređivanje svih 18 tipova sekcija, promena redosleda i bez miša, poništi/ponovi,
+> automatsko čuvanje sa detekcijom sudara, uređivanje teme uz proveru kontrasta,
+> promena šablona bez gubitka sadržaja i otpremanje fotografija sa uklanjanjem
+> EXIF lokacije. Javna pozivnica, RSVP, raspored sedenja i naplata dolaze u
+> fazama 4–7 — vidi [`TASKS.md`](./TASKS.md) i „Poznata ograničenja” na dnu ovog
+> dokumenta.
 
 ---
 
@@ -25,6 +28,7 @@ organizator prati potvrde dolaska i pravi raspored sedenja.
 - [Struktura foldera](#struktura-foldera)
 - [Model baze](#model-baze)
 - [Registar sekcija](#registar-sekcija)
+- [Uređivač pozivnice](#uređivač-pozivnice)
 - [Tok kreiranja i objavljivanja](#tok-kreiranja-i-objavljivanja)
 - [Adapteri](#adapteri)
 - [Environment varijable](#environment-varijable)
@@ -155,6 +159,12 @@ Ključna pravila:
    React komponenti, a `Renderer` i `Editor` se traže iz odvojenih registara.
 6. **Nijedan limit nije hardkodovan u komponenti.** Sve ide kroz
    `features/billing/entitlements`, a vrednosti dolaze iz tabele `feature_plans`.
+7. **Uređivač je nepromenljiv dokument.** Sve izmene su čiste funkcije nad
+   `EditorDocument`, pa su poništi/ponovi, detekcija nesačuvanih izmena i
+   autosave izvedeni iz jednog izvora istine, a ne iz tri kopije stanja.
+8. **Uređivač renderuje jedno stablo za sve širine ekrana.** Raspored menja samo
+   CSS. Dva stabla sa `hidden` klasom značila bi dve kopije svakog polja u DOM-u
+   i dve kontrole sa istim nazivom za čitač ekrana.
 
 ---
 
@@ -173,9 +183,10 @@ Ključna pravila:
 │   │   ├── app/                Kontrolni panel organizatora
 │   │   │   ├── dogadjaji/
 │   │   │   │   ├── novi/       Čarobnjak
-│   │   │   │   └── [eventId]/  Dashboard, podešavanja, (editor, gosti…)
+│   │   │   │   └── [eventId]/  Dashboard, podešavanja, uređivač, (gosti…)
 │   │   │   └── profil/
 │   │   ├── api/auth/           Auth.js rute
+│   │   ├── api/uploads/local/  Prijem fotografija u razvojnom režimu
 │   │   ├── error.tsx           Granica greške
 │   │   └── not-found.tsx
 │   ├── components/
@@ -186,7 +197,17 @@ Ključna pravila:
 │   ├── features/
 │   │   ├── auth/
 │   │   ├── billing/            Entitlements (prava po paketu)
+│   │   ├── editor/             UREĐIVAČ POZIVNICE
+│   │   │   ├── document.ts     Model dokumenta i sve operacije (čiste funkcije)
+│   │   │   ├── history.ts      Poništi/ponovi sa objedinjavanjem izmena
+│   │   │   ├── store.tsx       Reducer, kontekst, radnje
+│   │   │   ├── use-autosave.ts Odloženo čuvanje i detekcija sudara
+│   │   │   ├── upload.ts       Prekodiranje i otpremanje fotografija
+│   │   │   ├── editors.ts      Lenji registar editora sekcija
+│   │   │   ├── editors/        Editori po kategoriji sekcije
+│   │   │   └── fields/         Deljena polja uređivača
 │   │   ├── events/             Šeme, detalji po tipu, čarobnjak
+│   │   ├── invitations/        Sklapanje pozivnice od sekcija
 │   │   ├── profile/
 │   │   ├── sections/           REGISTAR SEKCIJA
 │   │   │   ├── types.ts        Ugovor `SectionDefinition`
@@ -196,7 +217,7 @@ Ključna pravila:
 │   │   │   └── definitions/    basics, logistics, media, interaction
 │   │   └── themes/             Design tokeni + provera kontrasta
 │   ├── i18n/                   Prevodilac, formati, katalozi (4 jezika)
-│   ├── lib/                    env, slug, ids, utils
+│   ├── lib/                    env, slug, ids, uuid, image-metadata, utils
 │   ├── server/
 │   │   ├── actions/            Server akcije (jedini put za mutacije)
 │   │   ├── adapters/           email · storage · payments
@@ -316,10 +337,18 @@ export type SectionDefinition<TData> = {
 
 **Zašto komponente nisu na definiciji.** Specifikacija predviđa `Editor` i
 `Renderer` kao polja definicije. Ovde su namerno izdvojene u zasebne registre
-(`renderers.ts`, `editors.ts`, Faza 3): da su na istom objektu, uvoz registra na
-javnoj stranici pozivnice povukao bi i ceo JavaScript uređivača. Ovako
-`registry.ts` ostaje bez React-a i može se uvesti bilo gde — na serveru, u
-uređivaču i u javnom prikazu.
+(`features/sections/renderers.ts` i `features/editor/editors.ts`): da su na istom
+objektu, uvoz registra na javnoj stranici pozivnice povukao bi i ceo JavaScript
+uređivača. Ovako `registry.ts` ostaje bez React-a i može se uvesti bilo gde — na
+serveru, u uređivaču i u javnom prikazu. Test
+`tests/unit/editor-registry.test.ts` čuva da tri registra ostanu usklađena, pa
+sekcija bez editora ne može tiho da se pojavi u biblioteci.
+
+Editori se učitavaju lenjo i **ne renderuju se na serveru**
+(`dynamic(loader, { ssr: false })`). Uređivač je privatna stranica iza prijave:
+serverski render mu ne donosi ništa, a donosi stvarnu opasnost — kada pregledač
+pri hidraciji još nema učitan lenji deo koda, ume da ostane i serverska i
+klijentska kopija istog polja u DOM-u.
 
 **Verzionisanje.** Svaka sekcija u bazi pamti `schema_version`. Pri čitanju
 `readSectionData` poredi je sa aktuelnom verzijom:
@@ -334,7 +363,7 @@ uređivaču i u javnom prikazu.
 
 Oštećena sekcija nikad ne obara celu pozivnicu — gost mora da vidi sadržaj.
 
-Registrovane sekcije (Faza 1): naslovna, imena, datum i vreme, odbrojavanje,
+Registrovane sekcije: naslovna, imena, datum i vreme, odbrojavanje,
 poruka, kalendar, lokacije, satnica, korisne informacije, važne osobe, galerija,
 priča, muzika, RSVP, knjiga želja, kontakt, prilagođeni sadržaj, podnožje.
 
@@ -342,6 +371,102 @@ priča, muzika, RSVP, knjiga želja, kontakt, prilagođeni sadržaj, podnožje.
 ograničen bogat tekst (definisana struktura blokova, ne HTML), fotografiju i
 jedno dugme sa proverenim linkom. Linkovi prolaze kroz `safeUrlSchema` koji
 prihvata isključivo `http:` i `https:`.
+
+---
+
+## Uređivač pozivnice
+
+Uređivač je jedina zaista velika klijentska celina u projektu. Javna stranica
+pozivnice je nikad ne uvozi — deli s njom samo model podataka i renderere.
+
+### Dokument kao nepromenljiva vrednost
+
+Sve što uređivač radi svodi se na jedan tip:
+
+```ts
+type EditorDocument = {
+  theme: ThemeTokens;
+  sections: EditorSection[];   // id, type, schemaVersion, position, isVisible, data
+};
+```
+
+Sve operacije (`addSection`, `moveSection`, `duplicateSection`, `resetSection`,
+`applyTemplateToDocument`…) su čiste funkcije koje vraćaju novi dokument. Zbog
+toga:
+
+- **poništi/ponovi** je obična istorija vrednosti, bez ijedne inverzne operacije
+  koju bi trebalo održavati uz svaku novu radnju;
+- **nesačuvane izmene** su poređenje trenutnog i poslednjeg poslatog dokumenta;
+- **sve se testira bez DOM-a** — `tests/unit/editor-document.test.ts`.
+
+Uzastopne izmene istog polja u kratkom roku ulaze u **isti** korak istorije, pa
+„poništi" vraća celu reč, a ne poslednje otkucano slovo.
+
+### Autosave i sudar dve sesije
+
+Čuvanje kreće kada kucanje stane (1,2 s) i nikad se ne preklapa samo sa sobom.
+Detekcija sudara je jedan upit:
+
+```sql
+update invitations set revision = revision + 1
+where id = $1 and revision = $2   -- revizija koju uređivač misli da ima
+```
+
+Ako nijedan red nije pogođen, izmena je zasnovana na zastareloj verziji i vraća
+se `ConflictError` sa trenutnom revizijom. Provera pa upis u dva koraka ostavila
+bi prozor u kome druga sesija upiše svoje.
+
+Spajanja nema namerno: dva različita teksta u istom polju nemaju tačno rešenje
+koje bismo mogli da pogodimo umesto korisnika. Uređivač zato nudi dva jasno
+imenovana izlaza — „učitaj tuđu verziju" ili „zadrži moje izmene".
+
+Sekcije se upisuju kao celina unutar transakcije. Identifikatore daje klijent, pa
+ostaju stabilni kroz čuvanja i React ključevi se ne pomeraju. Uz svako čuvanje
+ide i snimak revizije, ali najviše jedan na pet minuta i najviše dvadeset po
+pozivnici — inače bi istorija za sat vremena rada imala hiljade beskorisnih
+koraka. Snimak je pogodnost, a ne uslov: sudar u istoriji ne obara čuvanje
+sadržaja.
+
+### Pregled je isti kod kao javna pozivnica
+
+`InvitationRenderer` je ista komponenta koju koriste demo šablona, pregled u
+uređivaču i (od Faze 4) javna stranica. Razliku pravi samo `context.mode`:
+u `preview` režimu su RSVP i knjiga želja prikazani kao onemogućena forma sa
+vidljivom napomenom. Pregled zato ne može da obeća nešto što gost neće dobiti.
+
+Pregled radi nad **trenutnim** dokumentom, a ne nad poslednjim sačuvanim — izmena
+se vidi dok se kuca. Prikaz za telefon i tablet koristi
+`container-type: inline-size`, pa se pozivnica prilagođava širini okvira umesto
+širini prozora.
+
+### Jedno stablo za sve širine ekrana
+
+Na širokom ekranu stoje tri kolone, na telefonu isti paneli postaju tabovi.
+Renderuje se **jedno** stablo, a raspored menja samo CSS. Dva stabla sa `hidden`
+klasom značila bi dve kopije svakog polja u DOM-u, dvostruki posao pri svakom
+pritisku tastera i dve kontrole sa istim nazivom za čitač ekrana. `display: none`
+uklanja panel i sa ekrana i iz stabla pristupačnosti u istom trenutku.
+
+### Pristupačnost promene redosleda
+
+Prevlačenje (dnd-kit) je udobno mišem, ali nije jedini način. Svaka sekcija ima
+„pomeri gore" i „pomeri dole" u meniju, tastaturni senzor radi razmaknicom i
+strelicama, a svaka promena redosleda se izgovara kroz `aria-live` područje sa
+novom pozicijom i ukupnim brojem sekcija.
+
+### Provera kontrasta uživo
+
+Paleta je jedino slobodno polje teme, pa se uz nju računa WCAG odnos kontrasta
+za sve bitne parove boja pri svakoj izmeni. Upozorenje stoji odmah ispod palete,
+ne iza „naprednih podešavanja": ako je pozivnica nečitljiva, to je prvo što
+korisnik treba da vidi.
+
+### Promena šablona bez gubitka sadržaja
+
+Pravilo je jednostavno: **šablon donosi raspored i izgled, korisnik zadržava
+sadržaj.** Za svaki tip sekcije koji postoji i u dokumentu i u šablonu preuzimaju
+se korisnikovi podaci; prazne sekcije ustupaju mesto šablonskim; sekcije koje je
+korisnik popunio, a šablon ih nema, premeštaju se na kraj umesto da nestanu.
 
 ---
 
@@ -412,8 +537,30 @@ nose i tekstualnu verziju uz HTML.
 | `s3` | Bilo koji S3-kompatibilan servis. Presigned `PUT` preko SigV4 (`node:crypto`, bez AWS SDK-a). |
 
 Validacija (`validateUpload`) proverava MIME tip i veličinu **pre** izdavanja
-URL-a; dozvoljeni su JPEG, PNG, WebP i AVIF do 12 MB. Lokalni adapter dodatno
-odbija ključeve koji bi izašli iz `public/uploads`.
+URL-a; primaju se JPEG, PNG i WebP do 12 MB. Lokalni adapter dodatno odbija
+ključeve koji bi izašli iz `public/uploads`.
+
+**Uklanjanje metapodataka (zahtev 24).** Fotografija sa telefona nosi EXIF blok
+sa tačnom GPS lokacijom snimanja; objavljena pozivnica ne sme da oda adresu stana.
+Odbrana ide u tri koraka:
+
+1. **Uređivač prekodira sliku** pre slanja: dekodira je uz primenu EXIF
+   orijentacije, crta u `canvas` i kodira u WebP. Rezultat po konstrukciji nema
+   metapodatke, jer canvas nema gde da ih zapiše. Usput se slika smanjuje na
+   2400 px, što je i pitanje performansi javne stranice.
+2. **Server ih uklanja još jednom** kada fajl prolazi kroz aplikaciju (lokalni
+   drajver): `src/lib/image-metadata.ts` je scrubber bez zavisnosti koji iz
+   JPEG-a baca `APP1` (EXIF/XMP), `APP13` (IPTC) i komentare — a zadržava `APP0`
+   i ICC profil boja — iz PNG-a `eXIf` i tekstualne komade, a iz WebP-a delove
+   `EXIF` i `XMP ` uz gašenje odgovarajućih zastavica u `VP8X` zaglavlju.
+3. **Server proverava rezultat.** Uz S3 fajl ide iz pregledača pravo u skladište,
+   pa server pri potvrdi pročita prvih 64 KB (`readHead`) i sam utvrdi da
+   metapodataka nema. Ako ih ima, fotografija se briše iz skladišta i ne ulazi u
+   pozivnicu. Klijentska obrada nikad nije odbrana — ovo jeste.
+
+AVIF i HEIC se ne primaju baš zato što iz njih ne umemo pouzdano da uklonimo
+EXIF. Korisnik to ne oseti, jer uređivač svaku fotografiju ionako prekodira u
+WebP.
 
 ### Naplata — `src/server/adapters/payments`
 
@@ -489,9 +636,9 @@ pnpm test:e2e            # Playwright
 
 | Vrsta | Broj | Pokriva |
 |-------|------|---------|
-| Unit | 158 | Zod šeme sekcija, migracije verzija, slug, tokeni, dozvole, entitlements, prelazi stanja naplate, kontrast tema, i18n i množina, registar renderera, tokeni teme u CSS, grupisanje boja, demo kontekst, seed šabloni |
-| Integracioni | 25 | Kreiranje događaja u transakciji, jedinstvenost sluga, limiti paketa, meko brisanje, cascade pravila, `CHECK` ograničenja, **snimak verzije šablona** |
-| E2E | 60 (30 × desktop/mobilni) | Marketing, prijava, zaštita ruta, čarobnjak sa izborom šablona, dashboard, izmena bez promene linka, brisanje uz potvrdu, profil, galerija i filteri, favoriti, demo na tri veličine ekrana, cenovnik, česta pitanja, sitemap |
+| Unit | 214 | Zod šeme sekcija, migracije verzija, slug, tokeni, dozvole, entitlements, prelazi stanja naplate, kontrast tema, i18n i množina, registri sekcija/renderera/editora, tokeni teme u CSS, grupisanje boja, demo kontekst, seed šabloni, **operacije nad dokumentom uređivača**, **istorija poništi/ponovi**, **spajanje pri promeni šablona**, **uklanjanje EXIF-a iz JPEG/PNG/WebP** |
+| Integracioni | 54 | Kreiranje događaja u transakciji, jedinstvenost sluga, limiti paketa, meko brisanje, cascade pravila, `CHECK` ograničenja, snimak verzije šablona, **čuvanje nacrta i sudar revizija**, **limiti i zaključane sekcije pri čuvanju**, **snimci verzija i njihovo orezivanje**, **otpremanje fotografija i odbijanje fajla sa EXIF-om** |
+| E2E | 74 (37 × desktop/mobilni) | Marketing, prijava, zaštita ruta, čarobnjak sa izborom šablona, dashboard, izmena bez promene linka, brisanje uz potvrdu, profil, galerija i filteri, favoriti, demo na tri veličine ekrana, cenovnik, česta pitanja, sitemap, **uređivač: izmena teksta uz živi pregled i autosave, biblioteka sekcija, zaključana sekcija, promena redosleda bez miša, sakrivanje sekcije, upozorenje o kontrastu, otpremanje fotografije** |
 
 ```bash
 pnpm test                # unit — bez baze
@@ -517,7 +664,7 @@ Integracioni testovi se **preskaču** ako `TEST_DATABASE_URL` nije postavljen, p
 
 ## Bezbednost
 
-Implementirano u Fazi 1:
+Implementirano do kraja Faze 3:
 
 - **Autorizacija na serveru** za svaku akciju i stranicu; interfejs nikad nije
   jedina odbrana.
@@ -532,8 +679,16 @@ Implementirano u Fazi 1:
   čuvani isključivo kao SHA-256 heš.
 - **Otvoreno preusmerenje sprečeno** — `callbackUrl` prihvata samo relativne
   putanje.
-- **Bez proizvoljnog HTML-a**; linkovi ograničeni na `http`/`https`.
-- **Bezbedni upload URL-ovi** sa proverom MIME tipa, veličine i putanje.
+- **Bez proizvoljnog HTML-a**; linkovi ograničeni na `http`/`https`. Sekcija
+  „prilagođeni sadržaj" nudi blokove teksta koje sami renderujemo, pa u trenutku
+  prikaza nema šta da se sanitizuje.
+- **Bezbedni upload URL-ovi** sa proverom MIME tipa, veličine i putanje, uz
+  **uklanjanje EXIF lokacije** iz svake fotografije i serversku proveru da je
+  zaista uklonjena (vidi [Adapteri](#adapteri)).
+- **Limiti paketa i zaključane sekcije proveravaju se pri čuvanju**, ne samo u
+  biblioteci sekcija: zahtev koji zaobiđe interfejs biva odbijen.
+- **Optimističko zaključavanje** pri čuvanju nacrta — istovremena izmena iz dve
+  sesije se prijavljuje umesto da se tiho prepiše.
 - **CSRF** — mutacije idu isključivo kroz server akcije, koje imaju ugrađenu
   zaštitu; odjava radi i bez JavaScripta.
 - **Sigurnosna zaglavlja** i `X-Robots-Tag: noindex` na `/p/*`.
@@ -549,8 +704,10 @@ Projekat je Vercel-kompatibilan. Potrebno je:
 1. PostgreSQL 16 (Neon, Supabase, RDS…) i `DATABASE_URL`.
 2. `AUTH_SECRET`, `APP_URL`, `NEXT_PUBLIC_APP_URL`, `AUTH_TRUST_HOST=true`.
 3. `EMAIL_DRIVER=resend` + `RESEND_API_KEY` i verifikovan domen pošiljaoca.
-4. `STORAGE_DRIVER=s3` + S3 podaci; hostove slika navesti u
-   `NEXT_PUBLIC_MEDIA_HOSTS` da ih `next/image` prihvati.
+4. `STORAGE_DRIVER=s3` + S3 podaci i `S3_PUBLIC_URL` sa koga se serviraju
+   fotografije. `NEXT_PUBLIC_MEDIA_HOSTS` treba postaviti samo ako se negde
+   koristi `next/image`; sekcije pozivnice namerno koriste običan `<img>` da
+   novi storage host ne bi tražio izmenu `next.config.ts`.
 5. `PAYMENT_DRIVER` postaviti na provajdera dozvoljenog u produkciji.
 6. Migracije pokrenuti pre puštanja saobraćaja: `pnpm db:migrate`.
 
@@ -560,16 +717,20 @@ Seed nije namenjen produkciji — puni bazu demo sadržajem.
 
 ## Poznata ograničenja
 
-Iskreni pregled onoga što **još ne postoji** na kraju Faze 1. Detaljan plan je u
+Iskreni pregled onoga što **još ne postoji** na kraju Faze 3. Detaljan plan je u
 [`TASKS.md`](./TASKS.md).
 
 | Oblast | Stanje |
 |--------|--------|
-| Uređivač pozivnice | Registar, šeme, migracije i **svi rendereri** gotovi i testirani; `Editor` komponente dolaze u Fazi 3 |
-| Javna pozivnica `/p/[slug]` | Renderer radi (vidi demo stranice); nedostaju privatnost, keširanje i deljenje — Faza 4 |
-| Otpremanje fotografija | Storage adapter je gotov; interfejs za upload dolazi u Fazi 3 |
+| Javna pozivnica `/p/[slug]` | Renderer radi (demo stranice i pregled u uređivaču); nedostaju privatnost, keširanje, deljenje i QR — Faza 4 |
+| RSVP i knjiga želja | Podešavaju se u uređivaču i u pregledu izgledaju tačno kao gostu, ali su isključene i označene; obrada odgovora u Fazi 5 |
+| Muzička sekcija | Podešavanja i prikaz rade; biblioteka numera još nije popunjena, a otpremanje zvuka dolazi u Fazi 8 |
+| EXIF uz S3 skladište | Uređivač uklanja metapodatke, server proverava prvih 64 KB fajla. Zaostali tekstualni komad na kraju velikog PNG-a bi promakao toj proveri; lokalni drajver obrađuje ceo fajl |
+| AVIF i HEIC | Ne primaju se pri otpremanju jer iz njih ne umemo pouzdano da uklonimo EXIF; uređivač ih prekodira u WebP, pa korisnik to ne oseti |
+| Istorija verzija | Poslednjih 20 snimaka, najviše jedan na pet minuta; vraćanje ide kao obična izmena koju „poništi" može da vrati |
+| Sudar dve sesije | Ne spaja se automatski — korisnik bira da učita tuđu verziju ili da zadrži svoju |
 | Pravni dokumenti | Radna verzija napisana prema stvarnom ponašanju aplikacije; traži pregled pravnika, i stranica to kaže |
-| RSVP i gosti | Kompletan model i dozvole; interfejs u Fazi 5 |
+| Gosti i RSVP interfejs | Kompletan model i dozvole; interfejs u Fazi 5 |
 | Raspored sedenja | Model, kapaciteti i preferencije u bazi; editor u Fazi 6 |
 | Naplata | Adapter, prelazi stanja i idempotencija testirani; tok objavljivanja u Fazi 7 |
 | Admin panel | Uloga i audit log postoje; stranice u Fazi 7 |

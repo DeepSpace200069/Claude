@@ -44,24 +44,24 @@ Legenda: ✅ gotovo · 🔄 u toku · ⬜ nije započeto
 | 2.8 | Pravne stranice: uslovi korišćenja, politika privatnosti | ✅ |
 | 2.9 | SEO: sitemap, canonical, Open Graph, structured data | ✅ |
 
-## Faza 3 — Modularni uređivač ⬜
+## Faza 3 — Modularni uređivač ✅
 
 | # | Zadatak | Status |
 |---|---------|--------|
-| 3.1 | Editor komponente za svaki tip sekcije (lazy-loaded) | ⬜ |
+| 3.1 | Editor komponente za svaki tip sekcije (lenjo učitane, `ssr: false`) | ✅ |
 | 3.2 | ~~Renderer komponente~~ — urađeno u Fazi 2 (trebale su demo stranici) | ✅ |
-| 3.3 | Biblioteka sekcija i dodavanje | ⬜ |
-| 3.4 | Promena redosleda: dnd-kit + pristupačna alternativa (tastatura) | ⬜ |
-| 3.5 | Uključi/isključi, dupliraj, obriši, resetuj sekciju | ⬜ |
-| 3.6 | Undo/redo | ⬜ |
-| 3.7 | Autosave: debounce, revizije, detekcija konflikta, indikator stanja | ⬜ |
-| 3.8 | Upozorenje o nesačuvanim izmenama pri napuštanju stranice | ⬜ |
-| 3.9 | Preview: telefon / tablet / desktop / full-screen | ⬜ |
-| 3.10 | Uređivanje teme: paleta, fontovi, pozadina, gustina, animacije | ⬜ |
-| 3.11 | Provera kontrasta pri izmeni palete | ⬜ |
-| 3.12 | Promena šablona bez gubitka osnovnih podataka | ⬜ |
-| 3.13 | Mobilni raspored uređivača (tabovi / bottom sheet) | ⬜ |
-| 3.14 | Upload fotografija kroz storage adapter (uklanjanje EXIF lokacije) | ⬜ |
+| 3.3 | Biblioteka sekcija i dodavanje (zaključane sekcije vidljive, ne skrivene) | ✅ |
+| 3.4 | Promena redosleda: dnd-kit + dugmad, tastatura i najave čitaču ekrana | ✅ |
+| 3.5 | Uključi/isključi, dupliraj, obriši, resetuj sekciju | ✅ |
+| 3.6 | Undo/redo sa objedinjavanjem uzastopnih izmena istog polja | ✅ |
+| 3.7 | Autosave: debounce, revizije, detekcija konflikta, indikator stanja | ✅ |
+| 3.8 | Upozorenje o nesačuvanim izmenama pri napuštanju stranice | ✅ |
+| 3.9 | Preview: telefon / tablet / desktop / preko celog ekrana | ✅ |
+| 3.10 | Uređivanje teme: paleta, fontovi, pozadina, gustina, animacije | ✅ |
+| 3.11 | Provera kontrasta pri izmeni palete (WCAG AA, uživo) | ✅ |
+| 3.12 | Promena šablona bez gubitka osnovnih podataka | ✅ |
+| 3.13 | Mobilni raspored uređivača (tabovi, jedno stablo za sve širine) | ✅ |
+| 3.14 | Upload fotografija kroz storage adapter (uklanjanje EXIF lokacije) | ✅ |
 
 ## Faza 4 — Javna pozivnica ⬜
 
@@ -134,25 +134,41 @@ Legenda: ✅ gotovo · 🔄 u toku · ⬜ nije započeto
 
 ---
 
-## Poznata ograničenja na kraju Faze 2
+## Poznata ograničenja na kraju Faze 3
 
 Sve navedeno je svesna odluka o obimu, a ne propust:
 
-- **Uređivač pozivnice** (`/app/dogadjaji/[id]/editor`) još ne postoji. Registar
-  sekcija, Zod šeme, migracije verzija i **svi rendereri** su gotovi i pokriveni
-  testovima; nedostaju `Editor` komponente (Faza 3).
-- **Javna pozivnica** (`/p/[slug]`) se još ne renderuje, iako je renderer gotov i
-  radi na demo stranicama. Nedostaju privatnost, keširanje i deljenje (Faza 4).
-  Slug se rezerviše i proverava od prvog dana, pa link zaista ostaje stabilan.
-- **Fotografije** još nema — upload dolazi u Fazi 3. Sekcije sa slikama su
-  napisane tako da bez fotografija izostave prazna mesta umesto da prikažu rupe.
+- **Javna pozivnica** (`/p/[slug]`) se još ne renderuje, iako renderer radi na
+  demo stranicama i u pregledu uređivača. Nedostaju privatnost, keširanje,
+  deljenje i QR kod (Faza 4). Slug se rezerviše od prvog dana, pa link zaista
+  ostaje stabilan.
+- **RSVP i knjiga želja** se u uređivaču podešavaju i u pregledu izgledaju tačno
+  onako kako će izgledati gostu, ali su isključene i vidno označene: obrada
+  odgovora dolazi u Fazi 5. Demo ne obećava ništa što ne radi.
+- **Muzička sekcija** ima podešavanja i prikaz, ali biblioteka numera još nije
+  popunjena; izbor „sopstveni fajl" čeka otpremanje zvuka u Fazi 8.
+- **Uklanjanje EXIF-a sa S3 skladištem**: fotografija ide iz pregledača pravo u
+  skladište, pa metapodatke uklanja uređivač (prekodiranje kroz canvas). Server
+  posle otpremanja pročita prvih 64 KB fajla i sam proveri da metapodataka nema —
+  za JPEG i PNG su svi zanimljivi segmenti na početku fajla, a kod WebP-a
+  postojanje EXIF/XMP dela stoji u `VP8X` zaglavlju. Zaostali tekstualni komad na
+  samom kraju velikog PNG-a bi promakao toj proveri; u lokalnom režimu server
+  ionako obrađuje ceo fajl.
+- **AVIF i HEIC se ne primaju pri otpremanju**, jer iz njih ne umemo pouzdano da
+  uklonimo EXIF. Korisnik to ne oseti — uređivač svaku fotografiju prekodira u
+  WebP pre slanja, pa i slika sa iPhone-a prolazi.
+- **Istorija verzija** čuva poslednjih 20 snimaka, najviše jedan na pet minuta
+  rada. Vraćanje ubacuje verziju u uređivač kao običnu izmenu koja se može
+  poništiti — ne upisuje se prećutno.
+- **Sudar dve sesije** se ne spaja automatski. Korisnik bira: učitaj tuđu verziju
+  ili prepiši svojom. Pogađanje umesto korisnika ovde nema tačno rešenje.
 - **Pravni dokumenti** (uslovi, politika privatnosti) su radna verzija napisana
   prema stvarnom ponašanju aplikacije. Pre puštanja u rad treba da ih pregleda
   pravnik; stranice to i kažu korisniku.
 - **Prevodi dugih tekstova** (česta pitanja, pravni dokumenti) postoje na srpskoj
   latinici i engleskom; ostali jezici padaju na njih uz vidljivu napomenu.
-- **RSVP, gosti i raspored sedenja** postoje u bazi i u modelu dozvola, ali bez
-  korisničkog interfejsa (Faze 5–6).
+- **Raspored sedenja** postoji u bazi i u modelu dozvola, ali bez korisničkog
+  interfejsa (Faza 6).
 - **Naplata** ima adapter, model narudžbine i prelaze stanja sa testovima; tok
   objavljivanja se sklapa u Fazi 7.
 - **Rate limiting** je in-memory i važi po instanci procesa. Za više instanci
