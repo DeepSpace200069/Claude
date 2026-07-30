@@ -66,9 +66,16 @@ export class ValidationError extends Error {
 export class ConflictError extends Error {
   readonly code = 'conflict';
 
+  /**
+   * Sukob stanja, ne unosa.
+   *
+   * Detalji su neobavezni jer nisu svi sukobi isti: uređivač šalje
+   * `currentRevision` da bi forma znala na šta da se osloni, a zaključana
+   * verzija rasporeda nema šta da doda - poruka je cela informacija.
+   */
   constructor(
     message: string,
-    readonly details: { currentRevision: number },
+    readonly details?: Record<string, unknown>,
   ) {
     super(message);
     this.name = 'ConflictError';
