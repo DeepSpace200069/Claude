@@ -93,17 +93,17 @@ Legenda: ✅ gotovo · 🔄 u toku · ⬜ nije započeto
 | 5.10 | Podsetnici: filtriranje gostiju bez odgovora i spisak za slanje | ✅ |
 | 5.11 | Knjiga želja sa moderacijom | ✅ |
 
-## Faza 6 — Raspored sedenja ⬜
+## Faza 6 — Raspored sedenja ✅
 
 | # | Zadatak | Status |
 |---|---------|--------|
-| 6.1 | Sale i platno za raspored | ⬜ |
-| 6.2 | Stolovi: oblici, kapacitet, položaj, rotacija, dupliranje | ⬜ |
-| 6.3 | Drag-and-drop gostiju + pristupačna alternativa | ⬜ |
-| 6.4 | Lista neraspoređenih, kapacitet, upozorenja o prekoračenju | ⬜ |
-| 6.5 | Preferencije sedenja i upozorenja | ⬜ |
-| 6.6 | Verzije rasporeda i zaključavanje | ⬜ |
-| 6.7 | Export: PDF plana sale, PDF po stolovima, CSV, print prikaz | ⬜ |
+| 6.1 | Sale i platno za raspored | ✅ |
+| 6.2 | Stolovi: oblici, kapacitet, položaj, rotacija, dupliranje | ✅ |
+| 6.3 | Prevlačenje gostiju + ravnopravna alternativa bez miša | ✅ |
+| 6.4 | Lista neraspoređenih, kapacitet, upozorenja o prekoračenju | ✅ |
+| 6.5 | Preferencije sedenja i upozorenja | ✅ |
+| 6.6 | Verzije rasporeda i zaključavanje | ✅ |
+| 6.7 | CSV izvoz i prikaz za štampu iz kog pregledač pravi PDF | ✅ |
 
 ## Faza 7 — Naplata i administracija ⬜
 
@@ -134,7 +134,7 @@ Legenda: ✅ gotovo · 🔄 u toku · ⬜ nije započeto
 
 ---
 
-## Poznata ograničenja na kraju Faze 5
+## Poznata ograničenja na kraju Faze 6
 
 Sve navedeno je svesna odluka o obimu, a ne propust:
 
@@ -157,6 +157,17 @@ Sve navedeno je svesna odluka o obimu, a ne propust:
 - **Odgovor bez ličnog linka se ne spaja po imenu.** Dva gosta sa istim imenom
   su realnost, pa javni RSVP uvek pravi nov odgovor; spajanje bi tiho prepisalo
   tuđu potvrdu. Preko ličnog linka odgovor je jedan i menja se.
+- **PDF rasporeda pravi pregledač, ne server.** Prikaz za štampu ima `@page`
+  pravila i prelome koji ne cepaju sto, pa „Sačuvaj kao PDF" daje ispravan
+  dokument sa našim fontovima. Serverski generisan PDF sa ugrađenim standardnim
+  fontovima nema srpska slova (ć, č, đ), a „Petrovi?" umesto „Petrović" bilo bi
+  gore od odsustva dugmeta. Ugrađivanje fonta je posao Faze 8.
+- **Pravila sedenja su upozorenja, ne zabrane.** „Sedi sa" i „ne sedi sa" se
+  prikazuju kao upozorenje; raspored se svejedno čuva. Organizator zna svoju
+  porodicu bolje od nas, a raspored koji se ne može sačuvati zbog jednog pravila
+  bio bi gori od žutog upozorenja.
+- **Raspored sedenja traži paket sa mogućnošću `seating`.** Stranica se
+  prikazuje uz jasnu poruku, ali izmene su onemogućene i server ih odbija.
 - **Statistika** broji preglede iz pregledača (mali `fetch` posle učitavanja), pa
   je javna stranica keširana. Posetilac bez JavaScripta se ne broji — svesna
   zamena: keširana stranica za sve umesto tačnog brojanja za nekolicinu.

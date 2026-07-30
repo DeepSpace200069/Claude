@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test';
 import postgres from 'postgres';
 
 import { expect, test } from './fixtures';
@@ -92,6 +93,14 @@ async function createInvitationWithRsvp(options: {
   return { eventId: event!.id, invitationId: invitation!.id };
 }
 
+/** Gost u spisku, bez obzira da li je prikazan kao red tabele ili kao kartica. */
+function guestEntry(page: Page, name: string) {
+  return page
+    .getByRole('row')
+    .filter({ hasText: name })
+    .or(page.getByRole('listitem').filter({ hasText: name }));
+}
+
 async function cleanUp(eventId: string): Promise<void> {
   await sql`delete from events where id = ${eventId}`;
   await sql`
@@ -125,11 +134,15 @@ test.describe('organizator vodi spisak gostiju', () => {
       await page.getByLabel('Oznake').fill('kumovi, porodica');
       await page.getByRole('button', { name: 'Sačuvaj' }).click();
 
-      // Oznake se vide uz gosta u redu tabele, a ne samo u filteru.
-      const row = page.getByRole('row').filter({ hasText: 'Nenad Ilić' });
-      await expect(row).toBeVisible();
-      await expect(row.getByText('kumovi')).toBeVisible();
-      await expect(row.getByText('porodica')).toBeVisible();
+      /*
+       * Spisak je tabela na širokom ekranu i kartice na telefonu, pa se gost
+       * traži u onom prikazu koji je trenutno vidljiv - skriveni prikaz nije ni
+       * u stablu pristupačnosti.
+       */
+      const guestRow = guestEntry(page, 'Nenad Ilić');
+      await expect(guestRow).toBeVisible();
+      await expect(guestRow.getByText('kumovi')).toBeVisible();
+      await expect(guestRow.getByText('porodica')).toBeVisible();
 
       // Lični link se prikazuje samo jednom i to piše u dijalogu.
       await page.getByRole('button', { name: 'Napravi lični link' }).first().click();
@@ -146,10 +159,10 @@ test.describe('organizator vodi spisak gostiju', () => {
 
       // Filtriranje ide kroz URL, pa mora da radi i posle osvežavanja.
       await page.goto(`/app/dogadjaji/${eventId}/gosti?pretraga=Nenad`);
-      await expect(page.getByRole('cell', { name: /Nenad Ilić/ })).toBeVisible();
+      await expect(guestEntry(page, 'Nenad Ilić')).toBeVisible();
 
       await page.goto(`/app/dogadjaji/${eventId}/gosti?pretraga=NePostoji`);
-      await expect(page.getByRole('cell', { name: /Nenad Ilić/ })).toHaveCount(0);
+      await expect(guestEntry(page, 'Nenad Ilić')).toHaveCount(0);
     } finally {
       await cleanUp(eventId);
     }

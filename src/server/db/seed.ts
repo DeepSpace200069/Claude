@@ -14,6 +14,7 @@ import {
   events,
   featurePlans,
   guestHouseholds,
+  guestPreferences,
   guestbookEntries,
   guests,
   invitationRecipients,
@@ -619,6 +620,19 @@ async function seedDemoEvent(ownerId: string) {
               seatNumber: index + 1,
             })),
           );
+        }
+
+        /*
+         * Pravila sedenja u demo podacima: jedno koje je poštovano i jedno koje
+         * nije. Demo bez ijednog upozorenja ne bi pokazao čemu panel služi, a
+         * demo u kome je sve crveno izgledao bi kao da je nešto pokvareno.
+         */
+        const [first, second, third] = guestIds;
+        if (first && second && third) {
+          await db.insert(guestPreferences).values([
+            { guestId: first, kind: 'sit_with', relatedGuestId: second },
+            { guestId: third, kind: 'high_chair', note: 'Stolica za bebe uz sto.' },
+          ]);
         }
       }
     }

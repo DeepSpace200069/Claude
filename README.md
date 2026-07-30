@@ -7,7 +7,7 @@ Korisnik izabere vrstu proslave i šablon, uredi sadržaj kroz modularni uređiv
 objavi pozivnicu i podeli jedan stabilan link. Gosti odgovaraju bez naloga, a
 organizator prati potvrde dolaska i pravi raspored sedenja.
 
-> **Trenutno stanje: Faze 1–5 su završene.** Osnova (baza, autentifikacija,
+> **Trenutno stanje: Faze 1–6 su završene.** Osnova (baza, autentifikacija,
 > autorizacija, dizajn sistem, i18n, upravljanje događajima), marketinški deo
 > (galerija šablona sa filterima, live demo, cenovnik iz baze, pravne stranice,
 > SEO) i **modularni uređivač pozivnice** rade i pokriveni su testovima:
@@ -19,8 +19,11 @@ organizator prati potvrde dolaska i pravi raspored sedenja.
 > koje se poništava pri svakoj izmeni. Radi i ceo tok oko gostiju: **spisak
 > gostiju sa domaćinstvima, uvoz i izvoz CSV-a, personalizovani linkovi, prava
 > RSVP forma sa dodatnim pitanjima i kasnijom izmenom odgovora, podsetnici i
-> knjiga želja sa moderacijom.** Raspored sedenja i naplata dolaze u fazama 6–7 —
-> vidi [`TASKS.md`](./TASKS.md) i „Poznata ograničenja” na dnu ovog dokumenta.
+> knjiga želja sa moderacijom.** Radi i **raspored sedenja**: sale i platno,
+> stolovi sa oblicima i kapacitetom, prevlačenje gostiju uz ravnopravnu
+> alternativu bez miša, upozorenja, verzije sa zaključavanjem, CSV izvoz i
+> prikaz za štampu. Naplata i administracija dolaze u Fazi 7 — vidi
+> [`TASKS.md`](./TASKS.md) i „Poznata ograničenja” na dnu ovog dokumenta.
 
 ---
 
@@ -35,6 +38,7 @@ organizator prati potvrde dolaska i pravi raspored sedenja.
 - [Uređivač pozivnice](#uređivač-pozivnice)
 - [Javna pozivnica](#javna-pozivnica)
 - [Gosti, RSVP i knjiga želja](#gosti-rsvp-i-knjiga-želja)
+- [Raspored sedenja](#raspored-sedenja)
 - [Tok kreiranja i objavljivanja](#tok-kreiranja-i-objavljivanja)
 - [Adapteri](#adapteri)
 - [Environment varijable](#environment-varijable)
@@ -248,6 +252,15 @@ Ključna pravila:
 │   │   │   ├── share-panel.tsx  Web Share API + rezervni kanali
 │   │   │   └── publishing-form.tsx
 │   │   ├── profile/
+│   │   ├── seating/            RASPORED SEDENJA
+│   │   │   ├── geometry.ts     Čista pravila (rotacija, granice, imena)
+│   │   │   ├── schemas.ts      Sale, stolovi, raspoređivanje, verzije
+│   │   │   ├── seating-editor.tsx  Platno, dnd-kit, stanje uređivača
+│   │   │   ├── table-card.tsx  Sto u pravom obliku
+│   │   │   ├── seat-select.tsx Alternativa prevlačenju bez miša
+│   │   │   ├── table-inspector.tsx / unseated-panel.tsx
+│   │   │   ├── version-bar.tsx / warnings-panel.tsx
+│   │   │   └── preference-manager.tsx
 │   │   ├── sections/           REGISTAR SEKCIJA
 │   │   │   ├── types.ts        Ugovor `SectionDefinition`
 │   │   │   ├── registry.ts     Lista svih sekcija
@@ -770,6 +783,110 @@ prazni i neispravni redovi se ionako preskaču.
 
 ---
 
+## Raspored sedenja
+
+### Tri nivoa (zahtev 14)
+
+```
+plan (jedan po događaju)
+└── verzija (alternative; „Plan A", „Plan B", zaključavanje)
+    └── sala (platno sa dimenzijama)
+        └── sto (oblik, kapacitet, položaj, rotacija)
+            └── mesto (gost + redni broj)
+```
+
+Plan se pravi pri **prvom otvaranju stranice**, sa jednom praznom salom.
+Organizator ne treba da klikne „napravi plan" pre nego što uopšte vidi o čemu se
+radi — prazna sala je bolji početak od praznog ekrana.
+
+### Šta server proverava pri svakoj izmeni
+
+Tim redom, i uvek na serveru:
+
+1. **Dozvola nad događajem** (`seating:edit`).
+2. **Mogućnost paketa** (`seating`). Kada paket ne uključuje raspored, stranica
+   se i dalje **prikazuje**, uz poruku sa nazivom paketa i putem dalje — ali
+   izmene su onemogućene i server ih odbija.
+3. **Stanje verzije.** Zaključana verzija odbija sve: nov sto, pomeranje,
+   brisanje, raspoređivanje. Zaključavanje koje bi postojalo samo kao sakriveno
+   dugme ne bi značilo ništa (zahtev 24).
+
+Identifikator sale, stola ili rasporeda se pri svakoj radnji vraća kroz spojeve
+do verzije i do događaja, pa tuđi sto nije dostupan ni greškom u pozivaocu.
+
+### Kapacitet: granica pri sedanju, upozorenje posle
+
+Deveta osoba ne sme za sto od osam — akcija se odbija sa objašnjenjem šta da se
+uradi (povećati kapacitet ili izabrati drugi sto). Ali **smanjenje kapaciteta
+ispod broja već raspoređenih je dozvoljeno** i daje upozorenje.
+
+Razlika je namerna: prvo je slučajno prekoračenje, drugo je svesna izmena, a
+organizator je taj koji odlučuje kako će rasporediti svoju svadbu.
+
+### Jedan gost, jedan sto
+
+Gost sedi za tačno jednim stolom u okviru verzije. Premeštanje uklanja staro
+mesto **u istoj transakciji**, pa nije „skloni pa dodaj" koje u međuvremenu može
+da padne i ostavi gosta nigde. Ponovno slanje za isti sto ne menja ništa.
+
+Redni brojevi mesta popunjavaju rupe: kada neko ustane sa mesta 2, sledeći gost
+sedne na 2, a ne na 9.
+
+### Prevlačenje i ravnopravna alternativa (zahtev 31)
+
+Sto se pomera **preko posebnog hvatišta**, a ne po celoj površini — bez toga bi
+svaki pokušaj da se uhvati gost pomerio ceo sto.
+
+Gost se prevlači na sto mišem, ali uz svako ime stoji i lista stolova koja odmah
+izvršava istu radnju. Jedna kontrola, bez dodatnog dugmeta, radi tastaturom,
+čitačem ekrana i na telefonu — gde je prevlačenje po platnu ionako nezgodno.
+Pun sto ostaje u listi, ali onemogućen: da se vidi da postoji i zašto ne može
+tamo, umesto da tiho nestane.
+
+E2E scenariji rasporeda se izvršavaju **isključivo bez miša**, i na desktopu i na
+telefonu. Ako alternativa pukne, testovi padaju.
+
+### Pravila sedenja su podsetnik, ne prepreka
+
+| Pravilo | Ponašanje |
+|---------|-----------|
+| „sedi sa" | Upozorenje kada su oboje raspoređeni, a za različitim stolovima |
+| „ne sedi sa" | Upozorenje kada su oboje za istim stolom |
+| stolica za bebe, pristupačno mesto, blizu izlaza, dečji sto | Značka uz ime dok raspoređujete |
+
+Pravilo **ćuti dok bar jedno od dvoje nije raspoređeno** — dok raspored nije
+gotov, nije ni prekršen. Nijedno pravilo ne sprečava čuvanje: raspored koji se
+ne može sačuvati zbog jednog pravila bio bi gori od žutog upozorenja.
+
+Upozorenja se računaju na serveru, pa panel ne nosi nijedan bajt JavaScripta.
+
+### Verzije i zaključavanje
+
+Kopija verzije preuzima sale, stolove i ceo raspored, a original ostaje netaknut.
+To je i jedini način da se proba alternativa bez rizika po raspored koji već
+radi. **Kopija zaključane verzije sama nije zaključana** — inače bi zaključavanje
+značilo i „ne smeš više ni da probaš drugačije".
+
+Brisanje sale ili stola vraća goste među neraspoređene; nijedan gost se ne gubi.
+Raspored mora imati bar jednu salu, a plan bar jednu verziju.
+
+### Izvoz i PDF
+
+**CSV** ima jedan red po gostu, a ne jedan red po stolu sa nabrajanjem imena —
+tako se spisak sortira i po imenu i po stolu i uvozi u bilo koju tabelu bez
+ručnog razdvajanja. Neraspoređeni gosti su takođe u fajlu, sa praznim stolom:
+spisak koji ih prećuti izgledao bi kao da su svi raspoređeni.
+
+**PDF pravi pregledač, ne server**, i to je svesna odluka. Prikaz za štampu ima
+`@page` pravila, `break-inside: avoid` po stolu i plan sale kao SVG koji se
+štampa oštro na svakoj rezoluciji; „Sačuvaj kao PDF" daje ispravan dokument sa
+našim fontovima. Serverski generisan PDF sa ugrađenim standardnim fontovima
+**nema srpska slova** (ć, č, đ nisu u njihovim tabelama znakova), a ime
+„Petrović" odštampano kao „Petrovi?" bilo bi gore od odsustva dugmeta.
+Ugrađivanje sopstvenog fonta u PDF je posao Faze 8.
+
+---
+
 ## Tok kreiranja i objavljivanja
 
 ```mermaid
@@ -936,9 +1053,9 @@ pnpm test:e2e            # Playwright
 
 | Vrsta | Broj | Pokriva |
 |-------|------|---------|
-| Unit | 278 | Zod šeme sekcija, migracije verzija, slug, tokeni, dozvole, entitlements, prelazi stanja naplate, kontrast tema, i18n i množina, registri sekcija/renderera/editora, tokeni teme u CSS, grupisanje boja, demo kontekst, seed šabloni, operacije nad dokumentom uređivača, istorija poništi/ponovi, spajanje pri promeni šablona, uklanjanje EXIF-a iz JPEG/PNG/WebP, QR matrica i SVG/PNG izlaz, kraj dana u vremenskoj zoni i dan agregata, **CSV parser i generator (razdvajač, navodnici, prelom reda u polju, zaštita od formula, prepoznavanje kolona)**, **potpisani ključ obrasca (prebrzo slanje, istek, tuđi opseg, izmenjeno vreme)**, **provera odgovora na svih šest tipova pitanja** |
-| Integracioni | 109 | Kreiranje događaja u transakciji, jedinstvenost sluga, limiti paketa, meko brisanje, cascade pravila, `CHECK` ograničenja, snimak verzije šablona, čuvanje nacrta i sudar revizija, limiti i zaključane sekcije pri čuvanju, snimci verzija i orezivanje, otpremanje fotografija i odbijanje fajla sa EXIF-om, **objavljivanje i isključivanje linka**, **sva četiri režima privatnosti**, **istek do kraja dana**, **PIN i tokeni samo kao heš**, dnevni agregat i spisak kolona statistike, **gosti uz `eventId` (tuđi gost i tuđe domaćinstvo se ne vide)**, **meko brisanje gasi lični link**, **token i token za izmenu samo kao heš**, **jedan primalac = jedan odgovor**, **granica osoba sa linka domaćinstva**, **uvoz CSV-a i granica paketa**, **moderacija knjige želja** |
-| E2E | 110 (55 × desktop/mobilni) | Marketing, prijava, zaštita ruta, čarobnjak sa izborom šablona, dashboard, izmena bez promene linka, brisanje uz potvrdu, profil, galerija i filteri, favoriti, demo na tri veličine ekrana, cenovnik, česta pitanja, sitemap, uređivač (živi pregled, autosave, biblioteka, redosled bez miša, kontrast, otpremanje fotografije), javna pozivnica (nacrt i istek se ne prikazuju, PIN kapija, indeksiranje po režimu, deljenje i QR, poništavanje keša), **spisak gostiju: dodavanje, oznake, lični link koji se vidi samo jednom, filtriranje kroz URL, izvoz kao CSV**, **gost šalje odgovor sa javne pozivnice i dobija link za izmenu**, **izmena odgovora ne pravi drugi odgovor**, **lični link sa velikim slovima ostaje ispravan** |
+| Unit | 296 | Zod šeme sekcija, migracije verzija, slug, tokeni, dozvole, entitlements, prelazi stanja naplate, kontrast tema, i18n i množina, registri sekcija/renderera/editora, tokeni teme u CSS, grupisanje boja, demo kontekst, seed šabloni, operacije nad dokumentom uređivača, istorija poništi/ponovi, spajanje pri promeni šablona, uklanjanje EXIF-a iz JPEG/PNG/WebP, QR matrica i SVG/PNG izlaz, kraj dana u vremenskoj zoni i dan agregata, **CSV parser i generator (razdvajač, navodnici, prelom reda u polju, zaštita od formula, prepoznavanje kolona)**, **potpisani ključ obrasca (prebrzo slanje, istek, tuđi opseg, izmenjeno vreme)**, provera odgovora na svih šest tipova pitanja, **geometrija rasporeda (rotacija, granice stola, sto koji ostaje u sali, redni broj mesta, slobodan naziv)** |
+| Integracioni | 134 | Kreiranje događaja u transakciji, jedinstvenost sluga, limiti paketa, meko brisanje, cascade pravila, `CHECK` ograničenja, snimak verzije šablona, čuvanje nacrta i sudar revizija, limiti i zaključane sekcije pri čuvanju, snimci verzija i orezivanje, otpremanje fotografija i odbijanje fajla sa EXIF-om, **objavljivanje i isključivanje linka**, **sva četiri režima privatnosti**, **istek do kraja dana**, **PIN i tokeni samo kao heš**, dnevni agregat i spisak kolona statistike, **gosti uz `eventId` (tuđi gost i tuđe domaćinstvo se ne vide)**, **meko brisanje gasi lični link**, **token i token za izmenu samo kao heš**, **jedan primalac = jedan odgovor**, **granica osoba sa linka domaćinstva**, **uvoz CSV-a i granica paketa**, moderacija knjige želja, **raspored: zaključana verzija odbija svaku izmenu, kapacitet zaustavlja gosta viška, jedan sto po gostu, kopija verzije ne deli redove sa originalom, brisanje vraća goste među neraspoređene, upozorenja o pravilima** |
+| E2E | 122 (61 × desktop/mobilni) | Marketing, prijava, zaštita ruta, čarobnjak sa izborom šablona, dashboard, izmena bez promene linka, brisanje uz potvrdu, profil, galerija i filteri, favoriti, demo na tri veličine ekrana, cenovnik, česta pitanja, sitemap, uređivač (živi pregled, autosave, biblioteka, redosled bez miša, kontrast, otpremanje fotografije), javna pozivnica (nacrt i istek se ne prikazuju, PIN kapija, indeksiranje po režimu, deljenje i QR, poništavanje keša), **spisak gostiju: dodavanje, oznake, lični link koji se vidi samo jednom, filtriranje kroz URL, izvoz kao CSV**, **gost šalje odgovor sa javne pozivnice i dobija link za izmenu**, **izmena odgovora ne pravi drugi odgovor**, lični link sa velikim slovima ostaje ispravan, **raspored sedenja: dodavanje stola i sedanje gostiju bez miša, kapacitet, zaključana verzija, CSV i prikaz za štampu** |
 
 ```bash
 pnpm test                # unit — bez baze
@@ -964,7 +1081,7 @@ Integracioni testovi se **preskaču** ako `TEST_DATABASE_URL` nije postavljen, p
 
 ## Bezbednost
 
-Implementirano do kraja Faze 5:
+Implementirano do kraja Faze 6:
 
 - **Autorizacija na serveru** za svaku akciju i stranicu; interfejs nikad nije
   jedina odbrana.
@@ -1009,7 +1126,10 @@ Implementirano do kraja Faze 5:
   sekcije (tražena polja, rok) čitaju se iz pozivnice, a ne iz zahteva.
 - **Knjiga želja podrazumevano traži odobrenje**, a poruka se svuda ispisuje kao
   tekst — ni u panelu organizatora se ne izvršava.
-- **Izvoz gostiju i odgovora** ide iza dozvole i šalje `no-store, private`.
+- **Izvoz gostiju, odgovora i rasporeda** ide iza dozvole i šalje
+  `no-store, private`.
+- **Zaključana verzija rasporeda** odbija izmene na serveru, ne samo u
+  interfejsu; isto važi i za paket koji ne uključuje raspored.
 - **Sigurnosna zaglavlja**; `X-Robots-Tag: noindex` stoji na putanjama sa tokenom
   (`/p/:slug/:token*`), a ne na celom `/p/*` — inače bi pregazio režim „javno"
   koji organizator bira u interfejsu.
@@ -1038,7 +1158,7 @@ Seed nije namenjen produkciji — puni bazu demo sadržajem.
 
 ## Poznata ograničenja
 
-Iskreni pregled onoga što **još ne postoji** na kraju Faze 5. Detaljan plan je u
+Iskreni pregled onoga što **još ne postoji** na kraju Faze 6. Detaljan plan je u
 [`TASKS.md`](./TASKS.md).
 
 | Oblast | Stanje |
@@ -1056,7 +1176,8 @@ Iskreni pregled onoga što **još ne postoji** na kraju Faze 5. Detaljan plan je
 | Istorija verzija | Poslednjih 20 snimaka, najviše jedan na pet minuta; vraćanje ide kao obična izmena koju „poništi" može da vrati |
 | Sudar dve sesije | Ne spaja se automatski — korisnik bira da učita tuđu verziju ili da zadrži svoju |
 | Pravni dokumenti | Radna verzija napisana prema stvarnom ponašanju aplikacije; traži pregled pravnika, i stranica to kaže |
-| Raspored sedenja | Model, kapaciteti i preferencije u bazi; editor u Fazi 6 |
+| PDF rasporeda | Pravi ga pregledač iz prikaza za štampu; serverski PDF sa standardnim fontovima nema srpska slova, pa ugrađivanje fonta ide u Fazu 8 |
+| Raspored sedenja i paket | Traži paket sa mogućnošću `seating`; stranica se prikazuje uz jasnu poruku, ali izmene su onemogućene i server ih odbija |
 | Naplata | Adapter, prelazi stanja i idempotencija testirani; tok objavljivanja u Fazi 7 |
 | Admin panel | Uloga i audit log postoje; stranice u Fazi 7 |
 | Rate limiting | In-memory, po instanci procesa. Za više instanci potreban Redis — interfejs je izdvojen |

@@ -39,9 +39,9 @@ export type GuestListItem = {
 /**
  * Spisak gostiju (zahtev 12 i 13).
  *
- * Na širokom ekranu je tabela, na telefonu niz kartica - ista lista, jedan
- * izvor podataka. Privatna beleška se prikazuje diskretno, ispod imena: to je
- * podatak koji organizator gleda dok zove goste, a gost ga nikad ne vidi.
+ * Na širokom ekranu tabela, na telefonu kartice - ista lista, jedan izvor
+ * podataka i iste radnje. Privatna beleška se prikazuje diskretno, ispod imena:
+ * to je podatak koji organizator gleda dok zove goste, a gost ga nikad ne vidi.
  */
 export function GuestTable({
   eventId,
@@ -85,9 +85,150 @@ export function GuestTable({
     );
   }
 
+  const identity = (guest: GuestListItem) => (
+    <>
+      <div className="font-medium">
+        {[guest.firstName, guest.lastName].filter(Boolean).join(' ')}
+        {guest.isChild ? (
+          <Badge variant="neutral" className="ml-2">
+            {t('guests.isChild')}
+          </Badge>
+        ) : null}
+      </div>
+
+      {guest.tags.length > 0 ? (
+        <div className="mt-1 flex flex-wrap gap-1">
+          {guest.tags.map((tag) => (
+            <Badge key={tag} variant="neutral">
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      ) : null}
+
+      {guest.privateNote ? (
+        <p className="mt-1 text-xs text-muted-foreground">{guest.privateNote}</p>
+      ) : null}
+    </>
+  );
+
+  const actions = (guest: GuestListItem) => (
+    <div className="flex flex-wrap gap-1">
+      <Button variant="ghost" size="sm" onClick={() => void issueLink(guest)}>
+        <Link2 aria-hidden />
+        {guest.hasLink ? t('guests.reissueLink') : t('guests.issueLink')}
+      </Button>
+
+      {guest.hasLink && guest.recipientId ? (
+        <ConfirmDialog
+          trigger={
+            <Button variant="ghost" size="sm">
+              <Link2Off aria-hidden />
+              <span className="sr-only">{t('guests.revokeLink')}</span>
+            </Button>
+          }
+          title={t('guests.revokeLink')}
+          description={t('guests.revokeConfirm')}
+          confirmLabel={t('guests.revokeLink')}
+          cancelLabel={t('common.cancel')}
+          onConfirm={async () => {
+            const result = await revokeRecipientLinkAction({
+              eventId,
+              recipientId: guest.recipientId as string,
+            });
+            if (!result.ok) return result.message;
+            toast.success(t('guests.linkRevoked'));
+            router.refresh();
+            return null;
+          }}
+        />
+      ) : null}
+
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => {
+          setEditing(guest);
+          setDialogOpen(true);
+        }}
+      >
+        <Pencil aria-hidden />
+        <span className="sr-only">{t('guests.editGuest')}</span>
+      </Button>
+
+      <ConfirmDialog
+        trigger={
+          <Button variant="ghost" size="sm">
+            <Trash2 aria-hidden />
+            <span className="sr-only">{t('guests.deleteGuest')}</span>
+          </Button>
+        }
+        title={t('guests.deleteGuest')}
+        description={t('guests.deleteConfirm', {
+          name: [guest.firstName, guest.lastName].filter(Boolean).join(' '),
+        })}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={async () => {
+          const result = await deleteGuestAction({ eventId, guestId: guest.id });
+          if (!result.ok) return result.message;
+          toast.success(t('guests.deleted'));
+          router.refresh();
+          return null;
+        }}
+      />
+    </div>
+  );
+
+  const contact = (guest: GuestListItem) =>
+    guest.email || guest.phone
+      ? [guest.email, guest.phone].filter(Boolean).join(' · ')
+      : null;
+
   return (
     <>
-      <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-border bg-surface">
+      {/*
+        Na telefonu kartice, od `md` naviše tabela.
+        Tabela od 52rem u vodoravnom klizaču je na telefonu neupotrebljiva:
+        dugmad reda završe petsto piksela desno od ekrana. Isti podaci, dva
+        prikaza - a ne jedan prikaz koji na malom ekranu tehnički postoji.
+      */}
+      <ul className="space-y-2 md:hidden">
+        {guests.map((guest) => (
+          <li
+            key={guest.id}
+            className="rounded-[var(--radius-lg)] border border-border bg-surface p-4"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">{identity(guest)}</div>
+              <ResponseBadge status={guest.rsvpStatus} />
+            </div>
+
+            <dl className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+              {contact(guest) ? (
+                <div>
+                  <dt className="sr-only">{t('guests.columnContact')}</dt>
+                  <dd>{contact(guest)}</dd>
+                </div>
+              ) : null}
+              {guest.householdName ? (
+                <div>
+                  <dt className="sr-only">{t('guests.columnHousehold')}</dt>
+                  <dd>{guest.householdName}</dd>
+                </div>
+              ) : null}
+              <div>
+                <dt className="sr-only">{t('guests.columnLink')}</dt>
+                <dd>{guest.hasLink ? t('guests.linkActive') : t('guests.linkNone')}</dd>
+              </div>
+            </dl>
+
+            <div className="mt-3">{actions(guest)}</div>
+          </li>
+        ))}
+      </ul>
+
+      <div className="hidden overflow-x-auto rounded-[var(--radius-lg)] border border-border bg-surface md:block">
         <table className="w-full min-w-[52rem] border-collapse text-sm">
           <caption className="sr-only">{t('guests.title')}</caption>
           <thead>
@@ -116,37 +257,10 @@ export function GuestTable({
           <tbody>
             {guests.map((guest) => (
               <tr key={guest.id} className="border-b border-border/60 last:border-0">
-                <td className="px-4 py-3 align-top">
-                  <div className="font-medium">
-                    {[guest.firstName, guest.lastName].filter(Boolean).join(' ')}
-                    {guest.isChild ? (
-                      <Badge variant="neutral" className="ml-2">
-                        {t('guests.isChild')}
-                      </Badge>
-                    ) : null}
-                  </div>
-
-                  {guest.tags.length > 0 ? (
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {guest.tags.map((tag) => (
-                        <Badge key={tag} variant="neutral">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  {guest.privateNote ? (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {guest.privateNote}
-                    </p>
-                  ) : null}
-                </td>
+                <td className="px-4 py-3 align-top">{identity(guest)}</td>
 
                 <td className="px-4 py-3 align-top text-muted-foreground">
-                  {guest.email ? <div>{guest.email}</div> : null}
-                  {guest.phone ? <div>{guest.phone}</div> : null}
-                  {!guest.email && !guest.phone ? <span aria-hidden>—</span> : null}
+                  {contact(guest) ?? <span aria-hidden>—</span>}
                 </td>
 
                 <td className="px-4 py-3 align-top text-muted-foreground">
@@ -158,92 +272,13 @@ export function GuestTable({
                 </td>
 
                 <td className="px-4 py-3 align-top">
-                  {guest.hasLink ? (
-                    <span className="text-xs text-muted-foreground">
-                      {t('guests.linkActive')}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">
-                      {t('guests.linkNone')}
-                    </span>
-                  )}
+                  <span className="text-xs text-muted-foreground">
+                    {guest.hasLink ? t('guests.linkActive') : t('guests.linkNone')}
+                  </span>
                 </td>
 
                 <td className="px-4 py-3 align-top">
-                  <div className="flex flex-wrap justify-end gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => void issueLink(guest)}
-                    >
-                      <Link2 aria-hidden />
-                      {guest.hasLink ? t('guests.reissueLink') : t('guests.issueLink')}
-                    </Button>
-
-                    {guest.hasLink && guest.recipientId ? (
-                      <ConfirmDialog
-                        trigger={
-                          <Button variant="ghost" size="sm">
-                            <Link2Off aria-hidden />
-                            <span className="sr-only">{t('guests.revokeLink')}</span>
-                          </Button>
-                        }
-                        title={t('guests.revokeLink')}
-                        description={t('guests.revokeConfirm')}
-                        confirmLabel={t('guests.revokeLink')}
-                        cancelLabel={t('common.cancel')}
-                        onConfirm={async () => {
-                          const result = await revokeRecipientLinkAction({
-                            eventId,
-                            recipientId: guest.recipientId as string,
-                          });
-                          if (!result.ok) return result.message;
-                          toast.success(t('guests.linkRevoked'));
-                          router.refresh();
-                          return null;
-                        }}
-                      />
-                    ) : null}
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setEditing(guest);
-                        setDialogOpen(true);
-                      }}
-                    >
-                      <Pencil aria-hidden />
-                      <span className="sr-only">{t('guests.editGuest')}</span>
-                    </Button>
-
-                    <ConfirmDialog
-                      trigger={
-                        <Button variant="ghost" size="sm">
-                          <Trash2 aria-hidden />
-                          <span className="sr-only">{t('guests.deleteGuest')}</span>
-                        </Button>
-                      }
-                      title={t('guests.deleteGuest')}
-                      description={t('guests.deleteConfirm', {
-                        name: [guest.firstName, guest.lastName]
-                          .filter(Boolean)
-                          .join(' '),
-                      })}
-                      confirmLabel={t('common.delete')}
-                      cancelLabel={t('common.cancel')}
-                      onConfirm={async () => {
-                        const result = await deleteGuestAction({
-                          eventId,
-                          guestId: guest.id,
-                        });
-                        if (!result.ok) return result.message;
-                        toast.success(t('guests.deleted'));
-                        router.refresh();
-                        return null;
-                      }}
-                    />
-                  </div>
+                  <div className="flex justify-end">{actions(guest)}</div>
                 </td>
               </tr>
             ))}

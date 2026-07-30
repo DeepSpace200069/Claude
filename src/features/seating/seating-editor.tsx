@@ -25,6 +25,7 @@ import {
 } from '@/server/actions/seating';
 import type { SeatingPlanView, SeatingTable } from '@/server/services/seating';
 
+import { clampToRoom } from './geometry';
 import { GuestChip } from './guest-chip';
 import { SeatSelect } from './seat-select';
 import { TableCard } from './table-card';
@@ -114,11 +115,18 @@ export function SeatingEditor({
       const table = allTables.find((candidate) => candidate.id === tableId);
       if (!table) return;
 
+      const home = plan.rooms.find((candidate) =>
+        candidate.tables.some((entry) => entry.id === tableId),
+      );
+      if (!home) return;
+
       const base = positionOf(table);
-      const next = {
-        x: Math.max(0, Math.round(base.x + event.delta.x / zoom)),
-        y: Math.max(0, Math.round(base.y + event.delta.y / zoom)),
-      };
+      // Ista pravila kao na serveru: sto ostaje unutar sale.
+      const next = clampToRoom(
+        { x: base.x + event.delta.x / zoom, y: base.y + event.delta.y / zoom },
+        table,
+        home,
+      );
 
       setPositions((current) => ({ ...current, [tableId]: next }));
 

@@ -12,6 +12,14 @@ import {
   seatingPlans,
   tables,
 } from '@/server/db/schema';
+import {
+  clampCapacity,
+  clampTableSize,
+  clampToRoom,
+  nextFreeSeat,
+  nextTableName,
+  normalizeRotation,
+} from '@/features/seating/geometry';
 import { ConflictError, NotFoundError, ValidationError } from '@/server/authz/errors';
 
 import { listGuests } from './guests';
@@ -240,13 +248,26 @@ async function requireRoom(
 async function requireTable(
   eventId: string,
   tableId: string,
-): Promise<{ id: string; roomId: string; versionId: string; capacity: number }> {
+): Promise<{
+  id: string;
+  roomId: string;
+  versionId: string;
+  capacity: number;
+  width: number;
+  height: number;
+  roomWidth: number;
+  roomHeight: number;
+}> {
   const [row] = await db
     .select({
       id: tables.id,
       roomId: tables.roomId,
       versionId: rooms.versionId,
       capacity: tables.capacity,
+      width: tables.width,
+      height: tables.height,
+      roomWidth: rooms.width,
+      roomHeight: rooms.height,
     })
     .from(tables)
     .innerJoin(rooms, eq(tables.roomId, rooms.id))
@@ -592,8 +613,8 @@ export async function createRoom(
     .values({
       versionId,
       name: input.name,
-      width: clamp(input.width, ROOM_MIN_SIZE, ROOM_MAX_SIZE),
-      height: clamp(input.height, ROOM_MIN_SIZE, ROOM_MAX_SIZE),
+      width: clampRoomSize(input.width),
+      height: clampRoomSize(input.height),
       position: (last?.position ?? -1) + 1,
     })
     .returning({ id: rooms.id });
@@ -614,8 +635,8 @@ export async function updateRoom(
     .update(rooms)
     .set({
       name: input.name,
-      width: clamp(input.width, ROOM_MIN_SIZE, ROOM_MAX_SIZE),
-      height: clamp(input.height, ROOM_MIN_SIZE, ROOM_MAX_SIZE),
+      width: clampRoomSize(input.width),
+      height: clampRoomSize(input.height),
     })
     .where(eq(rooms.id, roomId));
 }
@@ -639,6 +660,10 @@ export async function deleteRoom(eventId: string, roomId: string): Promise<void>
   }
 
   await db.delete(rooms).where(eq(rooms.id, roomId));
+}
+
+function clampRoomSize(value: number): number {
+  return Math.min(ROOM_MAX_SIZE, Math.max(ROOM_MIN_SIZE, Math.round(value)));
 }
 
 // --- Stolovi ----------------------------------------------------------------
@@ -705,11 +730,16 @@ export async function moveTable(
   const table = await requireTable(eventId, tableId);
   await requireEditableVersion(eventId, table.versionId);
 
+  const inside = clampToRoom(
+    position,
+    { width: table.width, height: table.height },
+    { width: table.roomWidth, height: table.roomHeight },
+  );
+
   await db
     .update(tables)
     .set({
-      x: Math.round(position.x),
-      y: Math.round(position.y),
+      ...inside,
       ...(position.rotation === undefined
         ? {}
         : { rotation: normalizeRotation(position.rotation) }),
@@ -783,36 +813,23 @@ async function uniqueTableName(
     existing.filter((row) => row.id !== excludeId).map((row) => row.name),
   );
 
-  if (!taken.has(desired)) return desired;
+  const name = nextTableName(taken, desired);
+  if (!name) throw new ValidationError('Previše stolova sa istim nazivom.');
 
-  for (let suffix = 2; suffix < 200; suffix += 1) {
-    const candidate = `${desired} (${suffix})`;
-    if (!taken.has(candidate)) return candidate;
-  }
-
-  throw new ValidationError('Previše stolova sa istim nazivom.');
+  return name;
 }
 
 function normalizeTable(input: TableInput) {
   return {
     shape: input.shape,
-    capacity: clamp(input.capacity, 1, MAX_TABLE_CAPACITY),
-    x: Math.round(input.x),
-    y: Math.round(input.y),
-    width: clamp(Math.round(input.width), 40, 800),
-    height: clamp(Math.round(input.height), 40, 800),
+    capacity: clampCapacity(input.capacity),
+    x: Math.max(0, Math.round(input.x)),
+    y: Math.max(0, Math.round(input.y)),
+    width: clampTableSize(input.width),
+    height: clampTableSize(input.height),
     rotation: normalizeRotation(input.rotation),
     notes: input.notes.trim() === '' ? null : input.notes.trim(),
   };
-}
-
-function normalizeRotation(value: number): number {
-  const rounded = Math.round(value) % 360;
-  return rounded < 0 ? rounded + 360 : rounded;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
 }
 
 // --- Raspoređivanje gostiju -------------------------------------------------
@@ -895,14 +912,6 @@ export async function assignGuest(input: {
     if (!created) throw new Error('Gost nije raspoređen.');
     return { assignmentId: created.id };
   });
-}
-
-/** Prvi slobodan redni broj mesta; rupe se popunjavaju pre nego što se raste. */
-function nextFreeSeat(taken: ReadonlyArray<number | null>): number {
-  const used = new Set(taken.filter((value): value is number => value !== null));
-  let seat = 1;
-  while (used.has(seat)) seat += 1;
-  return seat;
 }
 
 export async function unassignGuest(
