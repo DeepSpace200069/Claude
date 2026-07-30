@@ -1,6 +1,7 @@
 import {
   ArrowRight,
   CalendarDays,
+  LayoutGrid,
   MailCheck,
   MapPin,
   MessageSquareHeart,
@@ -77,6 +78,11 @@ export default async function EventDashboardPage({
       href: `/app/dogadjaji/${eventId}/knjiga-zelja`,
       label: t('guestbookAdmin.title'),
       icon: MessageSquareHeart,
+    },
+    {
+      href: `/app/dogadjaji/${eventId}/raspored`,
+      label: t('seating.title'),
+      icon: LayoutGrid,
     },
     {
       href: `/app/dogadjaji/${eventId}/objavljivanje`,

@@ -201,6 +201,20 @@
   html {
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
+
+    /*
+     * Zaglavlje aplikacije je lepljivo, pa sve što pregledač „dovuče na vrh”
+     * inače završi ispod njega: skok na sidro, fokusirano polje pri kretanju
+     * tastaturom, dugme koje se pomera u vidno polje. Na telefonu je zaglavlje
+     * više jer nosi i red navigacije, pa je i razmak veći do `sm` širine.
+     */
+    scroll-padding-top: 7.5rem;
+  }
+
+  @media (min-width: 40rem) {
+    html {
+      scroll-padding-top: 5rem;
+    }
   }
 
   body {

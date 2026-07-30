@@ -1,0 +1,125 @@
+/*
+ * Prikaz rasporeda za štampu.
+ *
+ * `@page` pravila i `break-inside` su ovde ceo posao: bez njih pregledač
+ * preseče sto na pola strane, pa spisak gostiju počinje na jednoj a završava se
+ * na sledećoj. Ovo je i put do PDF-a, jer pregledač u „Sačuvaj kao PDF"
+ * primenjuje ista pravila.
+ */
+
+@page {
+  size: A4;
+  margin: 14mm;
+}
+
+.stampa {
+  max-width: 190mm;
+  margin-inline: auto;
+  padding: 1.5rem 1rem 3rem;
+  color: #111;
+  background: #fff;
+  font-size: 11pt;
+  line-height: 1.45;
+}
+
+.stampa__zaglavlje h1 {
+  font-size: 18pt;
+  font-weight: 600;
+  margin: 0;
+}
+
+.stampa__opis {
+  margin: 0.25rem 0 0;
+  color: #555;
+}
+
+.stampa__uputstvo {
+  margin: 0.75rem 0 0;
+  font-size: 9pt;
+  color: #666;
+}
+
+.stampa__sala {
+  margin-top: 2rem;
+  /* Nova sala uvek počinje na novoj strani - plan i spiskovi idu zajedno. */
+  break-before: page;
+}
+
+.stampa__sala:first-of-type {
+  break-before: auto;
+}
+
+.stampa__sala h2 {
+  font-size: 14pt;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+}
+
+.stampa__platno {
+  width: 100%;
+  height: auto;
+  max-height: 120mm;
+  break-inside: avoid;
+}
+
+.stampa__stolovi {
+  margin-top: 1.5rem;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(52mm, 1fr));
+}
+
+.stampa__sto {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.6rem 0.75rem;
+  /* Sto se nikad ne cepa između dve strane. */
+  break-inside: avoid;
+}
+
+.stampa__sto h3 {
+  font-size: 11pt;
+  font-weight: 600;
+  margin: 0 0 0.35rem;
+}
+
+.stampa__mesta {
+  font-weight: 400;
+  color: #666;
+}
+
+.stampa__napomena {
+  margin: 0 0 0.35rem;
+  font-size: 9pt;
+  color: #555;
+}
+
+.stampa__prazno {
+  margin: 0;
+  font-size: 9.5pt;
+  color: #777;
+}
+
+.stampa__gosti {
+  margin: 0;
+  padding-inline-start: 1.1rem;
+  font-size: 10pt;
+}
+
+.stampa__gosti--kolone {
+  columns: 3;
+  list-style: none;
+  padding-inline-start: 0;
+}
+
+/* Dugme za štampu je pomoć na ekranu; na papiru nema šta da traži. */
+@media print {
+  .stampa__uputstvo,
+  .stampa__stampaj {
+    display: none;
+  }
+
+  .stampa {
+    padding: 0;
+  }
+}
