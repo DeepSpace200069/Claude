@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 
 import { GuestbookForm } from '@/features/guestbook/guestbook-form';
-import { guestbookLabels } from '@/features/rsvp/labels';
+import { fillLabel, guestbookLabels } from '@/features/rsvp/labels';
 import { formatDate } from '@/i18n/format';
 
 import type { guestbookSection } from '../definitions/interaction';
@@ -115,7 +115,7 @@ function GuestbookPreview({
             className="inv-input"
           />
           <p className="inv-field__hint inv-muted">
-            {labels.charactersLeft(data.maxMessageLength)}
+            {fillLabel(labels.charactersLeft, { count: data.maxMessageLength })}
           </p>
         </div>
 

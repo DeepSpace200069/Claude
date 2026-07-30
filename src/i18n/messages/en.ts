@@ -1098,6 +1098,8 @@ const messages: Messages = {
     exportText: 'Download the whole list with replies as a CSV file Excel can open.',
     exportAction: 'Download CSV',
 
+    limitReachedText:
+      'The “{plan}” plan allows at most {count} guests on the list. Upgrade to add more.',
     saved: 'Saved.',
     deleted: 'Guest deleted.',
   },

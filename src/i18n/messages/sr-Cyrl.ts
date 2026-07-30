@@ -1106,6 +1106,8 @@ const messages: Messages = {
     exportText: 'Преузмите цео списак са одговорима у CSV фајлу који Excel отвара.',
     exportAction: 'Преузми CSV',
 
+    limitReachedText:
+      'Пакет „{plan}” дозвољава највише {count} гостију на списку. Надоградите пакет да додате још.',
     saved: 'Сачувано.',
     deleted: 'Гост је обрисан.',
   },

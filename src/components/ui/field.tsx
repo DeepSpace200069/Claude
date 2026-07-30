@@ -11,6 +11,7 @@ type FieldContextValue = {
   errorId: string;
   hasError: boolean;
   hasHint: boolean;
+  isRequired: boolean;
 };
 
 const FieldContext = createContext<FieldContextValue | null>(null);
@@ -21,6 +22,11 @@ const FieldContext = createContext<FieldContextValue | null>(null);
  * Povezuje labelu, pomoćni tekst i poruku greške sa kontrolom preko
  * `aria-describedby` i `aria-invalid` (zahtev 31), tako da čitači ekrana
  * pročitaju grešku odmah uz polje.
+ *
+ * Zvezdica obaveznog polja stoji **pored** labele, a ne u njoj: unutar labele
+ * bi ušla u naziv polja („Ime*”) svuda gde se naziv računa iz teksta, iako je
+ * `aria-hidden`. Obaveznost se prenosi kroz `aria-required` na samoj kontroli,
+ * što je i jedini oblik koji čitač ekrana zaista pročita.
  */
 export function Field({
   label,
@@ -47,20 +53,21 @@ export function Field({
     errorId: `${id}-error`,
     hasError: Boolean(error),
     hasHint: Boolean(hint),
+    isRequired: Boolean(required),
   };
 
   return (
     <FieldContext.Provider value={value}>
       <div className={cn('space-y-2', className)}>
         <div className="flex items-baseline justify-between gap-3">
-          <Label htmlFor={value.controlId}>
-            {label}
+          <span className="flex items-baseline">
+            <Label htmlFor={value.controlId}>{label}</Label>
             {required ? (
               <span className="ml-0.5 text-destructive" aria-hidden>
                 *
               </span>
             ) : null}
-          </Label>
+          </span>
           {!required && optionalLabel ? (
             <span className="text-xs text-muted-foreground">{optionalLabel}</span>
           ) : null}
@@ -92,6 +99,7 @@ export function useFieldControl(): {
   id: string;
   'aria-describedby'?: string;
   'aria-invalid'?: boolean;
+  'aria-required'?: boolean;
 } {
   const context = useContext(FieldContext);
 
@@ -110,6 +118,7 @@ export function useFieldControl(): {
     id: context.controlId,
     ...(describedBy ? { 'aria-describedby': describedBy } : {}),
     ...(context.hasError ? { 'aria-invalid': true } : {}),
+    ...(context.isRequired ? { 'aria-required': true } : {}),
   };
 }
 

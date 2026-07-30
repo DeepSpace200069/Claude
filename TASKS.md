@@ -77,21 +77,21 @@ Legenda: ✅ gotovo · 🔄 u toku · ⬜ nije započeto
 | 4.8 | Uvodna animacija sa mogućnošću preskakanja | ✅ |
 | 4.9 | Statistika pregleda (dnevni agregat, bez ličnih podataka) | ✅ |
 
-## Faza 5 — Gosti i RSVP ⬜
+## Faza 5 — Gosti i RSVP ✅
 
 | # | Zadatak | Status |
 |---|---------|--------|
-| 5.1 | Upravljanje gostima: dodavanje, izmena, tagovi, privatne beleške | ⬜ |
-| 5.2 | Domaćinstva i grupno vođenje | ⬜ |
-| 5.3 | Personalizovani tokeni i `/p/[slug]/rsvp/[token]` | ⬜ |
-| 5.4 | RSVP forma sa zaštitom od spama i rate limitom | ⬜ |
-| 5.5 | Dodatna pitanja (svih 6 tipova) i uslovni prikaz | ⬜ |
-| 5.6 | Kasnija izmena odgovora preko sigurnog linka | ⬜ |
-| 5.7 | Pregled odgovora: filtriranje, pretraga, sortiranje | ⬜ |
-| 5.8 | CSV import i CSV/Excel export | ⬜ |
-| 5.9 | Statistika RSVP-a na dashboardu | ⬜ |
-| 5.10 | Podsetnici: filtriranje gostiju bez odgovora i generisanje poruke | ⬜ |
-| 5.11 | Knjiga želja sa moderacijom | ⬜ |
+| 5.1 | Upravljanje gostima: dodavanje, izmena, tagovi, privatne beleške | ✅ |
+| 5.2 | Domaćinstva i grupno vođenje | ✅ |
+| 5.3 | Personalizovani tokeni i `/p/[slug]/[token]` | ✅ |
+| 5.4 | RSVP forma sa zaštitom od spama i rate limitom | ✅ |
+| 5.5 | Dodatna pitanja (svih 6 tipova) i uslovni prikaz | ✅ |
+| 5.6 | Kasnija izmena odgovora preko sigurnog linka | ✅ |
+| 5.7 | Pregled odgovora: filtriranje, pretraga, sortiranje | ✅ |
+| 5.8 | CSV uvoz i CSV izvoz (gosti i odgovori) | ✅ |
+| 5.9 | Statistika RSVP-a na dashboardu | ✅ |
+| 5.10 | Podsetnici: filtriranje gostiju bez odgovora i spisak za slanje | ✅ |
+| 5.11 | Knjiga želja sa moderacijom | ✅ |
 
 ## Faza 6 — Raspored sedenja ⬜
 
@@ -134,7 +134,7 @@ Legenda: ✅ gotovo · 🔄 u toku · ⬜ nije započeto
 
 ---
 
-## Poznata ograničenja na kraju Faze 4
+## Poznata ograničenja na kraju Faze 5
 
 Sve navedeno je svesna odluka o obimu, a ne propust:
 
@@ -142,11 +142,21 @@ Sve navedeno je svesna odluka o obimu, a ne propust:
   dolazi u Fazi 7; do tada plaćen paket evidentira administrator, kao što i
   adapter naplate predviđa. Na besplatnom paketu dugme postoji, ali je
   onemogućeno uz tačan razlog — nema lažnog uspeha.
-- **Personalizovani linkovi** rade kao pristup i pozdrav po imenu; sama RSVP
-  forma vezana za token dolazi u Fazi 5. Pravljenje i slanje tih linkova je deo
-  upravljanja gostima, takođe u Fazi 5.
-- **RSVP i knjiga želja** se prikazuju na javnoj pozivnici, ali su isključene i
-  vidno označene dok Faza 5 ne doda obradu odgovora.
+- **Spisak gostiju traži paket sa granicom `maxGuests`.** Besplatan paket ima
+  granicu 0, pa stranica gostiju to kaže odmah, iznad spiska, umesto da pusti
+  korisnika da popuni formu pa dobije odbijenicu. Server istu granicu proverava
+  u akciji i u uvozu.
+- **Podsetnike ne šaljemo mi.** Stranica odgovora daje spisak gostiju bez
+  odgovora i njihove kontakte za kopiranje, a poruku šalje organizator svojim
+  kanalom. Kontakt gosta je dat organizatoru za tu proslavu, a ne nama za
+  slanje; automatsko slanje bi tražilo posebnu saglasnost gosta.
+- **Zaštita javnih formi** je polje-mamac, potpisani ključ obrasca sa donjom
+  granicom vremena i ograničenje po otisku klijenta. To pokriva automatizovano
+  zatrpavanje, ali **nije** CAPTCHA: napadač koji jednom učita stranicu dobija
+  ispravan ključ. Adapter za CAPTCHA je posao Faze 8.
+- **Odgovor bez ličnog linka se ne spaja po imenu.** Dva gosta sa istim imenom
+  su realnost, pa javni RSVP uvek pravi nov odgovor; spajanje bi tiho prepisalo
+  tuđu potvrdu. Preko ličnog linka odgovor je jedan i menja se.
 - **Statistika** broji preglede iz pregledača (mali `fetch` posle učitavanja), pa
   je javna stranica keširana. Posetilac bez JavaScripta se ne broji — svesna
   zamena: keširana stranica za sve umesto tačnog brojanja za nekolicinu.

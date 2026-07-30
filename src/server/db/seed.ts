@@ -14,11 +14,13 @@ import {
   events,
   featurePlans,
   guestHouseholds,
+  guestbookEntries,
   guests,
   invitationRecipients,
   invitationSections,
   invitations,
   rooms,
+  rsvpAnswers,
   rsvpQuestions,
   rsvpResponses,
   seatAssignments,
@@ -399,7 +401,7 @@ async function seedDemoEvent(ownerId: string) {
   }
 
   // Dodatna RSVP pitanja o hrani i prevozu (zahtev 35).
-  await db
+  const [menuQuestion] = await db
     .insert(rsvpQuestions)
     .values({
       invitationId: invitation.id,
@@ -416,9 +418,10 @@ async function seedDemoEvent(ownerId: string) {
           { value: 'vegetarijanski', label: 'Vegetarijanski' },
         ],
       },
-    });
+    })
+    .returning({ id: rsvpQuestions.id });
 
-  await db.insert(rsvpQuestions).values([
+  const [transportQuestion, allergyQuestion] = await db.insert(rsvpQuestions).values([
     {
       invitationId: invitation.id,
       type: 'boolean',
@@ -438,7 +441,8 @@ async function seedDemoEvent(ownerId: string) {
       position: 2,
       config: { maxLength: 200 },
     },
-  ]);
+  ])
+    .returning({ id: rsvpQuestions.id });
 
   // Domaćinstva, gosti i personalizovani linkovi.
   let guestCount = 0;
@@ -486,18 +490,22 @@ async function seedDemoEvent(ownerId: string) {
     });
   }
 
-  // Različiti RSVP statusi da statistika na dashboardu ne bude prazna.
+  /*
+   * Različiti RSVP statusi da statistika na dashboardu ne bude prazna, i uz
+   * njih odgovori na dodatna pitanja - inače bi demo prikazao pitanja koja
+   * nikada nemaju odgovor, što je najgori mogući primer.
+   */
   const responses = [
-    { fullName: 'Dragan Jovanović', status: 'yes' as const, adults: 2, children: 1, message: 'Radujemo se!' },
-    { fullName: 'Miloš Petrović', status: 'yes' as const, adults: 2, children: 0, message: null },
-    { fullName: 'Nenad Ilić', status: 'yes' as const, adults: 2, children: 2, message: 'Dolazimo svi četvoro.' },
-    { fullName: 'Zoran Marković', status: 'no' as const, adults: 0, children: 0, message: 'Nažalost, putujemo tih dana.' },
-    { fullName: 'Aleksandar Nikolić', status: 'maybe' as const, adults: 2, children: 0, message: null },
-    { fullName: 'Marko Stanković', status: 'yes' as const, adults: 1, children: 0, message: null },
+    { fullName: 'Dragan Jovanović', status: 'yes' as const, adults: 2, children: 1, message: 'Radujemo se!', menu: 'meso', transport: false, allergy: null },
+    { fullName: 'Miloš Petrović', status: 'yes' as const, adults: 2, children: 0, message: null, menu: 'riba', transport: true, allergy: null },
+    { fullName: 'Nenad Ilić', status: 'yes' as const, adults: 2, children: 2, message: 'Dolazimo svi četvoro.', menu: 'meso', transport: false, allergy: 'Jedno dete ne jede orašaste plodove.' },
+    { fullName: 'Zoran Marković', status: 'no' as const, adults: 0, children: 0, message: 'Nažalost, putujemo tih dana.', menu: null, transport: null, allergy: null },
+    { fullName: 'Aleksandar Nikolić', status: 'maybe' as const, adults: 2, children: 0, message: null, menu: null, transport: null, allergy: null },
+    { fullName: 'Marko Stanković', status: 'yes' as const, adults: 1, children: 0, message: null, menu: 'vegetarijanski', transport: true, allergy: null },
   ];
 
   for (const response of responses) {
-    await db
+    const [row] = await db
       .insert(rsvpResponses)
       .values({
         invitationId: invitation.id,
@@ -507,8 +515,65 @@ async function seedDemoEvent(ownerId: string) {
         childrenCount: response.children,
         message: response.message,
         editTokenHash: hashToken(randomToken()),
-      });
+      })
+      .returning({ id: rsvpResponses.id });
+
+    if (!row) continue;
+
+    const answers = [
+      menuQuestion && response.menu
+        ? { questionId: menuQuestion.id, value: response.menu }
+        : null,
+      transportQuestion && response.transport !== null
+        ? { questionId: transportQuestion.id, value: response.transport }
+        : null,
+      allergyQuestion && response.allergy
+        ? { questionId: allergyQuestion.id, value: response.allergy }
+        : null,
+    ].filter((answer) => answer !== null);
+
+    if (answers.length > 0) {
+      await db.insert(rsvpAnswers).values(
+        answers.map((answer) => ({ responseId: row.id, ...answer })),
+      );
+    }
   }
+
+  /*
+   * Knjiga želja u sva tri stanja: odobrena poruka koju gosti vide, poruka
+   * koja čeka domaćine i sakrivena. Demo u kome je sve odobreno ne bi pokazao
+   * čemu moderacija služi (zahtev 9).
+   */
+  await db.insert(guestbookEntries).values([
+    {
+      invitationId: invitation.id,
+      authorName: 'Vesna Jovanović',
+      message: 'Neka vam zajednički put bude dug i pun smeha. Voli vas kuma Vesna.',
+      reaction: '❤️',
+      status: 'approved',
+    },
+    {
+      invitationId: invitation.id,
+      authorName: 'Bojan Đurić',
+      message: 'Čestitke od celog tima! Jedva čekamo da zaigramo.',
+      reaction: '🎉',
+      status: 'approved',
+    },
+    {
+      invitationId: invitation.id,
+      authorName: 'Katarina Mitrović',
+      message: 'Vidimo se u Kikindi! Nosim onu tortu koju svi traže.',
+      reaction: null,
+      status: 'pending',
+    },
+    {
+      invitationId: invitation.id,
+      authorName: 'Nepoznati posetilac',
+      message: 'Poruka koju su domaćini sklonili sa javne stranice.',
+      reaction: null,
+      status: 'hidden',
+    },
+  ]);
 
   // Demo sala sa stolovima i nekoliko raspoređenih gostiju.
   const [plan] = await db

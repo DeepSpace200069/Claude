@@ -54,10 +54,14 @@ export function IssuedLinkDialog({
           onFocus={(event) => event.currentTarget.select()}
         />
 
+        {/*
+          Jedina radnja je kopiranje. Zatvaranje već nudi „x" u uglu, pa drugo
+          dugme sa istim imenom ne postoji - dva kontrole sa istim nazivom u
+          istom dijalogu čitač ekrana pročita kao dve iste opcije (zahtev 31).
+        */}
         <DialogFooter>
           <Button
             type="button"
-            variant="secondary"
             onClick={() => {
               if (!url) return;
               void navigator.clipboard
@@ -67,9 +71,6 @@ export function IssuedLinkDialog({
             }}
           >
             {copied ? t('guests.linkCopied') : t('guests.linkCopy')}
-          </Button>
-          <Button type="button" onClick={onClose}>
-            {t('common.close')}
           </Button>
         </DialogFooter>
       </DialogContent>

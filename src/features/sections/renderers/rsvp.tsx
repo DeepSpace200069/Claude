@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 
-import { rsvpLabels } from '@/features/rsvp/labels';
+import { fillLabel, rsvpLabels } from '@/features/rsvp/labels';
 import { RsvpForm } from '@/features/rsvp/rsvp-form';
 import { formatDate } from '@/i18n/format';
 
@@ -52,7 +52,7 @@ export function RsvpRenderer({
     >
       {deadlineLabel && !closed ? (
         <p className="inv-rsvp__deadline">
-          {labels.deadline(deadlineLabel)}
+          {fillLabel(labels.deadline, { date: deadlineLabel })}
           {data.deadlineNote ? ` ${data.deadlineNote}` : null}
         </p>
       ) : null}

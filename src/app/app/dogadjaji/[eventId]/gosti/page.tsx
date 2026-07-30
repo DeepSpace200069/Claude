@@ -3,6 +3,8 @@ import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert } from '@/components/ui/feedback';
+import { limitFor } from '@/features/billing/entitlements';
 import { AddGuestButton } from '@/features/guests/add-guest-button';
 import { GuestFiltersBar } from '@/features/guests/guest-filters';
 import { GuestTable } from '@/features/guests/guest-table';
@@ -14,6 +16,7 @@ import { loadMessages } from '@/i18n/messages';
 import { getRequestLocale, getTranslations } from '@/i18n/server';
 import { requireEventPageAccess } from '@/server/authz/page-guards';
 import { roleHasPermission } from '@/server/authz/permissions';
+import { getUserEntitlements } from '@/server/services/entitlements';
 import {
   listGuestTags,
   listGuests,
@@ -48,11 +51,21 @@ export default async function GuestsPage({
     redosled: single(query.redosled) ?? 'prezime',
   });
 
-  const [guests, households, tags] = await Promise.all([
+  const [guests, households, tags, entitlements] = await Promise.all([
     listGuests(eventId, filters),
     listHouseholds(eventId),
     listGuestTags(eventId),
+    getUserEntitlements(access.user.id),
   ]);
+
+  /*
+   * Granica paketa se kaže **unapred**, a ne tek kada korisnik popuni formu i
+   * klikne „Sačuvaj". Dugmad ostaju vidljiva, jer skrivanje ostavlja korisnika
+   * da se pita zašto nešto ne radi - a server istu proveru ionako ponavlja
+   * (zahtev 18 i 24).
+   */
+  const guestLimit = limitFor(entitlements, 'maxGuests');
+  const limitReached = guestLimit !== null && guests.length >= guestLimit;
 
   const locale = await getRequestLocale();
   const t = await getTranslations(locale);
@@ -92,6 +105,22 @@ export default async function GuestsPage({
             <AddGuestButton eventId={eventId} households={householdOptions} />
           ) : null}
         </header>
+
+        {limitReached ? (
+          <Alert tone="info" title={t('plans.limitReachedTitle')}>
+            <p>
+              {t('guests.limitReachedText', {
+                plan: entitlements.planName,
+                count: guestLimit ?? 0,
+              })}
+            </p>
+            <p className="mt-2">
+              <Link href="/cenovnik" className="font-medium underline underline-offset-4">
+                {t('publishing.seePlans')}
+              </Link>
+            </p>
+          </Alert>
+        ) : null}
 
         <GuestFiltersBar eventId={eventId} filters={filters} tags={tags} t={t} />
 

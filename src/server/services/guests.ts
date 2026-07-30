@@ -173,14 +173,22 @@ export async function listHouseholds(eventId: string): Promise<HouseholdRow[]> {
       name: guestHouseholds.name,
       maxGuests: guestHouseholds.maxGuests,
       notes: guestHouseholds.notes,
+      /*
+       * Imena tabela i kolona su ovde ispisana, a ne uzeta iz šeme.
+       *
+       * Drizzle unutar `select` polja renderuje kolonu **bez kvalifikatora**
+       * (`"id"` umesto `"guest_households"."id"`), pa bi u korelisanom podupitu
+       * `guest_households.id` bilo protumačeno kao `guests.id` - poređenje koje
+       * je uvek netačno, a ne baca grešku. Zato podupiti nose eksplicitne
+       * aliase i puna imena.
+       */
       guestCount: sql<number>`(
-        select count(*)::int from ${guests}
-        where ${guests.householdId} = ${guestHouseholds.id}
-          and ${guests.deletedAt} is null
+        select count(*)::int from guests g
+        where g.household_id = guest_households.id and g.deleted_at is null
       )`,
       recipientId: sql<string | null>`(
-        select r.id from ${invitationRecipients} r
-        where r.household_id = ${guestHouseholds.id} and r.revoked_at is null
+        select r.id from invitation_recipients r
+        where r.household_id = guest_households.id and r.revoked_at is null
         limit 1
       )`,
     })

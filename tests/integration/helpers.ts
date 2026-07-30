@@ -76,15 +76,43 @@ export async function createTestUser(
   return user;
 }
 
+/**
+ * Podiže granicu gostiju.
+ *
+ * Besplatan paket namerno ima `maxGuests: 0` - spisak gostiju je deo paketa
+ * koji se plaća. Testovi koji proveravaju rad sa gostima zato prvo moraju da
+ * podignu granicu, isto kao što korisnik prvo mora da nadogradi paket.
+ */
+export async function raiseGuestLimit(limit: number | null): Promise<void> {
+  await setFreePlanLimit('maxGuests', limit);
+}
+
 /** Podiže limit paketa kada test treba da napravi više događaja od besplatnog limita. */
 export async function raiseEventLimit(limit: number | null): Promise<void> {
+  await setFreePlanLimit('maxEvents', limit);
+}
+
+/**
+ * Menja jednu granicu besplatnog paketa, čuvajući ostale.
+ *
+ * Čita se trenutno stanje iz baze, a ne podrazumevani paket iz koda: testovi
+ * često podignu dve granice zaredom, pa bi pisanje celog objekta poništilo
+ * prethodnu izmenu.
+ */
+async function setFreePlanLimit(
+  key: keyof (typeof DEFAULT_PLANS)['free']['limits'],
+  limit: number | null,
+): Promise<void> {
+  const [row] = await db
+    .select({ features: featurePlans.features })
+    .from(featurePlans)
+    .where(eq(featurePlans.code, 'free'))
+    .limit(1);
+
+  const current = row?.features ?? DEFAULT_PLANS.free;
+
   await db
     .update(featurePlans)
-    .set({
-      features: {
-        ...DEFAULT_PLANS.free,
-        limits: { ...DEFAULT_PLANS.free.limits, maxEvents: limit },
-      },
-    })
+    .set({ features: { ...current, limits: { ...current.limits, [key]: limit } } })
     .where(eq(featurePlans.code, 'free'));
 }

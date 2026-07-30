@@ -7,7 +7,7 @@ Korisnik izabere vrstu proslave i šablon, uredi sadržaj kroz modularni uređiv
 objavi pozivnicu i podeli jedan stabilan link. Gosti odgovaraju bez naloga, a
 organizator prati potvrde dolaska i pravi raspored sedenja.
 
-> **Trenutno stanje: Faze 1–4 su završene.** Osnova (baza, autentifikacija,
+> **Trenutno stanje: Faze 1–5 su završene.** Osnova (baza, autentifikacija,
 > autorizacija, dizajn sistem, i18n, upravljanje događajima), marketinški deo
 > (galerija šablona sa filterima, live demo, cenovnik iz baze, pravne stranice,
 > SEO) i **modularni uređivač pozivnice** rade i pokriveni su testovima:
@@ -16,9 +16,11 @@ organizator prati potvrde dolaska i pravi raspored sedenja.
 > promena šablona bez gubitka sadržaja i otpremanje fotografija sa uklanjanjem
 > EXIF lokacije. Radi i **javna pozivnica**: četiri režima privatnosti, datum
 > isteka, PIN, personalizovani linkovi, kartica pri deljenju, QR kod i keširanje
-> koje se poništava pri svakoj izmeni. RSVP, raspored sedenja i naplata dolaze u
-> fazama 5–7 — vidi [`TASKS.md`](./TASKS.md) i „Poznata ograničenja” na dnu ovog
-> dokumenta.
+> koje se poništava pri svakoj izmeni. Radi i ceo tok oko gostiju: **spisak
+> gostiju sa domaćinstvima, uvoz i izvoz CSV-a, personalizovani linkovi, prava
+> RSVP forma sa dodatnim pitanjima i kasnijom izmenom odgovora, podsetnici i
+> knjiga želja sa moderacijom.** Raspored sedenja i naplata dolaze u fazama 6–7 —
+> vidi [`TASKS.md`](./TASKS.md) i „Poznata ograničenja” na dnu ovog dokumenta.
 
 ---
 
@@ -32,6 +34,7 @@ organizator prati potvrde dolaska i pravi raspored sedenja.
 - [Registar sekcija](#registar-sekcija)
 - [Uređivač pozivnice](#uređivač-pozivnice)
 - [Javna pozivnica](#javna-pozivnica)
+- [Gosti, RSVP i knjiga želja](#gosti-rsvp-i-knjiga-želja)
 - [Tok kreiranja i objavljivanja](#tok-kreiranja-i-objavljivanja)
 - [Adapteri](#adapteri)
 - [Environment varijable](#environment-varijable)
@@ -192,7 +195,9 @@ Ključna pravila:
 │   │   │   │   ├── novi/       Čarobnjak
 │   │   │   │   └── [eventId]/  Dashboard, podešavanja, uređivač, (gosti…)
 │   │   │   └── profil/
-│   │   ├── p/[publicSlug]/     JAVNA POZIVNICA (+ /[token] za lične linkove)
+│   │   ├── p/[publicSlug]/     JAVNA POZIVNICA
+│   │   │                       + /[token]            lični link gosta
+│   │   │                       + /odgovor/[token]    izmena odgovora
 │   │   ├── api/auth/           Auth.js rute
 │   │   ├── api/uploads/local/  Prijem fotografija u razvojnom režimu
 │   │   ├── api/p/…/pregled/    Beleženje pregleda (dnevni zbir)
@@ -216,6 +221,24 @@ Ključna pravila:
 │   │   │   ├── editors/        Editori po kategoriji sekcije
 │   │   │   └── fields/         Deljena polja uređivača
 │   │   ├── events/             Šeme, detalji po tipu, čarobnjak
+│   │   ├── guests/             SPISAK GOSTIJU
+│   │   │   ├── schemas.ts      Gost, domaćinstvo, filteri, uvoz
+│   │   │   ├── guest-table.tsx Spisak sa radnjama nad redom
+│   │   │   ├── guest-dialog.tsx
+│   │   │   ├── household-manager.tsx
+│   │   │   ├── import-guests.tsx
+│   │   │   └── issued-link-dialog.tsx  Link koji se vidi samo jednom
+│   │   ├── guestbook/          Knjiga želja: šeme, javna forma, moderacija
+│   │   ├── rsvp/               POTVRDA DOLASKA
+│   │   │   ├── types.ts        Oblik podataka bez ijedne zavisnosti
+│   │   │   ├── schemas.ts      Pitanja, slanje, provera odgovora
+│   │   │   ├── labels.ts       Tekstovi sekcija na 4 jezika
+│   │   │   ├── section-data.ts Podešavanja RSVP-a čitana iz pozivnice
+│   │   │   ├── rsvp-form.tsx   Javna forma (bez biblioteke za forme)
+│   │   │   ├── question-field.tsx  Svih šest tipova pitanja
+│   │   │   ├── question-manager.tsx / question-dialog.tsx
+│   │   │   ├── response-list.tsx / reminder-panel.tsx
+│   │   │   └── export.ts       Prikaz odgovora u tabeli i u CSV-u
 │   │   ├── invitations/        JAVNA POZIVNICA I DELJENJE
 │   │   │   ├── invitation-renderer.tsx  Sklapanje pozivnice od sekcija
 │   │   │   ├── public-invitation-view.tsx
@@ -233,7 +256,8 @@ Ključna pravila:
 │   │   │   └── definitions/    basics, logistics, media, interaction
 │   │   └── themes/             Design tokeni + provera kontrasta
 │   ├── i18n/                   Prevodilac, formati, katalozi (4 jezika)
-│   ├── lib/                    env, slug, ids, uuid, image-metadata, utils
+│   ├── lib/                    env, slug, ids, uuid, image-metadata,
+│   │                           csv (parser i generator), form-nonce, utils
 │   ├── server/
 │   │   ├── actions/            Server akcije (jedini put za mutacije)
 │   │   ├── adapters/           email · storage · payments
@@ -576,6 +600,176 @@ fontove i rasterizator.
 
 ---
 
+## Gosti, RSVP i knjiga želja
+
+### Spisak gostiju (zahtev 12)
+
+Obavezno je samo ime. Organizator često zna samo to — kada forma traži i email i
+telefon, u spisku završe izmišljeni podaci. Sve ostalo (prezime, kontakt,
+oznake, privatna beleška, domaćinstvo) je dopuna.
+
+**Svaki upit nad gostima ide uz `eventId`**, čak i kada je identifikator gosta
+jedinstven. To nije optimizacija nego odbrana: nijedna greška u pozivaocu ne
+može da dohvati ili izmeni tuđeg gosta (zahtev 24 i 39.8).
+
+Brisanje je **meko**. Odgovor koji je gost već poslao ostaje — organizator ga i
+dalje broji u statistici, a i sam gost bi se s pravom začudio da mu potvrda
+nestane. Lični link obrisanog gosta prestaje da radi odmah.
+
+Filteri (pretraga, oznaka, stanje odgovora, redosled) žive u URL-u i idu kroz
+običnu `GET` formu, bez ijedne linije JavaScripta: filtriran spisak se deli
+linkom, otvara u novoj kartici i vraća dugmetom „nazad".
+
+### Domaćinstva (zahtev 12 i 13)
+
+Porodica dobija **jedan** link i odgovara zajedno. Zato lični link stoji uz
+domaćinstvo, a ne uz svakog člana — inače bi ista porodica dobila četiri linka i
+poslala četiri odgovora. Domaćinstvo može da nosi gornju granicu broja osoba,
+koju server proverava pri slanju odgovora.
+
+Brisanje domaćinstva **ne briše goste**; oni samo prestaju da budu grupisani
+(`ON DELETE SET NULL`).
+
+### Personalizovani linkovi (zahtev 13 i 39.6)
+
+```
+/p/<slug>/<TOKEN>            lični link gosta ili domaćinstva
+/p/<slug>/odgovor/<TOKEN>    izmena već poslatog odgovora
+```
+
+Token je kriptografski nepredvidiv (Crockford base32, ≈130 bita) i u bazi živi
+**samo kao heš**. Posledica je namerna i jasno rečena u interfejsu: jednom izdat
+link niko ne može ponovo da pročita — može se samo izdati novi, čime stari
+prestaje da važi. Baza koja procuri ne otvara tuđe pozivnice.
+
+Kanonizacija javne putanje spušta na mala slova **samo segment sluga**. Token
+ostaje netaknut; da nije tako, svaki već poslati lični link bi tiho prestao da
+radi. Postoji E2E test baš za to.
+
+### RSVP forma
+
+Renderer sekcije ima dva jasno razdvojena stanja:
+
+| Režim | Šta se vidi | Šta se dešava |
+|-------|-------------|---------------|
+| `live` | Radna forma, popunjena ranijim odgovorom ako ga gost ima | Odgovor se upisuje |
+| `preview` | Isti izgled, polja onemogućena, napomena „u demo prikazu se ništa ne šalje" | Ne postoji nijedan put do upisa |
+
+Razdvajanje je doslovno: u `preview` režimu `live` kontekst je `null`, pa forma
+nema ni token, ni ključ obrasca, ni akciju. Nemoguće je pomisliti da je odgovor
+poslat, a da nigde nije zapisan (zahtev 39.9).
+
+Forma je pisana bez biblioteke za forme. Gost je najčešće na telefonu i na
+mobilnom internetu, pa svaki kilobajt na javnoj pozivnici košta više nego u
+aplikaciji organizatora (zahtev 32 i 39.10). Iz istog razloga su tekstovi
+interaktivnih sekcija u `features/rsvp/labels.ts` na sva četiri jezika, umesto
+da javna stranica povlači ceo katalog prevoda.
+
+**Server akcije stižu do forme kao prop, ne kroz `import`.** Renderer sekcije se
+učitava i u uređivaču, pa bi uvoz akcije povukao ceo serverski graf u bundle
+pregleda.
+
+### Šta server proverava pri slanju odgovora (zahtev 24)
+
+Javni RSVP je jedini upis koji stiže od nekoga bez naloga, pa akcija ne veruje
+ničemu iz zahteva:
+
+1. **Polje-mamac** — sakriveno polje koje pravi gost nikad ne vidi. Ako je
+   popunjeno, odgovor je „uspešan", ali se ništa ne upisuje: poruka o grešci bi
+   automatu rekla šta da promeni.
+2. **Ograničenje po otisku klijenta** — osam slanja na deset minuta po pozivnici.
+3. **Potpisani ključ obrasca** (`lib/form-nonce.ts`) — dokazuje da je obrazac
+   izdala naša stranica i nosi trenutak izdavanja, pa se odbacuje slanje brže od
+   dve sekunde.
+4. **Pristup pozivnici** — ista provera kao za prikaz: objavljena, nije istekla,
+   PIN ili lični link ako režim to traži.
+5. **Podešavanja sekcije se čitaju iz pozivnice**, a ne iz zahteva: da li se
+   traže deca, pratnja, kontakt i poruka, i koji je rok.
+6. **Rok** se meri po kraju dana u vremenskoj zoni događaja — gost koji odgovori
+   u 23:50 na sam dan roka nije zakasnio.
+7. **Odgovori na dodatna pitanja** se mere prema pitanjima učitanim iz baze.
+
+Ovo **nije** CAPTCHA i README to ne krije: napadač koji jednom učita stranicu
+dobija ispravan ključ. Adapter za CAPTCHA je posao Faze 8.
+
+### Jedan primalac, jedan odgovor
+
+Isti lični link uvek ima najviše jedan odgovor — jedinstveni indeks u bazi to i
+garantuje. Ponovno slanje **menja** postojeći umesto da napravi drugi, pa
+dvostruki klik na „Pošalji" ne pravi dva gosta.
+
+Javni RSVP bez ličnog linka uvek pravi nov odgovor. Dva gosta sa istim imenom su
+realnost, a spajanje po imenu bi tiho prepisalo tuđu potvrdu.
+
+Pri svakoj izmeni se odgovori na dodatna pitanja pišu iznova. Gost koji je
+promenio „dolazim" u „ne dolazim" ne sme da zadrži odgovore na pitanja koja više
+ne vidi.
+
+### Dodatna pitanja (svih šest tipova)
+
+`single_choice`, `multi_choice`, `boolean`, `number`, `text`, `date`. Pitanje
+može da bude obavezno i može da se prikazuje samo gostima koji dolaze — takva
+pitanja se za goste koji ne dolaze ne proveravaju i ne čuvaju.
+
+Ključevi opcija (`o1`, `o2`…) dodeljuju se jednom i više se ne menjaju.
+Organizator sme da preformuliše opciju („Pileće" → „Piletina"), a već poslati
+odgovori nastavljaju da pokazuju na istu stvar.
+
+### Uvoz i izvoz (`src/lib/csv.ts`)
+
+Parser i generator su napisani ovde, u stotinak redova, umesto uvođenja
+biblioteke — format je mali, a jedini delovi koji prave probleme su navodnici i
+prelomi reda unutar polja.
+
+- **Razdvajač se prepoznaje**, ne pretpostavlja: Excel na srpskim i nemačkim
+  podešavanjima izvozi tačka-zarezom, ostali alati zarezom.
+- **BOM se piše** jer bez njega Excel na Windowsu otvori UTF-8 fajl kao
+  Windows-1252 i sva naša slova postanu smeće.
+- **Vrednost koja počinje sa `=`, `+`, `-` ili `@` dobija apostrof.** Excel bi je
+  inače protumačio kao formulu — poznat način da se kroz naizgled bezopasan
+  spisak gostiju izvrši komanda na tuđem računaru.
+- **Kolone se prepoznaju po nazivu**, na srpskom ili engleskom, sa ili bez
+  dijakritike i u proizvoljnom redosledu. Domaćinstva se prave u hodu.
+- **Red koji ne razumemo se preskoči uz objašnjenje**, umesto da obori ceo uvoz.
+  Spisak od dvesta gostiju ne sme da propadne zbog jednog praznog reda.
+
+Izvoz odgovora dodaje po jednu kolonu za svako dodatno pitanje — organizator
+hoće tabelu koju može da sortira, a ne jedno polje sa nabrajanjem. Obe rute za
+preuzimanje idu iza dozvole i šalju `cache-control: no-store, private`.
+
+### Podsetnici (zahtev 5.10 i 25)
+
+Aplikacija **ne šalje poruke gostima sama**. Stranica odgovora prikazuje spisak
+gostiju sa ličnim linkom koji još nisu odgovorili i nudi kopiranje njihovih
+email adresa ili brojeva telefona; poruku šalje organizator svojim kanalom.
+
+Kontakt gosta je dat organizatoru za tu proslavu, a ne nama za slanje.
+
+### Knjiga želja (zahtev 9)
+
+Podrazumevano stanje poruke je **„čeka odobrenje"**. Javna forma bez naloga je
+mesto gde pre ili kasnije stigne nešto što domaćini ne žele da im gosti vide na
+dan venčanja. Organizator sme da isključi moderaciju, ali to mora da bude
+njegova svesna odluka.
+
+Poruka je čist tekst i takva se ispisuje — i na javnoj pozivnici i u panelu
+organizatora. Nijedan sadržaj koji gost napiše ne može da se izvrši kod drugog
+gosta (zahtev 24, „custom HTML nije dozvoljen").
+
+Odobrena ili obrisana poruka odmah poništava keš javne stranice, pa dugme nikad
+ne izgleda kao da nije radilo.
+
+### Granica paketa
+
+Besplatan paket ima `maxGuests: 0` — spisak gostiju je deo paketa koji se plaća.
+Stranica gostiju to kaže **odmah, iznad spiska**, a ne tek kada korisnik popuni
+formu i klikne „Sačuvaj". Dugmad ostaju vidljiva: skriveno dugme ostavlja
+korisnika da se pita zašto nešto ne radi. Server istu granicu proverava i u
+akciji i u uvozu, gde se meri brojem redova koji **zaista postaju gosti** —
+prazni i neispravni redovi se ionako preskaču.
+
+---
+
 ## Tok kreiranja i objavljivanja
 
 ```mermaid
@@ -742,9 +936,9 @@ pnpm test:e2e            # Playwright
 
 | Vrsta | Broj | Pokriva |
 |-------|------|---------|
-| Unit | 235 | Zod šeme sekcija, migracije verzija, slug, tokeni, dozvole, entitlements, prelazi stanja naplate, kontrast tema, i18n i množina, registri sekcija/renderera/editora, tokeni teme u CSS, grupisanje boja, demo kontekst, seed šabloni, operacije nad dokumentom uređivača, istorija poništi/ponovi, spajanje pri promeni šablona, uklanjanje EXIF-a iz JPEG/PNG/WebP, **QR matrica i SVG/PNG izlaz**, **kraj dana u vremenskoj zoni i dan agregata** |
-| Integracioni | 78 | Kreiranje događaja u transakciji, jedinstvenost sluga, limiti paketa, meko brisanje, cascade pravila, `CHECK` ograničenja, snimak verzije šablona, čuvanje nacrta i sudar revizija, limiti i zaključane sekcije pri čuvanju, snimci verzija i orezivanje, otpremanje fotografija i odbijanje fajla sa EXIF-om, **objavljivanje i isključivanje linka**, **sva četiri režima privatnosti**, **istek do kraja dana**, **PIN i tokeni samo kao heš**, **dnevni agregat i spisak kolona statistike** |
-| E2E | 98 (49 × desktop/mobilni) | Marketing, prijava, zaštita ruta, čarobnjak sa izborom šablona, dashboard, izmena bez promene linka, brisanje uz potvrdu, profil, galerija i filteri, favoriti, demo na tri veličine ekrana, cenovnik, česta pitanja, sitemap, uređivač (živi pregled, autosave, biblioteka, redosled bez miša, kontrast, otpremanje fotografije), **javna pozivnica: nacrt i istek se ne prikazuju, PIN kapija, lični linkovi, indeksiranje po režimu, deljenje i QR, poništavanje keša posle izmene** |
+| Unit | 278 | Zod šeme sekcija, migracije verzija, slug, tokeni, dozvole, entitlements, prelazi stanja naplate, kontrast tema, i18n i množina, registri sekcija/renderera/editora, tokeni teme u CSS, grupisanje boja, demo kontekst, seed šabloni, operacije nad dokumentom uređivača, istorija poništi/ponovi, spajanje pri promeni šablona, uklanjanje EXIF-a iz JPEG/PNG/WebP, QR matrica i SVG/PNG izlaz, kraj dana u vremenskoj zoni i dan agregata, **CSV parser i generator (razdvajač, navodnici, prelom reda u polju, zaštita od formula, prepoznavanje kolona)**, **potpisani ključ obrasca (prebrzo slanje, istek, tuđi opseg, izmenjeno vreme)**, **provera odgovora na svih šest tipova pitanja** |
+| Integracioni | 109 | Kreiranje događaja u transakciji, jedinstvenost sluga, limiti paketa, meko brisanje, cascade pravila, `CHECK` ograničenja, snimak verzije šablona, čuvanje nacrta i sudar revizija, limiti i zaključane sekcije pri čuvanju, snimci verzija i orezivanje, otpremanje fotografija i odbijanje fajla sa EXIF-om, **objavljivanje i isključivanje linka**, **sva četiri režima privatnosti**, **istek do kraja dana**, **PIN i tokeni samo kao heš**, dnevni agregat i spisak kolona statistike, **gosti uz `eventId` (tuđi gost i tuđe domaćinstvo se ne vide)**, **meko brisanje gasi lični link**, **token i token za izmenu samo kao heš**, **jedan primalac = jedan odgovor**, **granica osoba sa linka domaćinstva**, **uvoz CSV-a i granica paketa**, **moderacija knjige želja** |
+| E2E | 110 (55 × desktop/mobilni) | Marketing, prijava, zaštita ruta, čarobnjak sa izborom šablona, dashboard, izmena bez promene linka, brisanje uz potvrdu, profil, galerija i filteri, favoriti, demo na tri veličine ekrana, cenovnik, česta pitanja, sitemap, uređivač (živi pregled, autosave, biblioteka, redosled bez miša, kontrast, otpremanje fotografije), javna pozivnica (nacrt i istek se ne prikazuju, PIN kapija, indeksiranje po režimu, deljenje i QR, poništavanje keša), **spisak gostiju: dodavanje, oznake, lični link koji se vidi samo jednom, filtriranje kroz URL, izvoz kao CSV**, **gost šalje odgovor sa javne pozivnice i dobija link za izmenu**, **izmena odgovora ne pravi drugi odgovor**, **lični link sa velikim slovima ostaje ispravan** |
 
 ```bash
 pnpm test                # unit — bez baze
@@ -770,7 +964,7 @@ Integracioni testovi se **preskaču** ako `TEST_DATABASE_URL` nije postavljen, p
 
 ## Bezbednost
 
-Implementirano do kraja Faze 3:
+Implementirano do kraja Faze 5:
 
 - **Autorizacija na serveru** za svaku akciju i stranicu; interfejs nikad nije
   jedina odbrana.
@@ -803,7 +997,22 @@ Implementirano do kraja Faze 3:
   kartica pri deljenju, ni Open Graph slika.
 - **CSRF** — mutacije idu isključivo kroz server akcije, koje imaju ugrađenu
   zaštitu; odjava radi i bez JavaScripta.
-- **Sigurnosna zaglavlja** i `X-Robots-Tag: noindex` na `/p/*`.
+- **Podaci gostiju su najosetljiviji deo aplikacije.** Svaki upit nad gostima,
+  domaćinstvima i odgovorima ide uz `eventId`, i kada je identifikator
+  jedinstven — greška u pozivaocu ne može da dohvati tuđeg gosta.
+- **Personalizovani tokeni i tokeni za izmenu odgovora** čuvaju se isključivo
+  kao heš, pa se jednom izdat link ne može ponovo pročitati.
+- **Kanonizacija javne putanje dira samo slug**, nikad token; inače bi već
+  poslati lični linkovi tiho prestali da rade.
+- **Javne forme** (RSVP i knjiga želja) imaju polje-mamac, potpisani ključ
+  obrasca sa donjom granicom vremena i ograničenje po otisku klijenta. Podešavanja
+  sekcije (tražena polja, rok) čitaju se iz pozivnice, a ne iz zahteva.
+- **Knjiga želja podrazumevano traži odobrenje**, a poruka se svuda ispisuje kao
+  tekst — ni u panelu organizatora se ne izvršava.
+- **Izvoz gostiju i odgovora** ide iza dozvole i šalje `no-store, private`.
+- **Sigurnosna zaglavlja**; `X-Robots-Tag: noindex` stoji na putanjama sa tokenom
+  (`/p/:slug/:token*`), a ne na celom `/p/*` — inače bi pregazio režim „javno"
+  koji organizator bira u interfejsu.
 - **Provera potpisa webhooka** i idempotentna obrada uplata.
 - **Audit log** za administrativne radnje.
 
@@ -829,14 +1038,16 @@ Seed nije namenjen produkciji — puni bazu demo sadržajem.
 
 ## Poznata ograničenja
 
-Iskreni pregled onoga što **još ne postoji** na kraju Faze 3. Detaljan plan je u
+Iskreni pregled onoga što **još ne postoji** na kraju Faze 5. Detaljan plan je u
 [`TASKS.md`](./TASKS.md).
 
 | Oblast | Stanje |
 |--------|--------|
 | Objavljivanje | Traži paket sa pravom `publish`; tok narudžbine i plaćanja je Faza 7. Na besplatnom paketu dugme postoji, ali je onemogućeno uz tačan razlog |
-| Personalizovani linkovi | Rade kao pristup i pozdrav po imenu; pravljenje, slanje i RSVP forma vezana za token dolaze u Fazi 5 |
-| RSVP i knjiga želja | Prikazuju se na javnoj pozivnici, ali su isključene i vidno označene dok Faza 5 ne doda obradu odgovora |
+| Spisak gostiju | Traži paket sa granicom `maxGuests`; besplatan paket ima 0 i stranica to kaže iznad spiska, pre nego što korisnik popuni formu |
+| Zaštita javnih formi | Polje-mamac, potpisani ključ obrasca i ograničenje po otisku klijenta. Pokriva automatizovano zatrpavanje, ali nije CAPTCHA — adapter dolazi u Fazi 8 |
+| Slanje podsetnika | Spisak gostiju bez odgovora i kontakti za kopiranje; samo slanje radi organizator svojim kanalom. Automatsko slanje bi tražilo posebnu saglasnost gosta |
+| Spajanje odgovora | Javni RSVP bez ličnog linka uvek pravi nov odgovor; spajanje po imenu bi tiho prepisalo tuđu potvrdu |
 | Statistika pregleda | Broji se iz pregledača da bi stranica ostala keširana; posetilac bez JavaScripta se ne broji |
 | Promena sluga | Servis postoji i proverava format i zauzetost; stranica dolazi kasnije jer je menjanje podeljenog linka opasna radnja |
 | Muzička sekcija | Podešavanja i prikaz rade; biblioteka numera još nije popunjena, a otpremanje zvuka dolazi u Fazi 8 |
@@ -845,7 +1056,6 @@ Iskreni pregled onoga što **još ne postoji** na kraju Faze 3. Detaljan plan je
 | Istorija verzija | Poslednjih 20 snimaka, najviše jedan na pet minuta; vraćanje ide kao obična izmena koju „poništi" može da vrati |
 | Sudar dve sesije | Ne spaja se automatski — korisnik bira da učita tuđu verziju ili da zadrži svoju |
 | Pravni dokumenti | Radna verzija napisana prema stvarnom ponašanju aplikacije; traži pregled pravnika, i stranica to kaže |
-| Gosti i RSVP interfejs | Kompletan model i dozvole; interfejs u Fazi 5 |
 | Raspored sedenja | Model, kapaciteti i preferencije u bazi; editor u Fazi 6 |
 | Naplata | Adapter, prelazi stanja i idempotencija testirani; tok objavljivanja u Fazi 7 |
 | Admin panel | Uloga i audit log postoje; stranice u Fazi 7 |

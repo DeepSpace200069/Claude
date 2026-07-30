@@ -15,18 +15,37 @@ import { NextResponse, type NextRequest } from 'next/server';
 export default function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
 
-  // Javne pozivnice: veliko slovo u slugu vodi na isti sadržaj, pa preusmeravamo
-  // na kanonski oblik umesto da imamo dva URL-a za istu stranicu.
+  /*
+   * Javne pozivnice: veliko slovo u slugu vodi na isti sadržaj, pa preusmeravamo
+   * na kanonski oblik umesto da imamo dva URL-a za istu stranicu.
+   *
+   * Normalizuje se **samo segment sluga**, nikad ostatak putanje. Personalizovani
+   * linkovi i linkovi za izmenu odgovora nose token iz abecede sa velikim slovima
+   * (`/p/ana-i-marko/D9740D4D…`), a token se poredi po hešu - spuštanje na mala
+   * slova bi tiho pokvarilo svaki lični link koji je već poslat gostima.
+   */
   if (pathname.startsWith('/p/')) {
-    const lower = pathname.toLowerCase();
-    if (lower !== pathname) {
+    const canonical = canonicalInvitationPath(pathname);
+
+    if (canonical !== pathname) {
       const url = request.nextUrl.clone();
-      url.pathname = lower;
+      url.pathname = canonical;
       return NextResponse.redirect(url, 308);
     }
   }
 
   return NextResponse.next();
+}
+
+/** `/p/<slug>/...` sa slugom u malim slovima; ostatak putanje ostaje netaknut. */
+function canonicalInvitationPath(pathname: string): string {
+  const segments = pathname.split('/');
+  const slug = segments[2];
+
+  if (!slug) return pathname;
+
+  segments[2] = slug.toLowerCase();
+  return segments.join('/');
 }
 
 export const config = {

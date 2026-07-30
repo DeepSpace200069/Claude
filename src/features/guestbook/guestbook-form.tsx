@@ -2,7 +2,7 @@
 
 import { useId, useState, useTransition } from 'react';
 
-import type { GuestbookLabels } from '@/features/rsvp/labels';
+import { fillLabel, type GuestbookLabels } from '@/features/rsvp/labels';
 import type { LiveInteractionContext } from '@/features/rsvp/types';
 
 import { GUESTBOOK_REACTIONS } from './schemas';
@@ -114,7 +114,7 @@ export function GuestbookForm({
             aria-invalid={errors.message ? true : undefined}
           />
           <p className="inv-field__hint inv-muted" id={`${fieldId}-preostalo`}>
-            {labels.charactersLeft(remaining)}
+            {fillLabel(labels.charactersLeft, { count: remaining })}
           </p>
           {errors.message ? (
             <p className="inv-field__hint" role="alert">

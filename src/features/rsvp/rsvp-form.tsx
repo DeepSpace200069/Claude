@@ -3,7 +3,7 @@
 import { useId, useState, useTransition } from 'react';
 
 import { QuestionField } from './question-field';
-import type { RsvpLabels } from './labels';
+import { fillLabel, type RsvpLabels } from './labels';
 import type { RsvpSectionData } from './section-data';
 import type { LiveInteractionContext, RsvpAnswerValue } from './types';
 
@@ -132,7 +132,7 @@ export function RsvpForm({
         <legend className="sr-only">{labels.legend}</legend>
 
         {live.maxGuests !== null ? (
-          <p className="inv-field__hint">{labels.maxGuests(live.maxGuests)}</p>
+          <p className="inv-field__hint">{fillLabel(labels.maxGuests, { count: live.maxGuests })}</p>
         ) : null}
 
         <Field

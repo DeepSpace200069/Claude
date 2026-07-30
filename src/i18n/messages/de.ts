@@ -1114,6 +1114,8 @@ const messages: Messages = {
     exportText: 'Laden Sie die ganze Liste mit Antworten als CSV-Datei für Excel herunter.',
     exportAction: 'CSV herunterladen',
 
+    limitReachedText:
+      'Der Tarif „{plan}“ erlaubt höchstens {count} Gäste auf der Liste. Upgraden Sie, um mehr hinzuzufügen.',
     saved: 'Gespeichert.',
     deleted: 'Gast gelöscht.',
   },
