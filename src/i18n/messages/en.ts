@@ -289,6 +289,7 @@ const messages: Messages = {
     backHome: 'Back to home',
     rateLimited: 'Too many attempts. Please wait a moment and try again.',
     unauthorized: 'Please sign in to continue.',
+    fileTooLarge: 'The file is too large. Split the list into smaller parts.',
   },
 
   sections: {
@@ -998,6 +999,216 @@ const messages: Messages = {
     statsUnique: 'Distinct visitors',
     statsShares: 'Shares',
     statsNote: 'We only count daily totals, without a single detail about any guest.',
+  },
+
+  guests: {
+    title: 'Guests',
+    subtitle: 'Your guest list, households and personal invitation links.',
+
+    addGuest: 'Add guest',
+    editGuest: 'Edit guest',
+    deleteGuest: 'Delete guest',
+    deleteConfirm: 'Remove {name} from the list? Any reply they sent stays.',
+
+    firstName: 'First name',
+    lastName: 'Last name',
+    email: 'Email',
+    phone: 'Phone',
+    isChild: 'Child',
+    tags: 'Tags',
+    tagsHint: 'Separate with commas, e.g. “bride’s family, colleagues”.',
+    privateNote: 'Private note',
+    privateNoteHint: 'Only you and your collaborators see this. Guests never do.',
+    household: 'Household',
+    noHousehold: 'No household',
+
+    search: 'Search',
+    searchPlaceholder: 'Name, email or phone',
+    filterTag: 'Tag',
+    allTags: 'All tags',
+    filterResponse: 'Reply',
+    allResponses: 'All replies',
+    sort: 'Order',
+    sortByLastName: 'By last name',
+    sortByFirstName: 'By first name',
+    sortByNewest: 'Newest first',
+    applyFilters: 'Apply',
+    clearFilters: 'Clear filters',
+
+    emptyTitle: 'Your guest list is empty',
+    emptyText: 'Add your first guest or import a list from a spreadsheet.',
+    noMatches: 'No guest matches these filters.',
+
+    countLabel: {
+      one: '{count} guest',
+      other: '{count} guests',
+    },
+
+    columnName: 'Guest',
+    columnContact: 'Contact',
+    columnHousehold: 'Household',
+    columnTags: 'Tags',
+    columnResponse: 'Reply',
+    columnLink: 'Personal link',
+    columnActions: 'Actions',
+
+    responsePending: 'No reply',
+    responseYes: 'Attending',
+    responseNo: 'Not attending',
+    responseMaybe: 'Maybe',
+
+    issueLink: 'Create personal link',
+    reissueLink: 'Create a new link',
+    revokeLink: 'Revoke link',
+    linkActive: 'Link is active',
+    linkNone: 'No link',
+    linkOnce:
+      'We show the link only now. If you lose it you can create a new one - the old one stops working.',
+    linkCopy: 'Copy link',
+    linkCopied: 'Link copied.',
+    linkRevoked: 'Link revoked.',
+    revokeConfirm: 'Revoke this link? The guest will no longer be able to open it.',
+
+    householdsTitle: 'Households',
+    householdsSubtitle: 'A family that gets one link and replies together.',
+    addHousehold: 'Add household',
+    editHousehold: 'Edit household',
+    householdName: 'Name',
+    householdMaxGuests: 'Maximum people',
+    householdMaxGuestsHint: 'Leave empty if you do not want an upper limit.',
+    householdNotes: 'Note',
+    householdGuests: 'Guests',
+    deleteHousehold: 'Delete household',
+    deleteHouseholdConfirm: 'Delete this household? The guests stay on the list.',
+    householdsEmpty: 'No households yet.',
+
+    importTitle: 'Import from a CSV file',
+    importText:
+      'Columns are matched by name (First name, Last name, Email, Phone, Household, Tags), in Serbian or English and in any order.',
+    importFile: 'CSV file',
+    importHasHeader: 'The first row contains column names',
+    importSubmit: 'Import guests',
+    importDone: 'Guests imported: {count}.',
+    importSkipped: 'Rows skipped: {count}.',
+    importProblems: 'Rows we could not read',
+    importRow: 'Row {row}',
+    importEmpty: 'Choose a file before importing.',
+
+    exportTitle: 'Export the list',
+    exportText: 'Download the whole list with replies as a CSV file Excel can open.',
+    exportAction: 'Download CSV',
+
+    saved: 'Saved.',
+    deleted: 'Guest deleted.',
+  },
+
+  responses: {
+    title: 'Replies',
+    subtitle: 'RSVPs, extra questions and reminders.',
+
+    summaryConfirmed: 'Attending',
+    summaryDeclined: 'Not attending',
+    summaryMaybe: 'Maybe',
+    summaryPending: 'No reply',
+    summaryPeople: 'People in total',
+
+    search: 'Search',
+    searchPlaceholder: 'Name, email or message',
+    filterAll: 'All',
+    filterYes: 'Attending',
+    filterNo: 'Not attending',
+    filterMaybe: 'Maybe',
+    sortNewest: 'Newest first',
+    sortName: 'By name',
+
+    columnGuest: 'Guest',
+    columnStatus: 'Reply',
+    columnPeople: 'People',
+    columnMessage: 'Message',
+    columnDate: 'Sent',
+
+    adults: 'adults',
+    children: 'children',
+    companions: 'Also coming',
+    editedAt: 'Edited {date}',
+    viaLink: 'via personal link',
+
+    deleteResponse: 'Delete reply',
+    deleteConfirm: 'Delete the reply from {name}?',
+    deleted: 'Reply deleted.',
+
+    emptyTitle: 'No replies yet',
+    emptyText: 'Once guests start replying, you will see them here.',
+    noMatches: 'No reply matches these filters.',
+
+    exportAction: 'Download CSV',
+
+    questionsTitle: 'Extra questions',
+    questionsSubtitle:
+      'Ask guests what you need for planning - menu, transport, accommodation.',
+    addQuestion: 'Add question',
+    editQuestion: 'Edit question',
+    deleteQuestion: 'Delete question',
+    deleteQuestionConfirm:
+      'Delete this question? The guests’ answers to it are deleted too.',
+    questionsEmpty: 'No extra questions yet.',
+
+    questionLabel: 'Question',
+    questionHelp: 'Help text',
+    questionType: 'Answer type',
+    questionRequired: 'An answer is required',
+    questionAttendingOnly: 'Show only to guests who are attending',
+    questionOptions: 'Options',
+    addOption: 'Add option',
+    removeOption: 'Remove option',
+    questionMin: 'Minimum value',
+    questionMax: 'Maximum value',
+    questionMaxLength: 'Maximum characters',
+    moveUp: 'Move up',
+    moveDown: 'Move down',
+
+    typeSingleChoice: 'Single choice',
+    typeMultiChoice: 'Multiple choice',
+    typeBoolean: 'Yes or no',
+    typeNumber: 'Number',
+    typeText: 'Text',
+    typeDate: 'Date',
+
+    remindersTitle: 'Reminder for guests who have not replied',
+    remindersText:
+      'Copy the contact list and send a reminder through whichever channel suits you.',
+    remindersNone: 'Every guest with a personal link has replied.',
+    remindersCopyEmails: 'Copy email addresses',
+    remindersCopyPhones: 'Copy phone numbers',
+    remindersCopied: 'Copied.',
+    remindersNoContact: 'Guests without contact details: {count}',
+  },
+
+  guestbookAdmin: {
+    title: 'Guest book',
+    subtitle: 'Messages from guests and their approval.',
+
+    filterAll: 'All',
+    filterPending: 'Awaiting approval',
+    filterApproved: 'Approved',
+    filterHidden: 'Hidden',
+
+    statusPending: 'Awaiting approval',
+    statusApproved: 'Approved',
+    statusHidden: 'Hidden',
+
+    approve: 'Approve',
+    hide: 'Hide',
+    deleteEntry: 'Delete',
+    deleteConfirm: 'Permanently delete the message from {name}?',
+    approved: 'Message approved.',
+    hidden: 'Message hidden.',
+    deleted: 'Message deleted.',
+
+    emptyTitle: 'No messages yet',
+    emptyText: 'When guests write a wish, it will appear here for approval.',
+    noSectionTitle: 'The guest book is not on the invitation',
+    noSectionText: 'Add the “Guest book” section in the editor to start receiving messages.',
   },
 
   plans: {

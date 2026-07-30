@@ -295,6 +295,7 @@ const messages = {
     backHome: 'Nazad na početnu',
     rateLimited: 'Previše pokušaja. Sačekajte malo pa probajte ponovo.',
     unauthorized: 'Prijavite se da biste nastavili.',
+    fileTooLarge: 'Fajl je prevelik. Podelite spisak na manje delove.',
   },
 
   sections: {
@@ -1009,6 +1010,217 @@ const messages = {
     statsUnique: 'Različitih posetilaca',
     statsShares: 'Deljenja',
     statsNote: 'Brojimo samo zbirno po danu, bez ijednog podatka o gostu.',
+  },
+
+  guests: {
+    title: 'Gosti',
+    subtitle: 'Spisak zvanica, domaćinstva i lični linkovi za pozivnicu.',
+
+    addGuest: 'Dodaj gosta',
+    editGuest: 'Izmeni gosta',
+    deleteGuest: 'Obriši gosta',
+    deleteConfirm: 'Obrisati {name} sa spiska? Odgovor koji je već poslao ostaje.',
+
+    firstName: 'Ime',
+    lastName: 'Prezime',
+    email: 'Email',
+    phone: 'Telefon',
+    isChild: 'Dete',
+    tags: 'Oznake',
+    tagsHint: 'Razdvojite zarezom, npr. „porodica mlade, kolege”.',
+    privateNote: 'Privatna beleška',
+    privateNoteHint: 'Vidite je samo vi i saradnici. Gost je nikad ne vidi.',
+    household: 'Domaćinstvo',
+    noHousehold: 'Bez domaćinstva',
+
+    search: 'Pretraga',
+    searchPlaceholder: 'Ime, email ili telefon',
+    filterTag: 'Oznaka',
+    allTags: 'Sve oznake',
+    filterResponse: 'Odgovor',
+    allResponses: 'Svi odgovori',
+    sort: 'Redosled',
+    sortByLastName: 'Po prezimenu',
+    sortByFirstName: 'Po imenu',
+    sortByNewest: 'Najnoviji prvo',
+    applyFilters: 'Primeni',
+    clearFilters: 'Poništi filtere',
+
+    emptyTitle: 'Spisak gostiju je prazan',
+    emptyText: 'Dodajte prvog gosta ili uvezite spisak iz tabele.',
+    noMatches: 'Nijedan gost ne odgovara filterima.',
+
+    countLabel: {
+      one: '{count} gost',
+      few: '{count} gosta',
+      other: '{count} gostiju',
+    },
+
+    columnName: 'Gost',
+    columnContact: 'Kontakt',
+    columnHousehold: 'Domaćinstvo',
+    columnTags: 'Oznake',
+    columnResponse: 'Odgovor',
+    columnLink: 'Lični link',
+    columnActions: 'Radnje',
+
+    responsePending: 'Bez odgovora',
+    responseYes: 'Dolazi',
+    responseNo: 'Ne dolazi',
+    responseMaybe: 'Možda',
+
+    issueLink: 'Napravi lični link',
+    reissueLink: 'Napravi novi link',
+    revokeLink: 'Poništi link',
+    linkActive: 'Link je aktivan',
+    linkNone: 'Nema link',
+    linkOnce:
+      'Link prikazujemo samo sada. Ako ga izgubite, možete napraviti novi - stari tada prestaje da važi.',
+    linkCopy: 'Kopiraj link',
+    linkCopied: 'Link je kopiran.',
+    linkRevoked: 'Link je poništen.',
+    revokeConfirm: 'Poništiti link? Gost više neće moći da ga otvori.',
+
+    householdsTitle: 'Domaćinstva',
+    householdsSubtitle: 'Porodica koja dobija jedan link i odgovara zajedno.',
+    addHousehold: 'Dodaj domaćinstvo',
+    editHousehold: 'Izmeni domaćinstvo',
+    householdName: 'Naziv',
+    householdMaxGuests: 'Najviše osoba',
+    householdMaxGuestsHint: 'Ostavite prazno ako ne želite gornju granicu.',
+    householdNotes: 'Napomena',
+    householdGuests: 'Broj gostiju',
+    deleteHousehold: 'Obriši domaćinstvo',
+    deleteHouseholdConfirm: 'Obrisati domaćinstvo? Gosti ostaju na spisku.',
+    householdsEmpty: 'Još nema domaćinstava.',
+
+    importTitle: 'Uvoz iz CSV fajla',
+    importText:
+      'Kolone se prepoznaju po nazivu (Ime, Prezime, Email, Telefon, Domaćinstvo, Oznake), na srpskom ili engleskom i u bilo kom redosledu.',
+    importFile: 'CSV fajl',
+    importHasHeader: 'Prvi red sadrži nazive kolona',
+    importSubmit: 'Uvezi goste',
+    importDone: 'Uvezeno gostiju: {count}.',
+    importSkipped: 'Preskočeno redova: {count}.',
+    importProblems: 'Redovi koje nismo mogli da pročitamo',
+    importRow: 'Red {row}',
+    importEmpty: 'Izaberite fajl pre uvoza.',
+
+    exportTitle: 'Izvoz spiska',
+    exportText: 'Preuzmite ceo spisak sa odgovorima u CSV fajlu koji Excel otvara.',
+    exportAction: 'Preuzmi CSV',
+
+    saved: 'Sačuvano.',
+    deleted: 'Gost je obrisan.',
+  },
+
+  responses: {
+    title: 'Odgovori',
+    subtitle: 'Potvrde dolaska, dodatna pitanja i podsetnici.',
+
+    summaryConfirmed: 'Dolazi',
+    summaryDeclined: 'Ne dolazi',
+    summaryMaybe: 'Možda',
+    summaryPending: 'Bez odgovora',
+    summaryPeople: 'Ukupno osoba',
+
+    search: 'Pretraga',
+    searchPlaceholder: 'Ime, email ili poruka',
+    filterAll: 'Svi',
+    filterYes: 'Dolaze',
+    filterNo: 'Ne dolaze',
+    filterMaybe: 'Možda',
+    sortNewest: 'Najnoviji prvo',
+    sortName: 'Po imenu',
+
+    columnGuest: 'Gost',
+    columnStatus: 'Odgovor',
+    columnPeople: 'Osobe',
+    columnMessage: 'Poruka',
+    columnDate: 'Poslato',
+
+    adults: 'odraslih',
+    children: 'dece',
+    companions: 'Dolaze i',
+    editedAt: 'Izmenjeno {date}',
+    viaLink: 'preko ličnog linka',
+
+    deleteResponse: 'Obriši odgovor',
+    deleteConfirm: 'Obrisati odgovor gosta {name}?',
+    deleted: 'Odgovor je obrisan.',
+
+    emptyTitle: 'Još nema odgovora',
+    emptyText: 'Kada gosti počnu da potvrđuju dolazak, videćete ih ovde.',
+    noMatches: 'Nijedan odgovor ne odgovara filterima.',
+
+    exportAction: 'Preuzmi CSV',
+
+    questionsTitle: 'Dodatna pitanja',
+    questionsSubtitle:
+      'Pitajte goste ono što vam treba za planiranje - meni, prevoz, smeštaj.',
+    addQuestion: 'Dodaj pitanje',
+    editQuestion: 'Izmeni pitanje',
+    deleteQuestion: 'Obriši pitanje',
+    deleteQuestionConfirm:
+      'Obrisati pitanje? Brišu se i odgovori gostiju na njega.',
+    questionsEmpty: 'Još nema dodatnih pitanja.',
+
+    questionLabel: 'Pitanje',
+    questionHelp: 'Pomoćni tekst',
+    questionType: 'Tip odgovora',
+    questionRequired: 'Odgovor je obavezan',
+    questionAttendingOnly: 'Prikaži samo gostima koji dolaze',
+    questionOptions: 'Ponuđene opcije',
+    addOption: 'Dodaj opciju',
+    removeOption: 'Ukloni opciju',
+    questionMin: 'Najmanja vrednost',
+    questionMax: 'Najveća vrednost',
+    questionMaxLength: 'Najviše znakova',
+    moveUp: 'Pomeri gore',
+    moveDown: 'Pomeri dole',
+
+    typeSingleChoice: 'Jedan izbor',
+    typeMultiChoice: 'Više izbora',
+    typeBoolean: 'Da ili ne',
+    typeNumber: 'Broj',
+    typeText: 'Tekst',
+    typeDate: 'Datum',
+
+    remindersTitle: 'Podsetnik za one koji nisu odgovorili',
+    remindersText:
+      'Kopirajte spisak kontakata i pošaljite podsetnik kanalom koji vam odgovara.',
+    remindersNone: 'Svi gosti sa ličnim linkom su odgovorili.',
+    remindersCopyEmails: 'Kopiraj email adrese',
+    remindersCopyPhones: 'Kopiraj brojeve telefona',
+    remindersCopied: 'Kopirano.',
+    remindersNoContact: 'Gosti bez kontakta: {count}',
+  },
+
+  guestbookAdmin: {
+    title: 'Knjiga želja',
+    subtitle: 'Poruke gostiju i njihovo odobravanje.',
+
+    filterAll: 'Sve',
+    filterPending: 'Čeka odobrenje',
+    filterApproved: 'Odobrene',
+    filterHidden: 'Sakrivene',
+
+    statusPending: 'Čeka odobrenje',
+    statusApproved: 'Odobrena',
+    statusHidden: 'Sakrivena',
+
+    approve: 'Odobri',
+    hide: 'Sakrij',
+    deleteEntry: 'Obriši',
+    deleteConfirm: 'Trajno obrisati poruku od {name}?',
+    approved: 'Poruka je odobrena.',
+    hidden: 'Poruka je sakrivena.',
+    deleted: 'Poruka je obrisana.',
+
+    emptyTitle: 'Još nema poruka',
+    emptyText: 'Kada gosti napišu želju, pojaviće se ovde na odobravanje.',
+    noSectionTitle: 'Knjiga želja nije na pozivnici',
+    noSectionText: 'Dodajte sekciju „Knjiga želja” u uređivaču da biste primali poruke.',
   },
 
   plans: {

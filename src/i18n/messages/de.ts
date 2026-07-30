@@ -298,6 +298,7 @@ const messages: Messages = {
     rateLimited:
       'Zu viele Versuche. Bitte warten Sie kurz und versuchen Sie es erneut.',
     unauthorized: 'Bitte melden Sie sich an, um fortzufahren.',
+    fileTooLarge: 'Die Datei ist zu groß. Teilen Sie die Liste in kleinere Teile.',
   },
 
   sections: {
@@ -1014,6 +1015,216 @@ const messages: Messages = {
     statsShares: 'Geteilt',
     statsNote:
       'Wir zählen nur Tagessummen, ohne eine einzige Angabe zu irgendeinem Gast.',
+  },
+
+  guests: {
+    title: 'Gäste',
+    subtitle: 'Gästeliste, Haushalte und persönliche Einladungslinks.',
+
+    addGuest: 'Gast hinzufügen',
+    editGuest: 'Gast bearbeiten',
+    deleteGuest: 'Gast löschen',
+    deleteConfirm: '{name} von der Liste entfernen? Eine bereits gesendete Antwort bleibt.',
+
+    firstName: 'Vorname',
+    lastName: 'Nachname',
+    email: 'E-Mail',
+    phone: 'Telefon',
+    isChild: 'Kind',
+    tags: 'Schlagwörter',
+    tagsHint: 'Mit Komma trennen, z. B. „Familie der Braut, Kollegen“.',
+    privateNote: 'Private Notiz',
+    privateNoteHint: 'Nur Sie und Ihre Mitarbeitenden sehen das. Gäste nie.',
+    household: 'Haushalt',
+    noHousehold: 'Ohne Haushalt',
+
+    search: 'Suche',
+    searchPlaceholder: 'Name, E-Mail oder Telefon',
+    filterTag: 'Schlagwort',
+    allTags: 'Alle Schlagwörter',
+    filterResponse: 'Antwort',
+    allResponses: 'Alle Antworten',
+    sort: 'Reihenfolge',
+    sortByLastName: 'Nach Nachname',
+    sortByFirstName: 'Nach Vorname',
+    sortByNewest: 'Neueste zuerst',
+    applyFilters: 'Anwenden',
+    clearFilters: 'Filter zurücksetzen',
+
+    emptyTitle: 'Die Gästeliste ist leer',
+    emptyText: 'Fügen Sie den ersten Gast hinzu oder importieren Sie eine Tabelle.',
+    noMatches: 'Kein Gast passt zu diesen Filtern.',
+
+    countLabel: {
+      one: '{count} Gast',
+      other: '{count} Gäste',
+    },
+
+    columnName: 'Gast',
+    columnContact: 'Kontakt',
+    columnHousehold: 'Haushalt',
+    columnTags: 'Schlagwörter',
+    columnResponse: 'Antwort',
+    columnLink: 'Persönlicher Link',
+    columnActions: 'Aktionen',
+
+    responsePending: 'Keine Antwort',
+    responseYes: 'Kommt',
+    responseNo: 'Kommt nicht',
+    responseMaybe: 'Vielleicht',
+
+    issueLink: 'Persönlichen Link erstellen',
+    reissueLink: 'Neuen Link erstellen',
+    revokeLink: 'Link widerrufen',
+    linkActive: 'Link ist aktiv',
+    linkNone: 'Kein Link',
+    linkOnce:
+      'Wir zeigen den Link nur jetzt. Wenn Sie ihn verlieren, erstellen Sie einen neuen - der alte gilt dann nicht mehr.',
+    linkCopy: 'Link kopieren',
+    linkCopied: 'Link kopiert.',
+    linkRevoked: 'Link widerrufen.',
+    revokeConfirm: 'Link widerrufen? Der Gast kann ihn dann nicht mehr öffnen.',
+
+    householdsTitle: 'Haushalte',
+    householdsSubtitle: 'Eine Familie, die einen Link bekommt und gemeinsam antwortet.',
+    addHousehold: 'Haushalt hinzufügen',
+    editHousehold: 'Haushalt bearbeiten',
+    householdName: 'Name',
+    householdMaxGuests: 'Höchstens Personen',
+    householdMaxGuestsHint: 'Leer lassen, wenn Sie keine Obergrenze wollen.',
+    householdNotes: 'Notiz',
+    householdGuests: 'Gäste',
+    deleteHousehold: 'Haushalt löschen',
+    deleteHouseholdConfirm: 'Haushalt löschen? Die Gäste bleiben auf der Liste.',
+    householdsEmpty: 'Noch keine Haushalte.',
+
+    importTitle: 'Import aus einer CSV-Datei',
+    importText:
+      'Spalten werden am Namen erkannt (Vorname, Nachname, E-Mail, Telefon, Haushalt, Schlagwörter), auf Serbisch oder Englisch und in beliebiger Reihenfolge.',
+    importFile: 'CSV-Datei',
+    importHasHeader: 'Die erste Zeile enthält Spaltennamen',
+    importSubmit: 'Gäste importieren',
+    importDone: 'Importierte Gäste: {count}.',
+    importSkipped: 'Übersprungene Zeilen: {count}.',
+    importProblems: 'Zeilen, die wir nicht lesen konnten',
+    importRow: 'Zeile {row}',
+    importEmpty: 'Wählen Sie vor dem Import eine Datei.',
+
+    exportTitle: 'Liste exportieren',
+    exportText: 'Laden Sie die ganze Liste mit Antworten als CSV-Datei für Excel herunter.',
+    exportAction: 'CSV herunterladen',
+
+    saved: 'Gespeichert.',
+    deleted: 'Gast gelöscht.',
+  },
+
+  responses: {
+    title: 'Antworten',
+    subtitle: 'Zusagen, zusätzliche Fragen und Erinnerungen.',
+
+    summaryConfirmed: 'Kommt',
+    summaryDeclined: 'Kommt nicht',
+    summaryMaybe: 'Vielleicht',
+    summaryPending: 'Keine Antwort',
+    summaryPeople: 'Personen insgesamt',
+
+    search: 'Suche',
+    searchPlaceholder: 'Name, E-Mail oder Nachricht',
+    filterAll: 'Alle',
+    filterYes: 'Kommen',
+    filterNo: 'Kommen nicht',
+    filterMaybe: 'Vielleicht',
+    sortNewest: 'Neueste zuerst',
+    sortName: 'Nach Name',
+
+    columnGuest: 'Gast',
+    columnStatus: 'Antwort',
+    columnPeople: 'Personen',
+    columnMessage: 'Nachricht',
+    columnDate: 'Gesendet',
+
+    adults: 'Erwachsene',
+    children: 'Kinder',
+    companions: 'Kommen ebenfalls',
+    editedAt: 'Geändert {date}',
+    viaLink: 'über persönlichen Link',
+
+    deleteResponse: 'Antwort löschen',
+    deleteConfirm: 'Die Antwort von {name} löschen?',
+    deleted: 'Antwort gelöscht.',
+
+    emptyTitle: 'Noch keine Antworten',
+    emptyText: 'Sobald Gäste antworten, sehen Sie sie hier.',
+    noMatches: 'Keine Antwort passt zu diesen Filtern.',
+
+    exportAction: 'CSV herunterladen',
+
+    questionsTitle: 'Zusätzliche Fragen',
+    questionsSubtitle:
+      'Fragen Sie, was Sie für die Planung brauchen - Menü, Transport, Unterkunft.',
+    addQuestion: 'Frage hinzufügen',
+    editQuestion: 'Frage bearbeiten',
+    deleteQuestion: 'Frage löschen',
+    deleteQuestionConfirm:
+      'Frage löschen? Die Antworten der Gäste darauf werden ebenfalls gelöscht.',
+    questionsEmpty: 'Noch keine zusätzlichen Fragen.',
+
+    questionLabel: 'Frage',
+    questionHelp: 'Hilfetext',
+    questionType: 'Antworttyp',
+    questionRequired: 'Antwort ist erforderlich',
+    questionAttendingOnly: 'Nur Gästen zeigen, die kommen',
+    questionOptions: 'Antwortmöglichkeiten',
+    addOption: 'Option hinzufügen',
+    removeOption: 'Option entfernen',
+    questionMin: 'Kleinster Wert',
+    questionMax: 'Größter Wert',
+    questionMaxLength: 'Höchstens Zeichen',
+    moveUp: 'Nach oben',
+    moveDown: 'Nach unten',
+
+    typeSingleChoice: 'Einfachauswahl',
+    typeMultiChoice: 'Mehrfachauswahl',
+    typeBoolean: 'Ja oder nein',
+    typeNumber: 'Zahl',
+    typeText: 'Text',
+    typeDate: 'Datum',
+
+    remindersTitle: 'Erinnerung für Gäste ohne Antwort',
+    remindersText:
+      'Kopieren Sie die Kontaktliste und senden Sie die Erinnerung über den Kanal Ihrer Wahl.',
+    remindersNone: 'Alle Gäste mit persönlichem Link haben geantwortet.',
+    remindersCopyEmails: 'E-Mail-Adressen kopieren',
+    remindersCopyPhones: 'Telefonnummern kopieren',
+    remindersCopied: 'Kopiert.',
+    remindersNoContact: 'Gäste ohne Kontaktdaten: {count}',
+  },
+
+  guestbookAdmin: {
+    title: 'Gästebuch',
+    subtitle: 'Nachrichten der Gäste und ihre Freigabe.',
+
+    filterAll: 'Alle',
+    filterPending: 'Wartet auf Freigabe',
+    filterApproved: 'Freigegeben',
+    filterHidden: 'Ausgeblendet',
+
+    statusPending: 'Wartet auf Freigabe',
+    statusApproved: 'Freigegeben',
+    statusHidden: 'Ausgeblendet',
+
+    approve: 'Freigeben',
+    hide: 'Ausblenden',
+    deleteEntry: 'Löschen',
+    deleteConfirm: 'Die Nachricht von {name} endgültig löschen?',
+    approved: 'Nachricht freigegeben.',
+    hidden: 'Nachricht ausgeblendet.',
+    deleted: 'Nachricht gelöscht.',
+
+    emptyTitle: 'Noch keine Nachrichten',
+    emptyText: 'Wenn Gäste einen Wunsch schreiben, erscheint er hier zur Freigabe.',
+    noSectionTitle: 'Das Gästebuch ist nicht auf der Einladung',
+    noSectionText: 'Fügen Sie im Editor den Abschnitt „Gästebuch“ hinzu, um Nachrichten zu empfangen.',
   },
 
   plans: {

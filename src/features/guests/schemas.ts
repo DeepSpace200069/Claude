@@ -31,7 +31,30 @@ export const guestSchema = z.object({
 });
 
 export type GuestInput = z.infer<typeof guestSchema>;
-export type GuestFormValues = z.input<typeof guestSchema>;
+
+/**
+ * Oblik forme se razlikuje od oblika podataka u jednoj tački: oznake se unose
+ * kao jedan tekst razdvojen zarezima, jer je to ono što korisnik zaista kuca.
+ * Pretvaranje u niz radi `tagsFromText` neposredno pre slanja.
+ */
+export const guestFormSchema = guestSchema
+  .omit({ tags: true })
+  .extend({ tagsText: z.string().trim().max(300).default('') });
+
+export type GuestFormValues = z.input<typeof guestFormSchema>;
+export type GuestFormOutput = z.output<typeof guestFormSchema>;
+
+export function tagsFromText(value: string): string[] {
+  return value
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter((tag) => tag !== '')
+    .slice(0, 12);
+}
+
+export function tagsToText(tags: readonly string[]): string {
+  return tags.join(', ');
+}
 
 export const createGuestSchema = guestSchema.extend({ eventId: z.uuid() });
 export const updateGuestSchema = guestSchema.extend({

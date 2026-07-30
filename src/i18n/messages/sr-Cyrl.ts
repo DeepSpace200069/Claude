@@ -291,6 +291,7 @@ const messages: Messages = {
     backHome: 'Назад на почетну',
     rateLimited: 'Превише покушаја. Сачекајте мало па пробајте поново.',
     unauthorized: 'Пријавите се да бисте наставили.',
+    fileTooLarge: 'Фајл је превелик. Поделите списак на мање делове.',
   },
 
   sections: {
@@ -1005,6 +1006,217 @@ const messages: Messages = {
     statsUnique: 'Различитих посетилаца',
     statsShares: 'Дељења',
     statsNote: 'Бројимо само збирно по дану, без иједног податка о госту.',
+  },
+
+  guests: {
+    title: 'Гости',
+    subtitle: 'Списак званица, домаћинства и лични линкови за позивницу.',
+
+    addGuest: 'Додај госта',
+    editGuest: 'Измени госта',
+    deleteGuest: 'Обриши госта',
+    deleteConfirm: 'Обрисати {name} са списка? Одговор који је већ послао остаје.',
+
+    firstName: 'Име',
+    lastName: 'Презиме',
+    email: 'Имејл',
+    phone: 'Телефон',
+    isChild: 'Дете',
+    tags: 'Ознаке',
+    tagsHint: 'Раздвојите зарезом, нпр. „породица младе, колеге”.',
+    privateNote: 'Приватна белешка',
+    privateNoteHint: 'Видите је само ви и сарадници. Гост је никад не види.',
+    household: 'Домаћинство',
+    noHousehold: 'Без домаћинства',
+
+    search: 'Претрага',
+    searchPlaceholder: 'Име, имејл или телефон',
+    filterTag: 'Ознака',
+    allTags: 'Све ознаке',
+    filterResponse: 'Одговор',
+    allResponses: 'Сви одговори',
+    sort: 'Редослед',
+    sortByLastName: 'По презимену',
+    sortByFirstName: 'По имену',
+    sortByNewest: 'Најновији прво',
+    applyFilters: 'Примени',
+    clearFilters: 'Поништи филтере',
+
+    emptyTitle: 'Списак гостију је празан',
+    emptyText: 'Додајте првог госта или увезите списак из табеле.',
+    noMatches: 'Ниједан гост не одговара филтерима.',
+
+    countLabel: {
+      one: '{count} гост',
+      few: '{count} госта',
+      other: '{count} гостију',
+    },
+
+    columnName: 'Гост',
+    columnContact: 'Контакт',
+    columnHousehold: 'Домаћинство',
+    columnTags: 'Ознаке',
+    columnResponse: 'Одговор',
+    columnLink: 'Лични линк',
+    columnActions: 'Радње',
+
+    responsePending: 'Без одговора',
+    responseYes: 'Долази',
+    responseNo: 'Не долази',
+    responseMaybe: 'Можда',
+
+    issueLink: 'Направи лични линк',
+    reissueLink: 'Направи нови линк',
+    revokeLink: 'Поништи линк',
+    linkActive: 'Линк је активан',
+    linkNone: 'Нема линк',
+    linkOnce:
+      'Линк приказујемо само сада. Ако га изгубите, можете направити нови - стари тада престаје да важи.',
+    linkCopy: 'Копирај линк',
+    linkCopied: 'Линк је копиран.',
+    linkRevoked: 'Линк је поништен.',
+    revokeConfirm: 'Поништити линк? Гост више неће моћи да га отвори.',
+
+    householdsTitle: 'Домаћинства',
+    householdsSubtitle: 'Породица која добија један линк и одговара заједно.',
+    addHousehold: 'Додај домаћинство',
+    editHousehold: 'Измени домаћинство',
+    householdName: 'Назив',
+    householdMaxGuests: 'Највише особа',
+    householdMaxGuestsHint: 'Оставите празно ако не желите горњу границу.',
+    householdNotes: 'Напомена',
+    householdGuests: 'Број гостију',
+    deleteHousehold: 'Обриши домаћинство',
+    deleteHouseholdConfirm: 'Обрисати домаћинство? Гости остају на списку.',
+    householdsEmpty: 'Још нема домаћинстава.',
+
+    importTitle: 'Увоз из CSV фајла',
+    importText:
+      'Колоне се препознају по називу (Име, Презиме, Имејл, Телефон, Домаћинство, Ознаке), на српском или енглеском и у било ком редоследу.',
+    importFile: 'CSV фајл',
+    importHasHeader: 'Први ред садржи називе колона',
+    importSubmit: 'Увези госте',
+    importDone: 'Увезено гостију: {count}.',
+    importSkipped: 'Прескочено редова: {count}.',
+    importProblems: 'Редови које нисмо могли да прочитамо',
+    importRow: 'Ред {row}',
+    importEmpty: 'Изаберите фајл пре увоза.',
+
+    exportTitle: 'Извоз списка',
+    exportText: 'Преузмите цео списак са одговорима у CSV фајлу који Excel отвара.',
+    exportAction: 'Преузми CSV',
+
+    saved: 'Сачувано.',
+    deleted: 'Гост је обрисан.',
+  },
+
+  responses: {
+    title: 'Одговори',
+    subtitle: 'Потврде доласка, додатна питања и подсетници.',
+
+    summaryConfirmed: 'Долази',
+    summaryDeclined: 'Не долази',
+    summaryMaybe: 'Можда',
+    summaryPending: 'Без одговора',
+    summaryPeople: 'Укупно особа',
+
+    search: 'Претрага',
+    searchPlaceholder: 'Име, имејл или порука',
+    filterAll: 'Сви',
+    filterYes: 'Долазе',
+    filterNo: 'Не долазе',
+    filterMaybe: 'Можда',
+    sortNewest: 'Најновији прво',
+    sortName: 'По имену',
+
+    columnGuest: 'Гост',
+    columnStatus: 'Одговор',
+    columnPeople: 'Особе',
+    columnMessage: 'Порука',
+    columnDate: 'Послато',
+
+    adults: 'одраслих',
+    children: 'деце',
+    companions: 'Долазе и',
+    editedAt: 'Измењено {date}',
+    viaLink: 'преко личног линка',
+
+    deleteResponse: 'Обриши одговор',
+    deleteConfirm: 'Обрисати одговор госта {name}?',
+    deleted: 'Одговор је обрисан.',
+
+    emptyTitle: 'Још нема одговора',
+    emptyText: 'Када гости почну да потврђују долазак, видећете их овде.',
+    noMatches: 'Ниједан одговор не одговара филтерима.',
+
+    exportAction: 'Преузми CSV',
+
+    questionsTitle: 'Додатна питања',
+    questionsSubtitle:
+      'Питајте госте оно што вам треба за планирање - мени, превоз, смештај.',
+    addQuestion: 'Додај питање',
+    editQuestion: 'Измени питање',
+    deleteQuestion: 'Обриши питање',
+    deleteQuestionConfirm:
+      'Обрисати питање? Бришу се и одговори гостију на њега.',
+    questionsEmpty: 'Још нема додатних питања.',
+
+    questionLabel: 'Питање',
+    questionHelp: 'Помоћни текст',
+    questionType: 'Тип одговора',
+    questionRequired: 'Одговор је обавезан',
+    questionAttendingOnly: 'Прикажи само гостима који долазе',
+    questionOptions: 'Понуђене опције',
+    addOption: 'Додај опцију',
+    removeOption: 'Уклони опцију',
+    questionMin: 'Најмања вредност',
+    questionMax: 'Највећа вредност',
+    questionMaxLength: 'Највише знакова',
+    moveUp: 'Помери горе',
+    moveDown: 'Помери доле',
+
+    typeSingleChoice: 'Један избор',
+    typeMultiChoice: 'Више избора',
+    typeBoolean: 'Да или не',
+    typeNumber: 'Број',
+    typeText: 'Текст',
+    typeDate: 'Датум',
+
+    remindersTitle: 'Подсетник за оне који нису одговорили',
+    remindersText:
+      'Копирајте списак контаката и пошаљите подсетник каналом који вам одговара.',
+    remindersNone: 'Сви гости са личним линком су одговорили.',
+    remindersCopyEmails: 'Копирај имејл адресе',
+    remindersCopyPhones: 'Копирај бројеве телефона',
+    remindersCopied: 'Копирано.',
+    remindersNoContact: 'Гости без контакта: {count}',
+  },
+
+  guestbookAdmin: {
+    title: 'Књига жеља',
+    subtitle: 'Поруке гостију и њихово одобравање.',
+
+    filterAll: 'Све',
+    filterPending: 'Чека одобрење',
+    filterApproved: 'Одобрене',
+    filterHidden: 'Сакривене',
+
+    statusPending: 'Чека одобрење',
+    statusApproved: 'Одобрена',
+    statusHidden: 'Сакривена',
+
+    approve: 'Одобри',
+    hide: 'Сакриј',
+    deleteEntry: 'Обриши',
+    deleteConfirm: 'Трајно обрисати поруку од {name}?',
+    approved: 'Порука је одобрена.',
+    hidden: 'Порука је сакривена.',
+    deleted: 'Порука је обрисана.',
+
+    emptyTitle: 'Још нема порука',
+    emptyText: 'Када гости напишу жељу, појавиће се овде на одобравање.',
+    noSectionTitle: 'Књига жеља није на позивници',
+    noSectionText: 'Додајте секцију „Књига жеља” у уређивачу да бисте примали поруке.',
   },
 
   plans: {
