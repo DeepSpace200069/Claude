@@ -5,7 +5,7 @@ import type { TemplateOption } from '@/features/editor/template-switcher';
 import { loadMessages } from '@/i18n/messages';
 import { getRequestLocale } from '@/i18n/server';
 import { requireEventPageAccess } from '@/server/authz/page-guards';
-import { getUserEntitlements } from '@/server/services/entitlements';
+import { getEventEntitlements } from '@/server/services/entitlements';
 import {
   getInvitationForEditor,
   renderContextFor,
@@ -27,7 +27,7 @@ export default async function EditorPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
-  const access = await requireEventPageAccess(eventId, 'invitation:edit');
+  await requireEventPageAccess(eventId, 'invitation:edit');
 
   const invitation = await getInvitationForEditor(eventId);
   if (!invitation) notFound();
@@ -36,7 +36,7 @@ export default async function EditorPage({
   const messages = await loadMessages(locale);
 
   const [entitlements, photoCount, templates] = await Promise.all([
-    getUserEntitlements(access.user.id),
+    getEventEntitlements(eventId),
     countEventPhotos(eventId),
     listTemplatesForPlans(
       // Sve šablone vidi samo paket koji ih ima; ostali biraju iz besplatnih.

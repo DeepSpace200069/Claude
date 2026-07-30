@@ -9,7 +9,7 @@ import { db } from '@/server/db';
 import { events, invitations } from '@/server/db/schema';
 import { NotFoundError, ValidationError } from '@/server/authz/errors';
 
-import { getUserEntitlements } from './entitlements';
+import { getEventEntitlements } from './entitlements';
 
 /**
  * Objavljivanje i privatnost pozivnice (zahtev 21 i 23).
@@ -34,10 +34,7 @@ export type PublicationState = {
   planName: string;
 };
 
-export async function getPublicationState(
-  eventId: string,
-  userId: string,
-): Promise<PublicationState | null> {
+export async function getPublicationState(eventId: string): Promise<PublicationState | null> {
   const [row] = await db
     .select({
       invitationId: invitations.id,
@@ -57,7 +54,7 @@ export async function getPublicationState(
 
   if (!row) return null;
 
-  const entitlements = await getUserEntitlements(userId);
+  const entitlements = await getEventEntitlements(eventId);
 
   return {
     invitationId: row.invitationId,
@@ -129,11 +126,8 @@ export async function updateInvitationPrivacy(
   return { slug: current.slug };
 }
 
-export async function publishInvitation(
-  eventId: string,
-  userId: string,
-): Promise<{ slug: string }> {
-  const state = await getPublicationState(eventId, userId);
+export async function publishInvitation(eventId: string): Promise<{ slug: string }> {
+  const state = await getPublicationState(eventId);
   if (!state) throw new NotFoundError('Pozivnica ne postoji.');
 
   if (!state.canPublish) {

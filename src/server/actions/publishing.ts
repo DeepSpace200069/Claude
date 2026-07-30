@@ -91,7 +91,7 @@ export async function publishInvitationAction(
       return failure('rate_limited', 'Previše pokušaja. Sačekajte pa probajte ponovo.');
     }
 
-    const result = await publishInvitation(parsed.data.eventId, access.user.id);
+    const result = await publishInvitation(parsed.data.eventId);
 
     revalidateInvitation(result.slug);
     revalidatePath(`/app/dogadjaji/${parsed.data.eventId}`);
@@ -203,9 +203,9 @@ export async function recordShareAction(
     const parsed = recordShareSchema.safeParse(input);
     if (!parsed.success) return failure('validation', 'Neispravan zahtev.');
 
-    const access = await requireEventAccess(parsed.data.eventId, 'event:view');
+    await requireEventAccess(parsed.data.eventId, 'event:view');
 
-    const state = await getPublicationState(parsed.data.eventId, access.user.id);
+    const state = await getPublicationState(parsed.data.eventId);
     if (!state) throw new NotFoundError('Pozivnica ne postoji.');
 
     const invitation = await getPublicInvitation(state.slug);

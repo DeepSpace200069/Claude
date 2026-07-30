@@ -24,7 +24,7 @@ import {
   invitationSections,
 } from '@/server/db/schema';
 import { LimitExceededError, NotFoundError } from '@/server/authz/errors';
-import { getUserEntitlements, currentUsage } from './entitlements';
+import { getAccountEntitlements, currentUsage } from './entitlements';
 import { insertWithUniqueSlug } from './slug';
 
 /**
@@ -132,7 +132,7 @@ export async function createEvent(
   userId: string,
   input: CreateEventInput,
 ): Promise<{ eventId: string; invitationId: string; slug: string }> {
-  const entitlements = await getUserEntitlements(userId);
+  const entitlements = await getAccountEntitlements();
   const used = await currentUsage(userId, 'maxEvents');
   const limit = checkLimit(entitlements, 'maxEvents', used);
 

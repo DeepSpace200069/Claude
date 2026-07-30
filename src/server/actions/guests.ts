@@ -72,7 +72,7 @@ export async function createGuestAction(
       return failure('rate_limited', 'Previše izmena zaredom. Sačekajte pa nastavite.');
     }
 
-    const result = await createGuest(eventId, access.user.id, guest);
+    const result = await createGuest(eventId, guest);
     revalidateGuestPages(eventId);
 
     return success(result);
@@ -272,7 +272,6 @@ export async function importGuestsAction(
 
     const summary = await importGuests({
       eventId: parsed.data.eventId,
-      userId: access.user.id,
       csv: parsed.data.csv,
       hasHeader: parsed.data.hasHeader,
     });

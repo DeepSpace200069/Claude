@@ -38,7 +38,7 @@ import {
   ValidationError,
 } from '@/server/authz/errors';
 
-import { getUserEntitlements } from './entitlements';
+import { getEventEntitlements } from './entitlements';
 import { listEventMedia, mediaMapFrom, type MediaAsset } from './media';
 
 /**
@@ -237,7 +237,7 @@ export async function saveInvitationDraft(
 
   if (!invitation) throw new NotFoundError('Pozivnica ne postoji.');
 
-  await assertSectionsAllowed(input.userId, input.sections);
+  await assertSectionsAllowed(input.eventId, input.sections);
 
   const issues = validateDocument({ theme: input.theme, sections: input.sections });
   if (issues.length > 0) {
@@ -390,10 +390,10 @@ async function writeRevisionSnapshot(
  * zahtev direktno, mimo interfejsa (zahtev 39.9).
  */
 async function assertSectionsAllowed(
-  userId: string,
+  eventId: string,
   sections: readonly EditorSection[],
 ): Promise<void> {
-  const entitlements = await getUserEntitlements(userId);
+  const entitlements = await getEventEntitlements(eventId);
 
   const limit = checkLimit(entitlements, 'maxSections', 0, sections.length);
   if (!limit.allowed) {

@@ -15,7 +15,7 @@ import {
 } from '@/server/adapters/storage';
 import { LimitExceededError, NotFoundError, ValidationError } from '@/server/authz/errors';
 
-import { getUserEntitlements } from './entitlements';
+import { getEventEntitlements } from './entitlements';
 
 /**
  * Fotografije pozivnice (zahtev 9 i 24).
@@ -78,7 +78,7 @@ export async function requestUpload(input: {
     throw new ValidationError(invalid.message, { file: [invalid.message] });
   }
 
-  const entitlements = await getUserEntitlements(input.userId);
+  const entitlements = await getEventEntitlements(input.eventId);
   const used = await countEventPhotos(input.eventId);
   const limit = checkLimit(entitlements, 'maxPhotos', used);
 

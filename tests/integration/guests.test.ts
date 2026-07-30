@@ -86,7 +86,7 @@ suite('gosti i domaćinstva', () => {
     otherEventId = theirs.eventId;
   });
 
-  const guestInput = (overrides: Partial<Parameters<typeof createGuest>[2]> = {}) => ({
+  const guestInput = (overrides: Partial<Parameters<typeof createGuest>[1]> = {}) => ({
     firstName: 'Marko',
     lastName: 'Ilić',
     email: '',
@@ -99,7 +99,7 @@ suite('gosti i domaćinstva', () => {
   });
 
   it('pravi gosta sa samo imenom', async () => {
-    await createGuest(eventId, userId, guestInput({ lastName: '', email: '', phone: '' }));
+    await createGuest(eventId, guestInput({ lastName: '', email: '', phone: '' }));
 
     const list = await listGuests(eventId, ALL_FILTERS);
     expect(list).toHaveLength(1);
@@ -110,10 +110,7 @@ suite('gosti i domaćinstva', () => {
   });
 
   it('čisti oznake od duplikata i praznih vrednosti', async () => {
-    await createGuest(
-      eventId,
-      userId,
-      guestInput({ tags: ['kolege', ' kolege ', '', 'porodica'] }),
+    await createGuest(eventId, guestInput({ tags: ['kolege', ' kolege ', '', 'porodica'] }),
     );
 
     const list = await listGuests(eventId, ALL_FILTERS);
@@ -122,7 +119,7 @@ suite('gosti i domaćinstva', () => {
   });
 
   it('ne dozvoljava izmenu tuđeg gosta', async () => {
-    const { guestId } = await createGuest(otherEventId, otherUserId, guestInput());
+    const { guestId } = await createGuest(otherEventId, guestInput());
 
     // Isti identifikator, pogrešan događaj - upit mora da ne nađe ništa.
     await expect(updateGuest(eventId, guestId, guestInput())).rejects.toBeInstanceOf(
@@ -139,12 +136,12 @@ suite('gosti i domaćinstva', () => {
     });
 
     await expect(
-      createGuest(eventId, userId, guestInput({ householdId })),
+      createGuest(eventId, guestInput({ householdId })),
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 
   it('meko brisanje čuva odgovor, ali gasi lični link', async () => {
-    const { guestId } = await createGuest(eventId, userId, guestInput());
+    const { guestId } = await createGuest(eventId, guestInput());
     const issued = await issueRecipientLink({ eventId, guestId });
 
     await deleteGuest(eventId, guestId);
@@ -169,7 +166,7 @@ suite('gosti i domaćinstva', () => {
       maxGuests: 4,
       notes: '',
     });
-    await createGuest(eventId, userId, guestInput({ householdId }));
+    await createGuest(eventId, guestInput({ householdId }));
 
     await deleteHousehold(eventId, householdId);
 
@@ -184,8 +181,8 @@ suite('gosti i domaćinstva', () => {
       maxGuests: '',
       notes: '',
     });
-    await createGuest(eventId, userId, guestInput({ householdId }));
-    await createGuest(eventId, userId, guestInput({ firstName: 'Ana', householdId }));
+    await createGuest(eventId, guestInput({ householdId }));
+    await createGuest(eventId, guestInput({ firstName: 'Ana', householdId }));
 
     const households = await listHouseholds(eventId);
     expect(households[0]?.guestCount).toBe(2);
@@ -202,11 +199,11 @@ suite('gosti i domaćinstva', () => {
       })
       .where(eq(featurePlans.code, 'free'));
 
-    await createGuest(eventId, userId, guestInput());
-    await createGuest(eventId, userId, guestInput({ firstName: 'Ana' }));
+    await createGuest(eventId, guestInput());
+    await createGuest(eventId, guestInput({ firstName: 'Ana' }));
 
     await expect(
-      createGuest(eventId, userId, guestInput({ firstName: 'Petar' })),
+      createGuest(eventId, guestInput({ firstName: 'Petar' })),
     ).rejects.toBeInstanceOf(LimitExceededError);
   });
 });
@@ -239,7 +236,7 @@ suite('personalizovani linkovi', () => {
   });
 
   it('token se u bazi čuva samo kao heš', async () => {
-    const { guestId } = await createGuest(eventId, userId, {
+    const { guestId } = await createGuest(eventId, {
       firstName: 'Marko',
       lastName: 'Ilić',
       email: '',
@@ -263,7 +260,7 @@ suite('personalizovani linkovi', () => {
   });
 
   it('novi link poništava stari za istog gosta', async () => {
-    const { guestId } = await createGuest(eventId, userId, {
+    const { guestId } = await createGuest(eventId, {
       firstName: 'Marko',
       lastName: 'Ilić',
       email: '',
@@ -342,7 +339,7 @@ suite('uvoz gostiju iz CSV-a', () => {
       'Kolege;Stanković;Marko;;kolege,posao',
     ].join('\n');
 
-    const summary = await importGuests({ eventId, userId, csv, hasHeader: true });
+    const summary = await importGuests({ eventId, csv, hasHeader: true });
 
     expect(summary.created).toBe(3);
     expect(summary.skipped).toBe(0);
@@ -364,7 +361,7 @@ suite('uvoz gostiju iz CSV-a', () => {
   it('prihvata engleska zaglavlja i zarez kao razdvajač', async () => {
     const csv = 'First name,Last name,Email\nAna,Popović,ana@primer.rs';
 
-    const summary = await importGuests({ eventId, userId, csv, hasHeader: true });
+    const summary = await importGuests({ eventId, csv, hasHeader: true });
 
     expect(summary.created).toBe(1);
     const list = await listGuests(eventId, ALL_FILTERS);
@@ -374,7 +371,7 @@ suite('uvoz gostiju iz CSV-a', () => {
   it('preskače red bez imena uz objašnjenje, a ostale uvozi', async () => {
     const csv = ['Ime;Prezime', 'Marko;Ilić', ';Bez imena', 'Ana;Popović'].join('\n');
 
-    const summary = await importGuests({ eventId, userId, csv, hasHeader: true });
+    const summary = await importGuests({ eventId, csv, hasHeader: true });
 
     expect(summary.created).toBe(2);
     expect(summary.skipped).toBe(1);
@@ -395,7 +392,7 @@ suite('uvoz gostiju iz CSV-a', () => {
     // Tri reda, ali jedan je prazan - u paket od dva gosta staje.
     const csv = ['Ime;Prezime', 'Marko;Ilić', ';', 'Ana;Popović'].join('\n');
 
-    const summary = await importGuests({ eventId, userId, csv, hasHeader: true });
+    const summary = await importGuests({ eventId, csv, hasHeader: true });
     expect(summary.created).toBe(2);
   });
 
@@ -413,7 +410,7 @@ suite('uvoz gostiju iz CSV-a', () => {
     const csv = ['Ime;Prezime', 'Marko;Ilić', 'Ana;Popović'].join('\n');
 
     await expect(
-      importGuests({ eventId, userId, csv, hasHeader: true }),
+      importGuests({ eventId, csv, hasHeader: true }),
     ).rejects.toBeInstanceOf(LimitExceededError);
 
     // Ništa nije upisano - uvoz je ili ceo prošao ili nije počeo.

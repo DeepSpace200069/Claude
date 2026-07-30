@@ -64,7 +64,7 @@ suite('raspored sedenja', () => {
   let roomId: string;
 
   const addGuest = async (firstName: string, lastName = 'Ilić', event = eventId) => {
-    const { guestId } = await createGuest(event, userId, {
+    const { guestId } = await createGuest(event, {
       firstName,
       lastName,
       email: '',
@@ -340,7 +340,7 @@ suite('zaključavanje i verzije rasporeda', () => {
   it('kopija verzije preuzima sale, stolove i raspored, ali ne deli redove', async () => {
     const { tableId } = await createTable(eventId, roomId, { ...TABLE, capacity: 4 });
 
-    const { guestId } = await createGuest(eventId, userId, {
+    const { guestId } = await createGuest(eventId, {
       firstName: 'Marko',
       lastName: 'Ilić',
       email: '',
@@ -403,7 +403,7 @@ suite('upozorenja rasporeda', () => {
   let roomId: string;
 
   const addGuest = async (firstName: string) => {
-    const { guestId } = await createGuest(eventId, userId, {
+    const { guestId } = await createGuest(eventId, {
       firstName,
       lastName: 'Ilić',
       email: '',

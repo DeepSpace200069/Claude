@@ -16,7 +16,7 @@ import { loadMessages } from '@/i18n/messages';
 import { getRequestLocale, getTranslations } from '@/i18n/server';
 import { requireEventPageAccess } from '@/server/authz/page-guards';
 import { roleHasPermission } from '@/server/authz/permissions';
-import { getUserEntitlements } from '@/server/services/entitlements';
+import { getEventEntitlements } from '@/server/services/entitlements';
 import {
   listGuestTags,
   listGuests,
@@ -55,7 +55,7 @@ export default async function GuestsPage({
     listGuests(eventId, filters),
     listHouseholds(eventId),
     listGuestTags(eventId),
-    getUserEntitlements(access.user.id),
+    getEventEntitlements(eventId),
   ]);
 
   /*

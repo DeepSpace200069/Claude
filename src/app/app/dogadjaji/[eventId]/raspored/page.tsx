@@ -22,7 +22,7 @@ import { loadMessages } from '@/i18n/messages';
 import { getRequestLocale, getTranslations } from '@/i18n/server';
 import { requireEventPageAccess } from '@/server/authz/page-guards';
 import { roleHasPermission } from '@/server/authz/permissions';
-import { getUserEntitlements } from '@/server/services/entitlements';
+import { getEventEntitlements } from '@/server/services/entitlements';
 import { getEventDetail } from '@/server/services/events';
 import { listGuests } from '@/server/services/guests';
 import { getSeatingPlan, listGuestPreferences } from '@/server/services/seating';
@@ -55,7 +55,7 @@ export default async function SeatingPage({
 
   const [plan, entitlements, preferences, guestRows] = await Promise.all([
     getSeatingPlan(eventId, requested.success ? requested.data : undefined),
-    getUserEntitlements(access.user.id),
+    getEventEntitlements(eventId),
     listGuestPreferences(eventId),
     listGuests(eventId, { odgovor: 'svi', redosled: 'prezime' }),
   ]);

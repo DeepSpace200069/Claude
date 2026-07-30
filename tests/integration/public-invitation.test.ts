@@ -114,18 +114,18 @@ describe.skipIf(!hasTestDatabase)('javna pozivnica', () => {
     });
 
     it('besplatan paket ne može da objavi, i to kaže naglas', async () => {
-      await expect(publishInvitation(eventId, userId)).rejects.toBeInstanceOf(
+      await expect(publishInvitation(eventId)).rejects.toBeInstanceOf(
         ValidationError,
       );
 
       // Odbijanje ne sme da ostavi pozivnicu u polovičnom stanju.
-      const state = await getPublicationState(eventId, userId);
+      const state = await getPublicationState(eventId);
       expect(state?.status).toBe('draft');
     });
 
     it('paket sa pravom objavljivanja objavljuje pozivnicu', async () => {
       await allowPublishing();
-      await publishInvitation(eventId, userId);
+      await publishInvitation(eventId);
 
       const access = await resolvePublicAccess({ slug });
 
@@ -139,17 +139,17 @@ describe.skipIf(!hasTestDatabase)('javna pozivnica', () => {
 
     it('isključivanje gasi link, a sadržaj i slug ostaju', async () => {
       await allowPublishing();
-      await publishInvitation(eventId, userId);
+      await publishInvitation(eventId);
       await unpublishInvitation(eventId);
 
       expect((await resolvePublicAccess({ slug })).state).toBe('not_published');
 
-      const state = await getPublicationState(eventId, userId);
+      const state = await getPublicationState(eventId);
       expect(state?.slug).toBe(slug);
 
       // Ponovno objavljivanje vraća **isti** link - već je podeljen gostima.
-      await publishInvitation(eventId, userId);
-      const again = await getPublicationState(eventId, userId);
+      await publishInvitation(eventId);
+      const again = await getPublicationState(eventId);
       expect(again?.slug).toBe(slug);
       expect((await resolvePublicAccess({ slug })).state).toBe('ok');
     });
@@ -162,7 +162,7 @@ describe.skipIf(!hasTestDatabase)('javna pozivnica', () => {
   describe('istek', () => {
     beforeEach(async () => {
       await allowPublishing();
-      await publishInvitation(eventId, userId);
+      await publishInvitation(eventId);
     });
 
     it('pozivnica važi do kraja izabranog dana', async () => {
@@ -215,7 +215,7 @@ describe.skipIf(!hasTestDatabase)('javna pozivnica', () => {
   describe('PIN', () => {
     beforeEach(async () => {
       await allowPublishing();
-      await publishInvitation(eventId, userId);
+      await publishInvitation(eventId);
       await updateInvitationPrivacy({
         eventId,
         privacy: 'pin',
@@ -272,7 +272,7 @@ describe.skipIf(!hasTestDatabase)('javna pozivnica', () => {
         shareDescription: '',
       });
 
-      const state = await getPublicationState(eventId, userId);
+      const state = await getPublicationState(eventId);
       expect(state?.hasPin).toBe(false);
       expect((await resolvePublicAccess({ slug })).state).toBe('ok');
     });
@@ -320,7 +320,7 @@ describe.skipIf(!hasTestDatabase)('javna pozivnica', () => {
 
     beforeEach(async () => {
       await allowPublishing();
-      await publishInvitation(eventId, userId);
+      await publishInvitation(eventId);
       await updateInvitationPrivacy({
         eventId,
         privacy: 'invite_only',
@@ -469,7 +469,7 @@ describe.skipIf(!hasTestDatabase)('javna pozivnica', () => {
   describe('kartica pri deljenju', () => {
     it('čuva naslov i opis koje organizator zada', async () => {
       await allowPublishing();
-      await publishInvitation(eventId, userId);
+      await publishInvitation(eventId);
 
       await updateInvitationPrivacy({
         eventId,
@@ -507,7 +507,7 @@ describe.skipIf(!hasTestDatabase)('javna pozivnica', () => {
         idempotencyKey: 'test-narudzbina-1',
       });
 
-      const state = await getPublicationState(eventId, userId);
+      const state = await getPublicationState(eventId);
       expect(state?.canPublish).toBe(true);
     });
   });

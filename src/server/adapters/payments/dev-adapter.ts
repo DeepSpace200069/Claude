@@ -1,4 +1,4 @@
-import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 
 import type {
   PaymentAdapter,
@@ -21,27 +21,40 @@ function isPaymentStatus(value: string): value is PaymentStatus {
  * označava kao plaćen. `allowedInProduction = false` je namerno - fabrika
  * odbija da ga instancira kada je `NODE_ENV=production`, pa lažno uspešno
  * plaćanje ne može da se prikaže korisniku (zahtev 17, poslednji red).
+ *
+ * **Idempotencija ne sme da zavisi od memorije procesa.** Mapa ispod je samo
+ * keš u okviru jednog procesa; posle restarta, i na drugoj instanci, ona je
+ * prazna. Zato se `providerRef` izvodi **determinističkim** potpisom ključa
+ * idempotencije: isti ključ daje isti `providerRef` zauvek, pa jedinstveni
+ * indeks nad `payments (provider, provider_ref)` hvata ponovljeni poziv i kada
+ * proces ništa ne pamti (zahtev 39.7).
+ *
+ * Pravi provajder ovo radi na svojoj strani; dev adapter mora da se ponaša isto
+ * da bi se ista putanja koda testirala.
  */
 export class DevPaymentAdapter implements PaymentAdapter {
   readonly name = 'dev';
   readonly allowedInProduction = false;
 
-  /** Nalozi žive u memoriji procesa; trajno stanje je u tabeli `payments`. */
+  /**
+   * Keš naloga u okviru procesa.
+   *
+   * Trajno stanje je u tabeli `payments` - ovo služi samo da `getIntent` radi
+   * bez odlaska u bazu unutar istog procesa.
+   */
   private readonly intents = new Map<string, PaymentIntent>();
-  private readonly byIdempotencyKey = new Map<string, string>();
 
   constructor(private readonly options: { webhookSecret: string }) {}
 
   async createIntent(input: PaymentIntentInput): Promise<PaymentIntent> {
-    // Idempotencija: isti ključ vraća isti nalog umesto novog.
-    const existingRef = this.byIdempotencyKey.get(input.idempotencyKey);
-    if (existingRef) {
-      const existing = this.intents.get(existingRef);
-      if (existing) return existing;
-    }
+    const providerRef = this.referenceFor(input.idempotencyKey);
+
+    // Isti ključ, isti nalog - i unutar procesa i posle restarta.
+    const existing = this.intents.get(providerRef);
+    if (existing) return existing;
 
     const intent: PaymentIntent = {
-      providerRef: `dev_${randomUUID()}`,
+      providerRef,
       status: 'pending',
       // Bez spoljne stranice: korisnik se vraća na svoju pozivnicu i vidi da
       // naplata čeka potvrdu administratora.
@@ -50,9 +63,22 @@ export class DevPaymentAdapter implements PaymentAdapter {
       currency: input.currency,
     };
 
-    this.intents.set(intent.providerRef, intent);
-    this.byIdempotencyKey.set(input.idempotencyKey, intent.providerRef);
+    this.intents.set(providerRef, intent);
     return intent;
+  }
+
+  /**
+   * Determinističan identifikator naloga iz ključa idempotencije.
+   *
+   * Potpis, a ne običan heš: ključ ne sme da se rekonstruiše iz reference koja
+   * putuje kroz logove i webhookove.
+   */
+  private referenceFor(idempotencyKey: string): string {
+    const digest = createHmac('sha256', this.options.webhookSecret)
+      .update(`intent:${idempotencyKey}`)
+      .digest('hex');
+
+    return `dev_${digest.slice(0, 32)}`;
   }
 
   async getIntent(providerRef: string): Promise<PaymentIntent | null> {

@@ -22,7 +22,7 @@ import {
 } from '@/features/seating/schemas';
 import { requireEventAccess } from '@/server/authz';
 import { recordActivity } from '@/server/services/events';
-import { getUserEntitlements } from '@/server/services/entitlements';
+import { getEventEntitlements } from '@/server/services/entitlements';
 import {
   addGuestPreference,
   assignGuest,
@@ -72,7 +72,7 @@ async function requireSeatingAccess(
   eventId: string,
 ): Promise<{ userId: string } | ActionFailure> {
   const access = await requireEventAccess(eventId, 'seating:edit');
-  const entitlements = await getUserEntitlements(access.user.id);
+  const entitlements = await getEventEntitlements(eventId);
 
   if (!can(entitlements, 'seating')) {
     return failure(

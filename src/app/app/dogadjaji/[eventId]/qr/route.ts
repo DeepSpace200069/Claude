@@ -24,8 +24,8 @@ export async function GET(
   const { eventId } = await params;
 
   try {
-    const access = await requireEventAccess(eventId, 'event:view');
-    const state = await getPublicationState(eventId, access.user.id);
+    await requireEventAccess(eventId, 'event:view');
+    const state = await getPublicationState(eventId);
 
     if (!state) {
       return NextResponse.json({ error: 'Pozivnica ne postoji.' }, { status: 404 });

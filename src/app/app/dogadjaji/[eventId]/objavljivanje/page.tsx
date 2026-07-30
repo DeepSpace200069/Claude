@@ -30,11 +30,11 @@ export default async function PublishingPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
-  const access = await requireEventPageAccess(eventId, 'event:view');
+  await requireEventPageAccess(eventId, 'event:view');
 
   const [event, state] = await Promise.all([
     getEventDetail(eventId),
-    getPublicationState(eventId, access.user.id),
+    getPublicationState(eventId),
   ]);
 
   if (!event || !state) notFound();

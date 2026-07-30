@@ -16,7 +16,7 @@ import {
 } from '@/server/db/schema';
 import { LimitExceededError, NotFoundError, ValidationError } from '@/server/authz/errors';
 
-import { getUserEntitlements } from './entitlements';
+import { getEventEntitlements } from './entitlements';
 
 /**
  * Spisak gostiju (zahtev 12).
@@ -201,12 +201,8 @@ export async function listHouseholds(eventId: string): Promise<HouseholdRow[]> {
 
 // --- Izmene -----------------------------------------------------------------
 
-async function assertGuestLimit(
-  userId: string,
-  eventId: string,
-  adding: number,
-): Promise<void> {
-  const entitlements = await getUserEntitlements(userId);
+async function assertGuestLimit(eventId: string, adding: number): Promise<void> {
+  const entitlements = await getEventEntitlements(eventId);
   const used = await countGuests(eventId);
   const limit = checkLimit(entitlements, 'maxGuests', used, adding);
 
@@ -226,10 +222,9 @@ function emptyToNull(value: string): string | null {
 
 export async function createGuest(
   eventId: string,
-  userId: string,
   input: GuestInput,
 ): Promise<{ guestId: string }> {
-  await assertGuestLimit(userId, eventId, 1);
+  await assertGuestLimit(eventId, 1);
   await assertHouseholdBelongsToEvent(eventId, input.householdId);
 
   const [guest] = await db
@@ -560,7 +555,6 @@ const COLUMN_ALIASES = {
  */
 export async function importGuests(input: {
   eventId: string;
-  userId: string;
   csv: string;
   hasHeader: boolean;
 }): Promise<ImportSummary> {
@@ -588,7 +582,7 @@ export async function importGuests(input: {
   const usableRows = dataRows.filter(
     (row) => (row[columns.firstName] ?? '').trim() !== '',
   ).length;
-  await assertGuestLimit(input.userId, input.eventId, usableRows);
+  await assertGuestLimit(input.eventId, usableRows);
 
   const households = new Map(
     (await listHouseholds(input.eventId)).map((household) => [

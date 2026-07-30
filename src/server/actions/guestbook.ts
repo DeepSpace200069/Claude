@@ -140,7 +140,7 @@ export async function moderateEntryAction(
     const parsed = moderateEntrySchema.safeParse(input);
     if (!parsed.success) return failure('validation', 'Neispravan zahtev.');
 
-    const access = await requireEventAccess(parsed.data.eventId, 'rsvp:manage');
+    await requireEventAccess(parsed.data.eventId, 'rsvp:manage');
 
     await moderateGuestbookEntry(
       parsed.data.eventId,
@@ -149,7 +149,7 @@ export async function moderateEntryAction(
     );
 
     revalidatePath(`/app/dogadjaji/${parsed.data.eventId}/knjiga-zelja`);
-    await revalidatePublicInvitation(parsed.data.eventId, access.user.id);
+    await revalidatePublicInvitation(parsed.data.eventId);
 
     return success(null);
   } catch (error) {
@@ -162,12 +162,12 @@ export async function deleteEntryAction(input: unknown): Promise<ActionResult<nu
     const parsed = deleteEntrySchema.safeParse(input);
     if (!parsed.success) return failure('validation', 'Neispravan zahtev.');
 
-    const access = await requireEventAccess(parsed.data.eventId, 'rsvp:manage');
+    await requireEventAccess(parsed.data.eventId, 'rsvp:manage');
 
     await deleteGuestbookEntry(parsed.data.eventId, parsed.data.entryId);
 
     revalidatePath(`/app/dogadjaji/${parsed.data.eventId}/knjiga-zelja`);
-    await revalidatePublicInvitation(parsed.data.eventId, access.user.id);
+    await revalidatePublicInvitation(parsed.data.eventId);
 
     return success(null);
   } catch (error) {
@@ -180,10 +180,7 @@ export async function deleteEntryAction(input: unknown): Promise<ActionResult<nu
  * poništava odmah - odobrena poruka koja se pojavi tek za pet minuta izgleda
  * kao da dugme nije radilo.
  */
-async function revalidatePublicInvitation(
-  eventId: string,
-  userId: string,
-): Promise<void> {
-  const state = await getPublicationState(eventId, userId);
+async function revalidatePublicInvitation(eventId: string): Promise<void> {
+  const state = await getPublicationState(eventId);
   if (state) revalidateInvitation(state.slug);
 }

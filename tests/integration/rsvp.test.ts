@@ -142,7 +142,7 @@ suite('RSVP', () => {
   });
 
   it('isti lični link daje najviše jedan odgovor', async () => {
-    const { guestId } = await createGuest(eventId, userId, GUEST);
+    const { guestId } = await createGuest(eventId, GUEST);
     const issued = await issueRecipientLink({ eventId, guestId });
     const recipient = await findRecipientByToken(invitationId, issued.token);
 

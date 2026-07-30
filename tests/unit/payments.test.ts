@@ -75,6 +75,33 @@ describe('development payment provajder', () => {
     expect(second.providerRef).not.toBe(first.providerRef);
   });
 
+  it('isti ključ daje isti nalog i posle restarta procesa', async () => {
+    // Nova instanca stoji umesto restartovanog procesa (ili druge instance iza
+    // balansera): keš u memoriji je prazan. Referenca zato mora da se izvede iz
+    // samog ključa - inače bi ponovljeni zahtev napravio drugi nalog i naplata
+    // bi se udvostručila.
+    const restarted = new DevPaymentAdapter({ webhookSecret: 'test-secret' });
+
+    const before = await adapter.createIntent({ ...baseInput, idempotencyKey: 'kljuc-e' });
+    const after = await restarted.createIntent({ ...baseInput, idempotencyKey: 'kljuc-e' });
+
+    expect(after.providerRef).toBe(before.providerRef);
+  });
+
+  it('referenca ne otkriva ključ idempotencije', async () => {
+    const key = 'order-42:user-7';
+    const intent = await adapter.createIntent({ ...baseInput, idempotencyKey: key });
+
+    expect(intent.providerRef).not.toContain(key);
+
+    // Potpis, a ne običan heš: sa drugom tajnom ista ulazna vrednost daje drugu
+    // referencu, pa se ključ ne može pogoditi iz reference viđene u logu.
+    const other = new DevPaymentAdapter({ webhookSecret: 'druga-tajna' });
+    const otherIntent = await other.createIntent({ ...baseInput, idempotencyKey: key });
+
+    expect(otherIntent.providerRef).not.toBe(intent.providerRef);
+  });
+
   it('odbija webhook bez potpisa', () => {
     const result = adapter.verifyWebhook('{}', null);
     expect(result.ok).toBe(false);
