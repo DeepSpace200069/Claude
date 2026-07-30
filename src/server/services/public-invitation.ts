@@ -178,6 +178,12 @@ async function loadInvitation(slug: string): Promise<PublicInvitation | null> {
       venueName: row.venueName,
       details: row.details as EventDetails as Record<string, unknown>,
       media,
+      /*
+       * Interaktivni deo namerno **nije** keširan: zavisi od gosta (njegov
+       * token, njegov raniji odgovor) i od trenutka (ključ forme). Dodaje ga
+       * stranica pri svakom zahtevu.
+       */
+      live: null,
     },
   };
 }

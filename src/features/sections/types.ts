@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 import type { ZodType } from 'zod';
 
 import type { Locale } from '@/i18n/config';
+import type { LiveInteractionContext } from '@/features/rsvp/types';
 import type { ThemeTokens } from '@/features/themes/tokens';
 
 /**
@@ -105,6 +106,15 @@ export type InvitationRenderContext = {
    * upit i javna pozivnica bi imala N+1 problem (zahtev 32).
    */
   media: Record<string, MediaResolution>;
+  /**
+   * Podaci koje interaktivne sekcije (RSVP, knjiga želja) traže da bi zaista
+   * radile: token gosta, njegov raniji odgovor, dodatna pitanja i ključ forme.
+   *
+   * `null` je uvek u `preview` režimu i to je jedini razlog zašto je polje
+   * obavezno: sekcija ne sme da „zaboravi” da proveri režim i pošalje podatke
+   * iz demo prikaza (zahtev 39.9).
+   */
+  live: LiveInteractionContext | null;
 };
 
 export type SectionEditorProps<TData> = {

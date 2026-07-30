@@ -922,6 +922,10 @@ const messages = {
     notFoundTitle: 'Pozivnica nije pronađena',
     notFoundText: 'Link je možda pogrešno prekopiran ili više ne postoji.',
 
+    editLinkInvalidTitle: 'Link za izmenu ne važi',
+    editLinkInvalidText:
+      'Ovaj link je istekao ili je odgovor u međuvremenu obrisan. Otvorite pozivnicu i pošaljite odgovor ponovo.',
+
     backHome: 'Saznajte više o {brand}',
   },
 

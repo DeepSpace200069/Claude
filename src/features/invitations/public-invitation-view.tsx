@@ -1,4 +1,5 @@
 import { InvitationRenderer } from '@/features/invitations/invitation-renderer';
+import type { LiveInteractionContext } from '@/features/rsvp/types';
 import { getSectionDefinition } from '@/features/sections/registry';
 import { brand } from '@/config/brand';
 import { getTranslations } from '@/i18n/server';
@@ -21,9 +22,15 @@ import '@/styles/invitation.css';
 export async function PublicInvitationView({
   invitation,
   greetingName,
+  live,
 }: {
   invitation: PublicInvitation;
   greetingName: string | null;
+  /**
+   * Interaktivni deo se dodaje ovde, a ne u keširanom sadržaju pozivnice:
+   * zavisi od gosta i od trenutka, pa ne sme da se deli među posetiocima.
+   */
+  live: LiveInteractionContext | null;
 }) {
   // Pozivnica se prikazuje na jeziku koji je organizator izabrao za događaj, a
   // ne na jeziku pregledača gosta: tekst koji je organizator uneo i okvir oko
@@ -57,7 +64,7 @@ export async function PublicInvitationView({
           sections={invitation.document.sections}
           theme={invitation.document.theme}
           locale={invitation.locale}
-          context={invitation.context}
+          context={{ ...invitation.context, live }}
         >
           {showIntro ? (
             <IntroOverlay

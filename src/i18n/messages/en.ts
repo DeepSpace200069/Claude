@@ -911,6 +911,10 @@ const messages: Messages = {
     notFoundTitle: 'Invitation not found',
     notFoundText: 'The link may have been copied incorrectly, or it no longer exists.',
 
+    editLinkInvalidTitle: 'This edit link is no longer valid',
+    editLinkInvalidText:
+      'The link has expired or the reply was removed. Open the invitation and send your reply again.',
+
     backHome: 'Learn more about {brand}',
   },
 

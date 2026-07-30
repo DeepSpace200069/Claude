@@ -86,6 +86,8 @@ export function buildDemoContext(
 
   const base: InvitationRenderContext = {
     mode: 'preview',
+    // Demo nema gosta: interaktivne sekcije se prikazuju, ali ništa ne šalju.
+    live: null,
     eventTypeKey,
     startsAt: startsAt.toISOString(),
     timeZone: DEFAULT_TIME_ZONE,

@@ -1126,6 +1126,49 @@
   font-size: 0.8125rem;
 }
 
+.inv-rsvp__thanks {
+  font-family: var(--inv-font-display);
+  font-size: 1.25rem;
+}
+
+/* Odobrene poruke ispod forme knjige želja. */
+.inv-wishes {
+  list-style: none;
+  margin: var(--inv-gap) 0 0;
+  padding: 0;
+  width: 100%;
+  max-width: 32rem;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: start;
+}
+
+.inv-wish {
+  border: 1px solid var(--inv-border);
+  border-radius: var(--inv-radius);
+  padding: 0.875rem 1rem;
+  background: var(--inv-surface);
+}
+
+.inv-wish__message {
+  /* Poruka gosta je slobodan tekst: prelomi se moraju poštovati, a duga reč
+     bez razmaka ne sme da razvuče stranicu. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+
+.inv-wish__author {
+  margin: 0.375rem 0 0;
+  font-size: 0.875rem;
+}
+
+.inv-wish__reaction {
+  font-size: 1rem;
+}
+
 /* --- Kontakt -------------------------------------------------------------- */
 
 .inv-contacts {

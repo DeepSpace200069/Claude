@@ -84,4 +84,13 @@ export const RATE_LIMITS = {
   pinAttempt: { limit: 10, windowMs: 15 * 60 * 1000 },
   /** Beleženje pregleda javne pozivnice - štiti agregat od naduvavanja. */
   invitationView: { limit: 60, windowMs: 10 * 60 * 1000 },
+  /**
+   * Uvoz gostiju iz CSV-a.
+   *
+   * Jedan uvoz upisuje stotine redova odjednom, pa je granica niska: normalan
+   * korisnik uveze fajl jednom ili dvaput, a petlja u skripti stane odmah.
+   */
+  guestImport: { limit: 12, windowMs: 60 * 60 * 1000 },
+  /** Pojedinačne izmene spiska gostiju - dovoljno široko za brz ručni unos. */
+  guestMutation: { limit: 300, windowMs: 10 * 60 * 1000 },
 } as const;

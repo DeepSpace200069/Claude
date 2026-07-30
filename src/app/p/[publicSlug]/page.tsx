@@ -6,6 +6,7 @@ import { PublicInvitationView } from '@/features/invitations/public-invitation-v
 import { InvitationUnavailable } from '@/features/invitations/unavailable';
 import { getTranslations } from '@/i18n/server';
 import { pinCookieName } from '@/features/invitations/pin-cookie';
+import { buildLiveContext } from '@/server/services/live-context';
 import {
   getPublicInvitation,
   resolvePublicAccess,
@@ -103,6 +104,7 @@ export default async function PublicInvitationPage({
       <PublicInvitationView
         invitation={access.invitation}
         greetingName={access.greetingName}
+        live={await buildLiveContext({ invitation: access.invitation })}
       />
     );
   }

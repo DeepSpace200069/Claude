@@ -922,6 +922,10 @@ const messages: Messages = {
     notFoundTitle: 'Einladung nicht gefunden',
     notFoundText: 'Der Link wurde vielleicht falsch kopiert oder existiert nicht mehr.',
 
+    editLinkInvalidTitle: 'Dieser Änderungslink gilt nicht mehr',
+    editLinkInvalidText:
+      'Der Link ist abgelaufen oder die Antwort wurde gelöscht. Öffnen Sie die Einladung und antworten Sie erneut.',
+
     backHome: 'Mehr über {brand} erfahren',
   },
 

@@ -181,6 +181,8 @@ export function renderContextFor(
     venueName: event.venueName,
     details: event.details as Record<string, unknown>,
     media,
+    // Uređivač i demo nemaju gosta; interaktivni deo dodaje javna stranica.
+    live: null,
   };
 }
 
