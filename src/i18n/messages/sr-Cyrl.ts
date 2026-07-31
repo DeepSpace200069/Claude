@@ -1343,6 +1343,56 @@ const messages: Messages = {
       'Ваш пакет „{plan}” дозвољава највише {limit}. Надоградите пакет да наставите.',
     featureLockedText: 'Ова могућност је доступна у пакету {plan}.',
   },
+
+  billing: {
+    title: 'План и наплата',
+    subtitle: 'Пакет се плаћа за позивницу „{event}”, једном и без обнављања.',
+
+    currentTitle: 'Пакет ове позивнице',
+    currentIncludesPublish: 'Овај пакет укључује објављивање јавног линка.',
+    currentNoPublish:
+      'Овај пакет омогућава прављење и преглед позивнице, али не и јавни линк.',
+    goToPublishing: 'Иди на објављивање',
+
+    upgradeTitle: 'Изаберите пакет',
+    choosePlan: 'Пакет за ову позивницу',
+    currentPlan: 'Тренутни пакет',
+    freePrice: 'Бесплатно',
+
+    promoLabel: 'Промо код',
+    promoHint: 'Ако имате код, унесите га пре плаћања.',
+
+    pay: 'Настави на плаћање',
+    payHint: 'Плаћате једном, за ову позивницу. Други догађаји се наплаћују засебно.',
+    activated: 'Пакет је активиран за ову позивницу.',
+
+    returnTitle: 'Вратили сте се са плаћања',
+    returnText:
+      'Ако је уплата потврђена, пакет ће овде бити приказан као плаћен. Потврда понекад стигне за неколико минута.',
+
+    historyTitle: 'Наруџбине',
+    historyEmpty: 'За ову позивницу још нема наруџбина.',
+    orderPending: 'Чека уплату',
+    orderPaid: 'Плаћено',
+    orderFailed: 'Неуспешно',
+    orderCanceled: 'Отказано',
+    orderRefunded: 'Враћен новац',
+
+    features: {
+      publish: 'Објављивање јавног линка',
+      customQuestions: 'Додатна питања у RSVP форми',
+      seating: 'Распоред седења',
+      collaborators: 'Сарадници',
+      export: 'Извоз података',
+      guestbook: 'Књига жеља',
+      music: 'Музика',
+      story: 'Секција „наша прича”',
+      customSubdomain: 'Сопствени поддомен',
+      removeBranding: 'Без ознаке платформе',
+      allTemplates: 'Сви шаблони',
+      advancedAnalytics: 'Напредна статистика',
+    },
+  },
 };
 
 export default messages;

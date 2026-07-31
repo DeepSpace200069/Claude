@@ -1,6 +1,7 @@
 'use client';
 
 import { Globe, PowerOff } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -68,9 +69,16 @@ export function PublishControls({
         <Alert tone="info" title={t('publishing.planLockedTitle')}>
           <p>{t('publishing.planLockedText', { plan: planName })}</p>
           <p className="mt-2">
-            <a href="/cenovnik" className="font-medium underline underline-offset-4">
+            {/*
+              Vodi na naplatu **ovog** događaja, ne na opšti cenovnik: paket se
+              kupuje po pozivnici, pa je izbor paketa uvek u kontekstu događaja.
+            */}
+            <Link
+              href={`/app/dogadjaji/${eventId}/naplata`}
+              className="font-medium underline underline-offset-4"
+            >
               {t('publishing.seePlans')}
-            </a>
+            </Link>
           </p>
         </Alert>
       ) : null}

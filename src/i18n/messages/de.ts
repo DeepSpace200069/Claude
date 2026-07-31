@@ -1351,6 +1351,59 @@ const messages: Messages = {
       'Ihr Paket „{plan}“ erlaubt höchstens {limit}. Führen Sie ein Upgrade durch, um fortzufahren.',
     featureLockedText: 'Diese Funktion ist im Paket {plan} verfügbar.',
   },
+
+  billing: {
+    title: 'Paket und Abrechnung',
+    subtitle:
+      'Das Paket wird für die Einladung „{event}“ bezahlt – einmalig, ohne Verlängerung.',
+
+    currentTitle: 'Paket dieser Einladung',
+    currentIncludesPublish:
+      'Dieses Paket umfasst die Veröffentlichung eines öffentlichen Links.',
+    currentNoPublish:
+      'Mit diesem Paket können Sie die Einladung erstellen und ansehen, aber nicht veröffentlichen.',
+    goToPublishing: 'Zur Veröffentlichung',
+
+    upgradeTitle: 'Paket wählen',
+    choosePlan: 'Paket für diese Einladung',
+    currentPlan: 'Aktuelles Paket',
+    freePrice: 'Kostenlos',
+
+    promoLabel: 'Promo-Code',
+    promoHint: 'Wenn Sie einen Code haben, geben Sie ihn vor der Zahlung ein.',
+
+    pay: 'Weiter zur Zahlung',
+    payHint:
+      'Sie zahlen einmalig für diese Einladung. Andere Veranstaltungen werden separat abgerechnet.',
+    activated: 'Das Paket ist für diese Einladung aktiviert.',
+
+    returnTitle: 'Sie sind von der Zahlung zurück',
+    returnText:
+      'Sobald die Zahlung bestätigt ist, wird das Paket hier als bezahlt angezeigt. Die Bestätigung dauert manchmal einige Minuten.',
+
+    historyTitle: 'Bestellungen',
+    historyEmpty: 'Für diese Einladung gibt es noch keine Bestellungen.',
+    orderPending: 'Zahlung ausstehend',
+    orderPaid: 'Bezahlt',
+    orderFailed: 'Fehlgeschlagen',
+    orderCanceled: 'Storniert',
+    orderRefunded: 'Erstattet',
+
+    features: {
+      publish: 'Öffentlichen Link veröffentlichen',
+      customQuestions: 'Zusätzliche Fragen im RSVP-Formular',
+      seating: 'Sitzplan',
+      collaborators: 'Mitwirkende',
+      export: 'Datenexport',
+      guestbook: 'Gästebuch',
+      music: 'Musik',
+      story: 'Abschnitt „Unsere Geschichte“',
+      customSubdomain: 'Eigene Subdomain',
+      removeBranding: 'Ohne Plattform-Branding',
+      allTemplates: 'Alle Vorlagen',
+      advancedAnalytics: 'Erweiterte Statistiken',
+    },
+  },
 };
 
 export default messages;

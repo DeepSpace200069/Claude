@@ -93,4 +93,12 @@ export const RATE_LIMITS = {
   guestImport: { limit: 12, windowMs: 60 * 60 * 1000 },
   /** Pojedinačne izmene spiska gostiju - dovoljno široko za brz ručni unos. */
   guestMutation: { limit: 300, windowMs: 10 * 60 * 1000 },
+  /**
+   * Pokretanje naplate.
+   *
+   * Granica je niska namerno: svaki poziv ide provajderu, a ponovljeni pokušaj
+   * sa istim paketom ionako vraća **istu** narudžbinu, pa normalnom korisniku
+   * ni ne treba više od nekoliko.
+   */
+  checkout: { limit: 15, windowMs: 60 * 60 * 1000 },
 } as const;

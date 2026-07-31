@@ -1347,6 +1347,57 @@ const messages = {
       'Vaš paket „{plan}” dozvoljava najviše {limit}. Nadogradite paket da nastavite.',
     featureLockedText: 'Ova mogućnost je dostupna u paketu {plan}.',
   },
+
+  billing: {
+    title: 'Plan i naplata',
+    subtitle: 'Paket se plaća za pozivnicu „{event}”, jednom i bez obnavljanja.',
+
+    currentTitle: 'Paket ove pozivnice',
+    currentIncludesPublish: 'Ovaj paket uključuje objavljivanje javnog linka.',
+    currentNoPublish:
+      'Ovaj paket omogućava pravljenje i pregled pozivnice, ali ne i javni link.',
+    goToPublishing: 'Idi na objavljivanje',
+
+    upgradeTitle: 'Izaberite paket',
+    choosePlan: 'Paket za ovu pozivnicu',
+    currentPlan: 'Trenutni paket',
+    freePrice: 'Besplatno',
+
+    promoLabel: 'Promo kod',
+    promoHint: 'Ako imate kod, unesite ga pre plaćanja.',
+
+    pay: 'Nastavi na plaćanje',
+    payHint: 'Plaćate jednom, za ovu pozivnicu. Drugi događaji se naplaćuju zasebno.',
+    activated: 'Paket je aktiviran za ovu pozivnicu.',
+
+    returnTitle: 'Vratili ste se sa plaćanja',
+    returnText:
+      'Ako je uplata potvrđena, paket će ovde biti prikazan kao plaćen. Potvrda ponekad stigne za nekoliko minuta.',
+
+    historyTitle: 'Narudžbine',
+    historyEmpty: 'Za ovu pozivnicu još nema narudžbina.',
+    orderPending: 'Čeka uplatu',
+    orderPaid: 'Plaćeno',
+    orderFailed: 'Neuspešno',
+    orderCanceled: 'Otkazano',
+    orderRefunded: 'Vraćen novac',
+
+    /** Nazivi mogućnosti paketa - isti ključevi kao `FEATURE_FLAGS`. */
+    features: {
+      publish: 'Objavljivanje javnog linka',
+      customQuestions: 'Dodatna pitanja u RSVP formi',
+      seating: 'Raspored sedenja',
+      collaborators: 'Saradnici',
+      export: 'Izvoz podataka',
+      guestbook: 'Knjiga želja',
+      music: 'Muzika',
+      story: 'Sekcija „naša priča”',
+      customSubdomain: 'Sopstveni poddomen',
+      removeBranding: 'Bez oznake platforme',
+      allTemplates: 'Svi šabloni',
+      advancedAnalytics: 'Napredna statistika',
+    },
+  },
 } as const;
 
 export default messages;

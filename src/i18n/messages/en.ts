@@ -1335,6 +1335,56 @@ const messages: Messages = {
       'Your “{plan}” plan allows at most {limit}. Upgrade to continue.',
     featureLockedText: 'This feature is available on the {plan} plan.',
   },
+
+  billing: {
+    title: 'Plan and billing',
+    subtitle: 'The plan is paid for the “{event}” invitation — once, with no renewals.',
+
+    currentTitle: 'Plan for this invitation',
+    currentIncludesPublish: 'This plan includes publishing a public link.',
+    currentNoPublish:
+      'This plan lets you build and preview the invitation, but not publish a public link.',
+    goToPublishing: 'Go to publishing',
+
+    upgradeTitle: 'Choose a plan',
+    choosePlan: 'Plan for this invitation',
+    currentPlan: 'Current plan',
+    freePrice: 'Free',
+
+    promoLabel: 'Promo code',
+    promoHint: 'If you have a code, enter it before paying.',
+
+    pay: 'Continue to payment',
+    payHint: 'You pay once, for this invitation. Other events are billed separately.',
+    activated: 'The plan is now active for this invitation.',
+
+    returnTitle: 'You are back from payment',
+    returnText:
+      'Once the payment is confirmed, the plan will show as paid here. Confirmation sometimes takes a few minutes.',
+
+    historyTitle: 'Orders',
+    historyEmpty: 'No orders for this invitation yet.',
+    orderPending: 'Awaiting payment',
+    orderPaid: 'Paid',
+    orderFailed: 'Failed',
+    orderCanceled: 'Canceled',
+    orderRefunded: 'Refunded',
+
+    features: {
+      publish: 'Publishing a public link',
+      customQuestions: 'Extra questions in the RSVP form',
+      seating: 'Seating plan',
+      collaborators: 'Collaborators',
+      export: 'Data export',
+      guestbook: 'Guest book',
+      music: 'Music',
+      story: '“Our story” section',
+      customSubdomain: 'Custom subdomain',
+      removeBranding: 'No platform branding',
+      allTemplates: 'All templates',
+      advancedAnalytics: 'Advanced analytics',
+    },
+  },
 };
 
 export default messages;

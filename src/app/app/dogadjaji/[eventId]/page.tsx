@@ -1,6 +1,7 @@
 import {
   ArrowRight,
   CalendarDays,
+  CreditCard,
   LayoutGrid,
   MailCheck,
   MapPin,
@@ -88,6 +89,11 @@ export default async function EventDashboardPage({
       href: `/app/dogadjaji/${eventId}/objavljivanje`,
       label: t('publishing.title'),
       icon: Send,
+    },
+    {
+      href: `/app/dogadjaji/${eventId}/naplata`,
+      label: t('billing.title'),
+      icon: CreditCard,
     },
     {
       href: `/app/dogadjaji/${eventId}/podesavanja`,
