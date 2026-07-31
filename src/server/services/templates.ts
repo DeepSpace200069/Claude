@@ -5,6 +5,8 @@ import { cache } from 'react';
 
 import type { ThemeTokens } from '@/features/themes/tokens';
 import { db } from '@/server/db';
+
+import { cachedCatalogRead } from './catalog-cache';
 import { eventTypes, templateVersions, templates } from '@/server/db/schema';
 
 /**
@@ -58,8 +60,13 @@ const summarySelection = {
   themeTokens: templateVersions.themeTokens,
 } as const;
 
+/*
+ * Dva sloja keša: `cache()` unutar jednog zahteva (galerija čita spisak i za
+ * filtere i za rezultate), `cachedCatalogRead` između zahteva - katalog se
+ * menja samo iz admin panela, koji ga tada i poništava.
+ */
 export const listTemplates = cache(
-  async (filters: TemplateFilters = {}): Promise<TemplateSummary[]> => {
+  cachedCatalogRead('sabloni-lista', async (filters: TemplateFilters = {}): Promise<TemplateSummary[]> => {
     const conditions: SQL[] = [eq(templates.status, 'published')];
 
     if (filters.eventTypeSlug) {
@@ -97,7 +104,7 @@ export const listTemplates = cache(
       : rows;
 
     return filtered.map(({ createdAt: _createdAt, ...rest }) => rest);
-  },
+  }),
 );
 
 export type TemplateDetail = TemplateSummary & {
@@ -114,7 +121,7 @@ export type TemplateDetail = TemplateSummary & {
 };
 
 export const getTemplateBySlug = cache(
-  async (slug: string): Promise<TemplateDetail | null> => {
+  cachedCatalogRead('sablon-detalj', async (slug: string): Promise<TemplateDetail | null> => {
     const [row] = await db
       .select({
         ...summarySelection,
@@ -136,7 +143,7 @@ export const getTemplateBySlug = cache(
 
     const { createdAt: _createdAt, ...rest } = row;
     return rest;
-  },
+  }),
 );
 
 /** Slugovi svih objavljenih šablona - koristi ih sitemap i statička generacija. */
@@ -174,7 +181,7 @@ export async function listTemplatesForPlans(
 
 /** Dostupni stilovi i boje za filtere; računa se iz stvarnog sadržaja baze. */
 export const getTemplateFacets = cache(
-  async (): Promise<{
+  cachedCatalogRead('sabloni-filteri', async (): Promise<{
     styles: Array<{ value: string; count: number }>;
     colorGroups: Array<{ value: string; count: number }>;
   }> => {
@@ -203,7 +210,7 @@ export const getTemplateFacets = cache(
         .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
 
     return { styles: toSorted(styles), colorGroups: toSorted(colors) };
-  },
+  }),
 );
 
 export const COLOR_GROUPS = ['svetla', 'topla', 'hladna', 'tamna'] as const;

@@ -11,10 +11,24 @@
 
 @theme {
   /* Tipografija ------------------------------------------------------------ */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+  /*
+   * Bez web fontova - namerno.
+   *
+   * Sistemski fontovi se ne preuzimaju, pa nema ni dodatnog zahteva ni
+   * pomeranja teksta kada font stigne. Ako se jednog dana doda font, dolazi
+   * kao `--font-sans-face` / `--font-display-face`, sa fallbackom **unutar**
+   * `var()`.
+   *
+   * Ranije je ovde stajalo `var(--font-inter)` i `var(--font-display)`, a te
+   * promenljive nisu nigde definisane - druga je uz to pokazivala sama na
+   * sebe. Takva deklaracija je „invalid at computed value time”, pa je cela
+   * lista otpadala: naslovi nisu dobijali serifni font, nego podrazumevani
+   * font pregledača. Greška se ne vidi u kodu, samo na ekranu.
+   */
+  --font-sans: var(--font-sans-face, ui-sans-serif), system-ui, -apple-system,
     'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-display: var(--font-display), 'Iowan Old Style', 'Palatino Linotype',
-    Palatino, Georgia, serif;
+  --font-display: var(--font-display-face, 'Iowan Old Style'),
+    'Palatino Linotype', Palatino, Georgia, serif;
 
   /* Osnovna paleta --------------------------------------------------------
      Topli neutralni tonovi (peščano-siva) sa dubokim šljiva akcentom.

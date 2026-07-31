@@ -7,6 +7,8 @@ import type { PlanFeatures } from '@/features/billing/entitlements';
 import { db } from '@/server/db';
 import { featurePlans } from '@/server/db/schema';
 
+import { cachedCatalogRead } from './catalog-cache';
+
 /**
  * Paketi za javni cenovnik.
  *
@@ -23,8 +25,9 @@ export type PublicPlan = {
   features: PlanFeatures;
 };
 
-export const listActivePlans = cache(async (): Promise<PublicPlan[]> =>
-  db
+export const listActivePlans = cache(
+  cachedCatalogRead('paketi', async (): Promise<PublicPlan[]> =>
+    db
     .select({
       id: featurePlans.id,
       code: featurePlans.code,
@@ -34,7 +37,8 @@ export const listActivePlans = cache(async (): Promise<PublicPlan[]> =>
       currency: featurePlans.currency,
       features: featurePlans.features,
     })
-    .from(featurePlans)
-    .where(eq(featurePlans.isActive, true))
-    .orderBy(asc(featurePlans.sortOrder)),
+      .from(featurePlans)
+      .where(eq(featurePlans.isActive, true))
+      .orderBy(asc(featurePlans.sortOrder)),
+  ),
 );

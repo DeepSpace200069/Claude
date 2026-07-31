@@ -13,6 +13,7 @@ import {
   updatePlanSchema,
 } from '@/features/admin/schemas';
 import { requireAdmin } from '@/server/authz';
+import { invalidateCatalog } from '@/server/services/catalog-cache';
 import {
   activateOrder,
   createPromoCode,
@@ -40,7 +41,13 @@ import {
  * interfejsa staje ovde.
  */
 
-/** Zajednički deo: provera prava i raščlanjivanje ulaza. */
+/**
+ * Zajednički deo: provera prava, raščlanjivanje ulaza i osvežavanje keša.
+ *
+ * Uz putanje se poništava i keš kataloga: šabloni, paketi i vrste događaja se
+ * keširaju između zahteva, pa bi bez ovoga administrator objavio šablon i
+ * gledao staru galeriju.
+ */
 async function withAdmin<T>(
   parse: () => { ok: true; value: T } | { ok: false; result: ActionResult<never> },
   run: (value: T, actor: { id: string; email: string }) => Promise<void>,
@@ -53,6 +60,7 @@ async function withAdmin<T>(
 
     await run(parsed.value, { id: user.id, email: user.email });
 
+    invalidateCatalog();
     for (const path of revalidate) revalidatePath(path);
     return success(null);
   } catch (error) {

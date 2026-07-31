@@ -6,6 +6,8 @@ import { cache } from 'react';
 import { db } from '@/server/db';
 import { eventTypes } from '@/server/db/schema';
 
+import { cachedCatalogRead } from './catalog-cache';
+
 /**
  * Katalog vrsta proslava.
  *
@@ -22,7 +24,7 @@ export type EventTypeOption = {
 };
 
 export const listActiveEventTypes = cache(
-  async (): Promise<EventTypeOption[]> =>
+  cachedCatalogRead('vrste-dogadjaja', async (): Promise<EventTypeOption[]> =>
     db
       .select({
         id: eventTypes.id,
@@ -35,6 +37,7 @@ export const listActiveEventTypes = cache(
       .from(eventTypes)
       .where(eq(eventTypes.isActive, true))
       .orderBy(asc(eventTypes.sortOrder)),
+  ),
 );
 
 export const getEventTypeBySlug = cache(
