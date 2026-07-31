@@ -50,7 +50,12 @@ const envSchema = z
     PAYMENT_CURRENCY: z.string().length(3).default('RSD'),
     PAYMENT_WEBHOOK_SECRET: z.string().default('dev-webhook-secret'),
 
-    RATE_LIMIT_DRIVER: z.enum(['memory']).default('memory'),
+    /*
+     * `postgres` je podrazumevan zato što je jedini ispravan kada aplikacija
+     * radi u više instanci: brojač u memoriji tada svakoj instanci daje pun
+     * kvot. `memory` ostaje za razvoj i testove, gde je proces jedan.
+     */
+    RATE_LIMIT_DRIVER: z.enum(['memory', 'postgres']).default('postgres'),
 
     DATA_RETENTION_DAYS: z.coerce.number().int().min(0).default(365),
   })

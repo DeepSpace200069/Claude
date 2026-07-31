@@ -35,8 +35,8 @@ export async function requestMagicLinkAction(
 
   // Dve granice: po adresi pošiljaoca i po email adresi - prva sprečava
   // masovno slanje, druga zatrpavanje jednog sandučeta.
-  const byIp = rateLimit(`magic-link:ip:${clientKey}`, MAGIC_LINK_LIMIT);
-  const byEmail = rateLimit(
+  const byIp = await rateLimit(`magic-link:ip:${clientKey}`, MAGIC_LINK_LIMIT);
+  const byEmail = await rateLimit(
     `magic-link:email:${parsed.data.email.toLowerCase()}`,
     MAGIC_LINK_LIMIT,
   );

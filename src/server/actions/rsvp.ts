@@ -80,7 +80,7 @@ export async function submitRsvpAction(
     }
 
     const fingerprint = await clientFingerprint();
-    const limit = rateLimit(`rsvp:${data.slug}:${fingerprint}`, RATE_LIMITS.rsvpSubmit);
+    const limit = await rateLimit(`rsvp:${data.slug}:${fingerprint}`, RATE_LIMITS.rsvpSubmit);
     if (!limit.allowed) {
       return failure(
         'rate_limited',

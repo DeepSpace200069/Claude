@@ -67,7 +67,7 @@ export async function createGuestAction(
     const { eventId, ...guest } = parsed.data;
     const access = await requireEventAccess(eventId, 'guests:edit');
 
-    const limit = rateLimit(`guest:${access.user.id}`, RATE_LIMITS.guestMutation);
+    const limit = await rateLimit(`guest:${access.user.id}`, RATE_LIMITS.guestMutation);
     if (!limit.allowed) {
       return failure('rate_limited', 'Previše izmena zaredom. Sačekajte pa nastavite.');
     }
@@ -93,7 +93,7 @@ export async function updateGuestAction(input: unknown): Promise<ActionResult<nu
     const { eventId, guestId, ...guest } = parsed.data;
     const access = await requireEventAccess(eventId, 'guests:edit');
 
-    const limit = rateLimit(`guest:${access.user.id}`, RATE_LIMITS.guestMutation);
+    const limit = await rateLimit(`guest:${access.user.id}`, RATE_LIMITS.guestMutation);
     if (!limit.allowed) {
       return failure('rate_limited', 'Previše izmena zaredom. Sačekajte pa nastavite.');
     }
@@ -209,7 +209,7 @@ export async function issueRecipientLinkAction(
     const { eventId, guestId, householdId } = parsed.data;
     const access = await requireEventAccess(eventId, 'guests:edit');
 
-    const limit = rateLimit(`link:${access.user.id}`, RATE_LIMITS.guestMutation);
+    const limit = await rateLimit(`link:${access.user.id}`, RATE_LIMITS.guestMutation);
     if (!limit.allowed) {
       return failure('rate_limited', 'Previše zahteva zaredom. Sačekajte pa nastavite.');
     }
@@ -262,7 +262,7 @@ export async function importGuestsAction(
 
     const access = await requireEventAccess(parsed.data.eventId, 'guests:edit');
 
-    const limit = rateLimit(`import:${access.user.id}`, RATE_LIMITS.guestImport);
+    const limit = await rateLimit(`import:${access.user.id}`, RATE_LIMITS.guestImport);
     if (!limit.allowed) {
       return failure(
         'rate_limited',

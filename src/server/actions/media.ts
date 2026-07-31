@@ -48,7 +48,7 @@ export async function requestUploadAction(
 
     const access = await requireEventAccess(parsed.data.eventId, 'invitation:edit');
 
-    const limit = rateLimit(
+    const limit = await rateLimit(
       `upload-ticket:${access.user.id}`,
       RATE_LIMITS.uploadTicket,
     );

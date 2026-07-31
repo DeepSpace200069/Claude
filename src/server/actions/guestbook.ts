@@ -61,7 +61,7 @@ export async function submitGuestbookEntryAction(
     }
 
     const fingerprint = await clientFingerprint();
-    const limit = rateLimit(
+    const limit = await rateLimit(
       `guestbook:${data.slug}:${fingerprint}`,
       RATE_LIMITS.guestbookSubmit,
     );

@@ -55,7 +55,7 @@ export async function saveInvitationAction(
 
     // Autosave šalje često, ali ne beskonačno: granica je iznad realnog ritma
     // kucanja, a hvata petlju u klijentu i automatizovano zatrpavanje.
-    const limit = rateLimit(
+    const limit = await rateLimit(
       `save-invitation:${access.user.id}:${parsed.data.eventId}`,
       RATE_LIMITS.saveInvitation,
     );

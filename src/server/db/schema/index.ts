@@ -13,3 +13,4 @@ export * from './guests';
 export * from './seating';
 export * from './billing';
 export * from './audit';
+export * from './rate-limits';

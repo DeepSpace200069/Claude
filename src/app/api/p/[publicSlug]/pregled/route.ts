@@ -24,7 +24,7 @@ export async function POST(
   const { publicSlug } = await params;
 
   const fingerprint = await clientFingerprint();
-  const limit = rateLimit(
+  const limit = await rateLimit(
     `view:${publicSlug}:${fingerprint}`,
     RATE_LIMITS.invitationView,
   );

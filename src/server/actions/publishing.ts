@@ -86,7 +86,7 @@ export async function publishInvitationAction(
 
     const access = await requireEventAccess(parsed.data.eventId, 'invitation:publish');
 
-    const limit = rateLimit(`publish:${access.user.id}`, RATE_LIMITS.publish);
+    const limit = await rateLimit(`publish:${access.user.id}`, RATE_LIMITS.publish);
     if (!limit.allowed) {
       return failure('rate_limited', 'Previše pokušaja. Sačekajte pa probajte ponovo.');
     }
@@ -155,7 +155,7 @@ export async function verifyPinAction(
     }
 
     const fingerprint = await clientFingerprint();
-    const limit = rateLimit(
+    const limit = await rateLimit(
       `pin:${parsed.data.slug}:${fingerprint}`,
       RATE_LIMITS.pinAttempt,
     );

@@ -41,7 +41,7 @@ export async function createEventAction(
   try {
     const user = await requireUser();
 
-    const limit = rateLimit(`create-event:${user.id}`, RATE_LIMITS.createEvent);
+    const limit = await rateLimit(`create-event:${user.id}`, RATE_LIMITS.createEvent);
     if (!limit.allowed) {
       return failure(
         'rate_limited',

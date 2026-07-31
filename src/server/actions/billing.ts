@@ -38,7 +38,7 @@ export async function startCheckoutAction(
 
     const access = await requireEventAccess(parsed.data.eventId, 'billing:manage');
 
-    const limit = rateLimit(`checkout:${access.user.id}`, RATE_LIMITS.checkout);
+    const limit = await rateLimit(`checkout:${access.user.id}`, RATE_LIMITS.checkout);
     if (!limit.allowed) {
       return failure(
         'rate_limited',
