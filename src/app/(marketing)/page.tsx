@@ -141,7 +141,12 @@ export default async function HomePage() {
           <ol className="grid gap-6 md:grid-cols-3">
             {steps.map((step, index) => (
               <li key={step.title} className="relative">
-                <span className="font-display text-5xl font-semibold text-primary-subtle">
+                {/*
+                  `primary-subtle` je token **pozadine**; kao boja teksta daje
+                  broj koji se praktično ne vidi. Broj koraka je deo poruke, pa
+                  mora da bude čitljiv.
+                */}
+                <span className="font-display text-5xl font-semibold text-primary">
                   {String(index + 1).padStart(2, '0')}
                 </span>
                 <h3 className="mt-2 text-lg font-semibold">{step.title}</h3>

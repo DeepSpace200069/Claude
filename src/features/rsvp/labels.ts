@@ -313,6 +313,29 @@ const DE: { rsvp: RsvpLabels; guestbook: GuestbookLabels } = {
   },
 };
 
+/**
+ * Oznake unutar sekcije lokacija.
+ *
+ * Renderer ih je do sada imao ispisane u kodu, na srpskom - pa je pozivnica na
+ * engleskom prikazivala „Pristupačnost”. Isti razlog kao za RSVP: pozivnica
+ * govori jezikom koji je organizator izabrao.
+ */
+export type LocationLabels = {
+  parking: string;
+  accessibility: string;
+};
+
+const LOCATION_LABELS: Record<Locale, LocationLabels> = {
+  'sr-Latn': { parking: 'Parking', accessibility: 'Pristupačnost' },
+  'sr-Cyrl': { parking: 'Паркинг', accessibility: 'Приступачност' },
+  en: { parking: 'Parking', accessibility: 'Accessibility' },
+  de: { parking: 'Parken', accessibility: 'Barrierefreiheit' },
+};
+
+export function locationLabels(locale: Locale): LocationLabels {
+  return LOCATION_LABELS[locale] ?? LOCATION_LABELS['sr-Latn'];
+}
+
 const CATALOG: Record<Locale, { rsvp: RsvpLabels; guestbook: GuestbookLabels }> = {
   'sr-Latn': SR_LATN,
   'sr-Cyrl': SR_CYRL,

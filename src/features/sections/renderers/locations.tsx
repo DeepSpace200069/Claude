@@ -2,6 +2,7 @@ import { ExternalLink, Navigation } from 'lucide-react';
 import type { z } from 'zod';
 
 import { formatDate } from '@/i18n/format';
+import { locationLabels } from '@/features/rsvp/labels';
 
 import type { locationsSection } from '../definitions/logistics';
 import type { SectionRendererProps } from '../types';
@@ -23,6 +24,10 @@ export function LocationsRenderer({
   index,
 }: SectionRendererProps<LocationsData>) {
   if (data.locations.length === 0) return null;
+
+  // Oznake idu iz tabele po jeziku, ne iz koda: pozivnica na engleskom ne sme
+  // da prikaže srpski naziv polja.
+  const labels = locationLabels(locale);
 
   return (
     <SectionShell
@@ -76,13 +81,13 @@ export function LocationsRenderer({
                 <dl className="inv-location__notes">
                   {location.parkingNote ? (
                     <div>
-                      <dt>Parking</dt>
+                      <dt>{labels.parking}</dt>
                       <dd>{location.parkingNote}</dd>
                     </div>
                   ) : null}
                   {location.accessibilityNote ? (
                     <div>
-                      <dt>Pristupačnost</dt>
+                      <dt>{labels.accessibility}</dt>
                       <dd>{location.accessibilityNote}</dd>
                     </div>
                   ) : null}

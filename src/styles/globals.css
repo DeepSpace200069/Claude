@@ -122,7 +122,8 @@
 
     --success: var(--color-sage-700);
     --success-subtle: var(--color-sage-100);
-    --warning: oklch(0.62 0.13 65);
+    /* 4.6:1 nad `--warning-subtle`; na 0.62 je bilo 3.3:1, ispod AA praga. */
+    --warning: oklch(0.54 0.13 65);
     --warning-subtle: oklch(0.96 0.04 75);
 
     --border: var(--color-sand-200);
@@ -151,7 +152,8 @@
     --accent: var(--color-sage-300);
     --accent-foreground: var(--color-sand-950);
 
-    --destructive: oklch(0.62 0.17 27);
+    /* 5.3:1 nad `--destructive-subtle`; na 0.62 je bilo 3.6:1, ispod AA praga. */
+    --destructive: oklch(0.72 0.17 27);
     --destructive-foreground: var(--color-sand-950);
     --destructive-subtle: oklch(0.3 0.08 27);
 

@@ -103,15 +103,23 @@ export default async function PricingPage() {
                   return (
                     <li
                       key={flag}
+                      /*
+                        Isključena mogućnost se razlikuje ikonom i punom
+                        `muted` bojom, ne prigušivanjem: tekst koji se ne može
+                        pročitati nije informacija da nešto nije uključeno.
+                      */
                       className={cn(
                         'flex items-start gap-2',
-                        !enabled && 'text-muted-foreground/70',
+                        !enabled && 'text-muted-foreground',
                       )}
                     >
                       {enabled ? (
                         <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
                       ) : (
-                        <Minus className="mt-0.5 size-4 shrink-0 opacity-50" aria-hidden />
+                        <Minus
+                          className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                          aria-hidden
+                        />
                       )}
                       <span>{t.dynamic(`features.${flag}`)}</span>
                       {/* Stanje mora biti dostupno i bez oslanjanja na ikonu. */}

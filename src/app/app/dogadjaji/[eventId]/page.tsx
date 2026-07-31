@@ -127,10 +127,17 @@ export default async function EventDashboardPage({
             {event.name}
           </h1>
 
+          {/*
+            Svaki `dd` ima svoj `dt`, makar i samo za čitač ekrana: ikona
+            objašnjava podatak oku, ali je `aria-hidden`, pa bi bez naziva
+            ostalo golo „12. septembar 2026.” bez odgovora na pitanje „šta je
+            to”.
+          */}
           <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
             {event.startsAt ? (
               <div className="flex items-center gap-1.5">
                 <CalendarDays className="size-4" aria-hidden />
+                <dt className="sr-only">{t('dashboard.eventDate')}</dt>
                 <dd>
                   {formatDateTime(event.startsAt, locale, {
                     timeZone: event.timeZone,
@@ -141,6 +148,7 @@ export default async function EventDashboardPage({
             {event.city ? (
               <div className="flex items-center gap-1.5">
                 <MapPin className="size-4" aria-hidden />
+                <dt className="sr-only">{t('eventFields.city')}</dt>
                 <dd>{event.city}</dd>
               </div>
             ) : null}
@@ -181,18 +189,18 @@ export default async function EventDashboardPage({
         <h2 id="statistika" className="sr-only">
           {t('dashboard.title')}
         </h2>
+        {/* Jedan omotač oko para `dt`/`dd` - vidi komentar na stranici odgovora. */}
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {statCards.map((stat) => (
-            <Card key={stat.label}>
-              <CardContent className="p-5 pt-5">
-                <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                  {stat.label}
-                </dt>
-                <dd className="mt-1 font-display text-3xl font-semibold">
-                  {stat.value}
-                </dd>
-              </CardContent>
-            </Card>
+            <div
+              key={stat.label}
+              className="rounded-[var(--radius-lg)] border border-border bg-surface p-5 text-surface-foreground shadow-soft"
+            >
+              <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                {stat.label}
+              </dt>
+              <dd className="mt-1 font-display text-3xl font-semibold">{stat.value}</dd>
+            </div>
           ))}
         </dl>
       </section>

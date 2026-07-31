@@ -112,17 +112,22 @@ export default async function ResponsesPage({
         </header>
 
         <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {/*
+            Kartica je ovde običan `div`, a ne `Card`: definiciona lista sme da
+            ima najviše jedan omotač oko para `dt`/`dd`, a `Card` unutar sebe
+            ima još jedan. Sa dva nivoa lista prestaje da bude lista za čitač
+            ekrana - izgled ostaje isti, značenje se vraća.
+          */}
           {summary.map((item) => (
-            <Card key={item.label}>
-              <CardContent className="p-5 pt-5">
-                <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                  {item.label}
-                </dt>
-                <dd className="mt-1 font-display text-3xl font-semibold">
-                  {item.value}
-                </dd>
-              </CardContent>
-            </Card>
+            <div
+              key={item.label}
+              className="rounded-[var(--radius-lg)] border border-border bg-surface p-5 text-surface-foreground shadow-soft"
+            >
+              <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                {item.label}
+              </dt>
+              <dd className="mt-1 font-display text-3xl font-semibold">{item.value}</dd>
+            </div>
           ))}
         </dl>
 

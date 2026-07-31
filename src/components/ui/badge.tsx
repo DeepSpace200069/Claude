@@ -13,7 +13,11 @@ const badgeVariants = cva(
         success: 'bg-success-subtle text-success',
         warning: 'bg-warning-subtle text-warning',
         destructive: 'bg-destructive-subtle text-destructive',
-        outline: 'border border-border text-foreground',
+        /*
+          Pozadina je obavezna: ova oznaka stoji i preko ilustracije šablona,
+          čija boja dolazi iz teme - bez podloge kontrast zavisi od šablona.
+        */
+        outline: 'border border-border bg-surface text-foreground',
       },
     },
     defaultVariants: { variant: 'neutral' },

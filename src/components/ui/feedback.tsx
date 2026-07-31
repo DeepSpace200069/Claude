@@ -45,7 +45,11 @@ export function Alert({
       <Icon className="mt-0.5 size-4 shrink-0" aria-hidden />
       <div className="space-y-1">
         {title ? <p className="font-medium">{title}</p> : null}
-        {children ? <div className="opacity-90">{children}</div> : null}
+        {/*
+          Bez prigušivanja: telo poruke o grešci mora da bude čitljivo koliko i
+          naslov. `opacity` je obarala kontrast ispod AA praga.
+        */}
+        {children ? <div>{children}</div> : null}
       </div>
     </div>
   );
