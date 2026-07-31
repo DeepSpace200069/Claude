@@ -6,10 +6,10 @@ import { can } from '@/features/billing/entitlements';
 import type { PrivacySettingsInput } from '@/features/invitations/schemas';
 import { hashToken } from '@/lib/ids';
 import { db } from '@/server/db';
-import { events, invitations } from '@/server/db/schema';
+import { events, invitations, templates } from '@/server/db/schema';
 import { NotFoundError, ValidationError } from '@/server/authz/errors';
 
-import { getEventEntitlements } from './entitlements';
+import { coversTemplate, getEventEntitlements } from './entitlements';
 
 /**
  * Objavljivanje i privatnost pozivnice (zahtev 21 i 23).
@@ -32,6 +32,13 @@ export type PublicationState = {
   shareDescription: string | null;
   canPublish: boolean;
   planName: string;
+  /**
+   * Paket koji traži izabrani šablon, ako ga paket pozivnice ne pokriva.
+   *
+   * `null` znači da nema prepreke. Interfejs time može da objasni **zašto**
+   * objavljivanje ne ide, umesto da samo onemogući dugme.
+   */
+  templateRequiresPlan: string | null;
 };
 
 export async function getPublicationState(eventId: string): Promise<PublicationState | null> {
@@ -46,15 +53,24 @@ export async function getPublicationState(eventId: string): Promise<PublicationS
       publishedAt: invitations.publishedAt,
       shareTitle: invitations.shareTitle,
       shareDescription: invitations.shareDescription,
+      templateRequiredPlanCode: templates.requiredPlanCode,
     })
     .from(invitations)
     .innerJoin(events, eq(invitations.eventId, events.id))
+    // Pozivnica sme da bude bez šablona, pa je ovo `leftJoin`.
+    .leftJoin(templates, eq(invitations.templateId, templates.id))
     .where(and(eq(events.id, eventId), isNull(events.deletedAt)))
     .limit(1);
 
   if (!row) return null;
 
   const entitlements = await getEventEntitlements(eventId);
+
+  const templateRequiresPlan =
+    row.templateRequiredPlanCode !== null &&
+    !(await coversTemplate(entitlements, row.templateRequiredPlanCode))
+      ? row.templateRequiredPlanCode
+      : null;
 
   return {
     invitationId: row.invitationId,
@@ -68,6 +84,7 @@ export async function getPublicationState(eventId: string): Promise<PublicationS
     shareDescription: row.shareDescription,
     canPublish: can(entitlements, 'publish'),
     planName: entitlements.planName,
+    templateRequiresPlan,
   };
 }
 
@@ -134,6 +151,22 @@ export async function publishInvitation(eventId: string): Promise<{ slug: string
     throw new ValidationError(
       `Paket „${state.planName}” ne uključuje objavljivanje javnog linka.`,
       { plan: ['Nadogradite paket da biste objavili pozivnicu.'] },
+    );
+  }
+
+  /*
+   * Šablon je slobodan dok je pozivnica nacrt - korisnik treba da vidi šta
+   * bira. Granica je objavljivanje: premium izgled se ne dobija na besplatnom
+   * paketu tako što se šablon primeni mimo interfejsa.
+   */
+  if (state.templateRequiresPlan !== null) {
+    throw new ValidationError(
+      `Izabrani šablon je uključen tek u paket „${state.templateRequiresPlan}”.`,
+      {
+        plan: [
+          `Nadogradite paket na „${state.templateRequiresPlan}” ili izaberite drugi šablon.`,
+        ],
+      },
     );
   }
 

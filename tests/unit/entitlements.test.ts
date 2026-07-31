@@ -7,8 +7,10 @@ import {
   FEATURE_FLAGS,
   FEATURE_LIMITS,
   limitFor,
+  planCoversTemplate,
   planFeaturesSchema,
   type Entitlements,
+  type PlanRank,
 } from '@/features/billing/entitlements';
 
 const entitlementsFor = (code: keyof typeof DEFAULT_PLANS): Entitlements => ({
@@ -87,5 +89,66 @@ describe('checkLimit', () => {
   it('limit 0 znači da mogućnost nije dostupna', () => {
     const result = checkLimit(entitlementsFor('free'), 'maxCollaborators', 0);
     expect(result.allowed).toBe(false);
+  });
+});
+
+/**
+ * Premium šablon se ne dobija na jeftinijem paketu.
+ *
+ * Izbor šablona je slobodan dok je pozivnica nacrt; granica je objavljivanje.
+ * Ovde se čuva samo pravilo poređenja - tačke primene pokriva
+ * `tests/integration/templates.test.ts`.
+ */
+describe('planCoversTemplate', () => {
+  const RANKS: PlanRank[] = [
+    { code: 'free', sortOrder: 10 },
+    { code: 'standard', sortOrder: 20 },
+    { code: 'premium', sortOrder: 30 },
+  ];
+
+  it('besplatan paket pokriva samo besplatan šablon', () => {
+    const free = entitlementsFor('free');
+    expect(planCoversTemplate(RANKS, free, 'free')).toBe(true);
+    expect(planCoversTemplate(RANKS, free, 'standard')).toBe(false);
+    expect(planCoversTemplate(RANKS, free, 'premium')).toBe(false);
+  });
+
+  it('Standard pokriva svoj i niži šablon, ali ne Premium', () => {
+    const standard = entitlementsFor('standard');
+    expect(planCoversTemplate(RANKS, standard, 'free')).toBe(true);
+    expect(planCoversTemplate(RANKS, standard, 'standard')).toBe(true);
+    expect(planCoversTemplate(RANKS, standard, 'premium')).toBe(false);
+  });
+
+  it('Premium pokriva sve jer ima `allTemplates`', () => {
+    const premium = entitlementsFor('premium');
+    for (const code of ['free', 'standard', 'premium']) {
+      expect(planCoversTemplate(RANKS, premium, code), code).toBe(true);
+    }
+  });
+
+  it('`allTemplates` pokriva i šablon sa nepoznatim zahtevom', () => {
+    expect(planCoversTemplate(RANKS, entitlementsFor('premium'), 'ne-postoji')).toBe(
+      true,
+    );
+  });
+
+  it('nepoznat zahtev bez `allTemplates` ne prolazi (fail closed)', () => {
+    expect(planCoversTemplate(RANKS, entitlementsFor('standard'), 'ne-postoji')).toBe(
+      false,
+    );
+  });
+
+  it('hijerarhiju određuje `sortOrder`, a ne naziv koda', () => {
+    // Administrator je Standardu dao viši `sortOrder` nego Premiumu.
+    const swapped: PlanRank[] = [
+      { code: 'free', sortOrder: 10 },
+      { code: 'standard', sortOrder: 99 },
+      { code: 'premium', sortOrder: 5 },
+    ];
+
+    expect(planCoversTemplate(swapped, entitlementsFor('standard'), 'premium')).toBe(
+      true,
+    );
   });
 });

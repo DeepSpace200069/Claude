@@ -5,6 +5,7 @@ import { cache } from 'react';
 
 import {
   DEFAULT_PLANS,
+  planCoversTemplate,
   type Entitlements,
   type FeatureLimit,
 } from '@/features/billing/entitlements';
@@ -110,6 +111,21 @@ export const getEventEntitlements = cache(
     };
   },
 );
+
+/**
+ * Da li paket pokriva šablon koji traži `requiredPlanCode`.
+ *
+ * Hijerarhija se čita iz baze (`sortOrder`), pa je administrator menja bez
+ * deploya - isto kao i limite. Prima gotova prava, a ne `eventId`, da bi ista
+ * funkcija služila i pri objavljivanju (prava događaja) i pri naplati (paket
+ * koji se tek kupuje).
+ */
+export async function coversTemplate(
+  entitlements: Entitlements,
+  requiredPlanCode: string,
+): Promise<boolean> {
+  return planCoversTemplate(await activePlans(), entitlements, requiredPlanCode);
+}
 
 /**
  * Prava na nivou naloga.

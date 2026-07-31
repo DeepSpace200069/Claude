@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 
 import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 
+import type { PlanFeatures } from '@/features/billing/entitlements';
 import { getEnv } from '@/lib/env';
 import { db } from '@/server/db';
 import {
@@ -13,6 +14,7 @@ import {
   orders,
   payments,
   promoCodes,
+  templates,
   webhookEvents,
 } from '@/server/db/schema';
 import { NotFoundError, ValidationError } from '@/server/authz/errors';
@@ -24,6 +26,7 @@ import {
 } from '@/server/adapters/payments/types';
 
 import { writeAuditLog } from './audit';
+import { coversTemplate } from './entitlements';
 import { sendPaymentReceipt } from './notifications';
 
 /**
@@ -158,6 +161,8 @@ type PlanRow = {
   id: string;
   code: string;
   name: string;
+  /** Potrebno za proveru pokrivenosti šablona (`allTemplates`). */
+  features: PlanFeatures;
   priceMinor: number;
   currency: string;
 };
@@ -168,6 +173,7 @@ async function requirePurchasablePlan(planId: string): Promise<PlanRow> {
       id: featurePlans.id,
       code: featurePlans.code,
       name: featurePlans.name,
+      features: featurePlans.features,
       priceMinor: featurePlans.priceMinor,
       currency: featurePlans.currency,
       isActive: featurePlans.isActive,
@@ -187,13 +193,22 @@ async function requirePurchasablePlan(planId: string): Promise<PlanRow> {
   return plan;
 }
 
-async function requireInvitation(
-  eventId: string,
-): Promise<{ invitationId: string; eventName: string }> {
+async function requireInvitation(eventId: string): Promise<{
+  invitationId: string;
+  eventName: string;
+  /** Paket koji traži izabrani šablon; `null` kada šablona nema. */
+  templateRequiredPlanCode: string | null;
+}> {
   const [row] = await db
-    .select({ invitationId: invitations.id, eventName: events.name })
+    .select({
+      invitationId: invitations.id,
+      eventName: events.name,
+      templateRequiredPlanCode: templates.requiredPlanCode,
+    })
     .from(invitations)
     .innerJoin(events, eq(invitations.eventId, events.id))
+    // Pozivnica sme da bude bez šablona, pa je ovo `leftJoin`.
+    .leftJoin(templates, eq(invitations.templateId, templates.id))
     .where(and(eq(events.id, eventId), isNull(events.deletedAt)))
     .limit(1);
 
@@ -266,6 +281,31 @@ export async function startCheckout(input: {
 
   const plan = await requirePurchasablePlan(input.planId);
   const invitation = await requireInvitation(input.eventId);
+
+  /*
+   * Paket mora da pokrije šablon koji pozivnica koristi.
+   *
+   * Bez ove provere korisnik sa premium šablonom mogao bi da plati Standard, a
+   * da mu objavljivanje zatim bude odbijeno - novac uzet, pozivnica
+   * neobjavljena. Bolje je odbiti naplatu uz jasnu poruku koji paket treba.
+   */
+  if (invitation.templateRequiredPlanCode !== null) {
+    const covered = await coversTemplate(
+      { planCode: plan.code, planName: plan.name, features: plan.features },
+      invitation.templateRequiredPlanCode,
+    );
+
+    if (!covered) {
+      throw new ValidationError(
+        `Izabrani šablon je uključen tek u paket „${invitation.templateRequiredPlanCode}”.`,
+        {
+          planId: [
+            `Izaberite paket „${invitation.templateRequiredPlanCode}” ili viši.`,
+          ],
+        },
+      );
+    }
+  }
 
   const existing = await db
     .select({ id: orders.id, status: orders.status, planId: orders.planId })
