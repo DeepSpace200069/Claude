@@ -116,7 +116,7 @@ const PRIVACY_SR_LATN: LegalDocument = {
       paragraphs: [
         'Ne prodajemo podatke i ne ustupamo ih oglašivačima.',
         'Ne koristimo podatke gostiju za marketing bez njihove izričite i posebne saglasnosti.',
-        'Ne postavljamo kolačiće za praćenje. Kolačići koje koristimo su neophodni za prijavu i za pamćenje izabranog jezika.',
+        'Ne postavljamo kolačiće za praćenje i nemamo treće strane koje bi vas prepoznale između sajtova. Tačan spisak svega što upisujemo u pregledač je na stranici „Kolačići i čuvanje u pregledaču”.',
       ],
     },
     {
@@ -124,6 +124,7 @@ const PRIVACY_SR_LATN: LegalDocument = {
       paragraphs: [
         'Za svaku objavljenu pozivnicu čuvamo dnevni zbir otvaranja, broj jedinstvenih posetilaca i broj odgovora.',
         'Čuvamo samo zbirne brojeve po danu. Ne beležimo pojedinačne posete, IP adrese posetilaca niti bilo šta čime bi se gost mogao identifikovati.',
+        'Razlikovanje prve posete od ponovljene traži jednu oznaku u sesiji pregledača, pa čeka vaš pristanak. Bez pristanka se otvaranje i dalje broji, ali kao ponovljeno.',
       ],
     },
     {

@@ -155,3 +155,124 @@ export async function collaboratorInviteEmail(options: {
     tag: 'collaborator-invite',
   };
 }
+
+/**
+ * Obaveštenje o novom odgovoru (zahtev 28).
+ *
+ * Sadrži ime gosta i status, ali **ne** i njegov kontakt: mejl putuje kroz
+ * tuđe servere, a organizator kontakt ionako vidi u aplikaciji.
+ */
+export async function rsvpNotificationEmail(options: {
+  to: string;
+  eventName: string;
+  guestName: string;
+  status: 'yes' | 'no' | 'maybe';
+  people: number;
+  url: string;
+  locale: Locale;
+}): Promise<EmailMessage> {
+  const t = await translatorFor(options.locale);
+
+  const statusText = t.dynamic(`notifications.status.${options.status}`);
+
+  const content = {
+    heading: t('notifications.newResponseHeading', { event: options.eventName }),
+    body: [
+      t('notifications.newResponseBody', {
+        guest: options.guestName,
+        status: statusText,
+        people: options.people,
+      }),
+      t('notifications.frequencyNote'),
+    ],
+    cta: { label: t('notifications.openResponses'), url: options.url },
+    footer: `${brand.name} · ${brand.domain}`,
+  };
+
+  return {
+    to: options.to,
+    subject: t('notifications.newResponseSubject', { event: options.eventName }),
+    html: layout(content),
+    text: toText(content),
+    tag: 'rsvp-notification',
+  };
+}
+
+/**
+ * Rezime odgovora za period (dnevni ili nedeljni).
+ *
+ * Šalje se **samo** ako je nešto stiglo - prazan rezime je poruka koja ne nosi
+ * nijedan podatak, a troši poverenje primaoca.
+ */
+export async function rsvpDigestEmail(options: {
+  to: string;
+  period: 'daily' | 'weekly';
+  events: Array<{ name: string; yes: number; no: number; maybe: number; people: number }>;
+  url: string;
+  locale: Locale;
+}): Promise<EmailMessage> {
+  const t = await translatorFor(options.locale);
+
+  const heading =
+    options.period === 'daily'
+      ? t('notifications.digestDailyHeading')
+      : t('notifications.digestWeeklyHeading');
+
+  const body = options.events.map((event) =>
+    t('notifications.digestLine', {
+      event: event.name,
+      yes: event.yes,
+      no: event.no,
+      maybe: event.maybe,
+      people: event.people,
+    }),
+  );
+
+  const content = {
+    heading,
+    body: [...body, t('notifications.frequencyNote')],
+    cta: { label: t('notifications.openApp'), url: options.url },
+    footer: `${brand.name} · ${brand.domain}`,
+  };
+
+  return {
+    to: options.to,
+    subject: heading,
+    html: layout(content),
+    text: toText(content),
+    tag: `rsvp-digest-${options.period}`,
+  };
+}
+
+/** Potvrda uplate - račun ostaje u sandučetu i kada korisnik obriše nalog. */
+export async function paymentReceiptEmail(options: {
+  to: string;
+  eventName: string;
+  planName: string;
+  amount: string;
+  url: string;
+  locale: Locale;
+}): Promise<EmailMessage> {
+  const t = await translatorFor(options.locale);
+
+  const content = {
+    heading: t('notifications.receiptHeading'),
+    body: [
+      t('notifications.receiptBody', {
+        plan: options.planName,
+        event: options.eventName,
+        amount: options.amount,
+      }),
+    ],
+    cta: { label: t('notifications.openBilling'), url: options.url },
+    footer: `${brand.name} · ${brand.domain}`,
+  };
+
+  return {
+    to: options.to,
+    subject: t('notifications.receiptSubject', { event: options.eventName }),
+    html: layout(content),
+    text: toText(content),
+    tag: 'payment-receipt',
+  };
+}

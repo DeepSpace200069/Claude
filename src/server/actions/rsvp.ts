@@ -18,6 +18,7 @@ import { requireEventAccess } from '@/server/authz';
 import { RATE_LIMITS, rateLimit } from '@/server/rate-limit';
 import { clientFingerprint } from '@/server/request-info';
 import { recordActivity } from '@/server/services/events';
+import { notifyNewResponse } from '@/server/services/notifications';
 import { formScope } from '@/server/services/live-context';
 import { resolvePublicAccess } from '@/server/services/public-invitation';
 import {
@@ -161,6 +162,23 @@ export async function submitRsvpAction(
       kind: result.isUpdate ? 'rsvp_updated' : 'rsvp_created',
       payload: { status: result.status },
     });
+
+    /*
+     * Obaveštenje ide samo za nov odgovor.
+     *
+     * Izmena postojećeg odgovora ne šalje poruku: gost koji se dvaput
+     * predomisli ne treba da napuni sanduče organizatora. Servis sam poštuje
+     * izabranu učestalost, a greška u slanju se guta - gost je svoje uradio i
+     * ne sme da vidi grešku zbog naše pošte.
+     */
+    if (!result.isUpdate) {
+      await notifyNewResponse({
+        eventId: invitation.eventId,
+        guestName: data.fullName,
+        status: result.status,
+        people: data.adultsCount + (section.askChildren ? data.childrenCount : 0),
+      }).catch(() => undefined);
+    }
 
     return success({
       status: result.status,

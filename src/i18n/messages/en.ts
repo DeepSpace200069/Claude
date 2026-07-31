@@ -1432,6 +1432,78 @@ const messages: Messages = {
     },
   },
 
+  notifications: {
+    newResponseSubject: 'New response · {event}',
+    newResponseHeading: 'New response to “{event}”',
+    newResponseBody: '{guest} replied: {status}. People: {people}.',
+    openResponses: 'View responses',
+
+    digestDailyHeading: 'Daily response summary',
+    digestWeeklyHeading: 'Weekly response summary',
+    digestLine:
+      '{event}: {yes} attending, {no} not attending, {maybe} maybe. People in total: {people}.',
+    openApp: 'Open dashboard',
+
+    frequencyNote:
+      'You can change how often we send these — or turn them off entirely — in your profile.',
+
+    receiptSubject: 'Payment confirmation · {event}',
+    receiptHeading: 'Your payment is recorded',
+    receiptBody: 'The “{plan}” plan for the “{event}” invitation is active. Amount: {amount}.',
+    openBilling: 'Open plan and billing',
+
+    status: {
+      yes: 'attending',
+      no: 'not attending',
+      maybe: 'maybe attending',
+    },
+  },
+
+  cookies: {
+    title: 'Cookies and browser storage',
+    subtitle:
+      'The exact list of everything we write to your browser, what it does and how long it lasts.',
+
+    bannerTitle: 'Cookies',
+    bannerText:
+      'We use necessary cookies so that sign-in, language and protected invitations work. Visit measurement is switched on only if you agree.',
+    bannerAcceptAll: 'Accept all',
+    bannerNecessaryOnly: 'Necessary only',
+    bannerMore: 'Details',
+
+    choiceTitle: 'Your choice',
+    currentLabel: 'Current state:',
+    stateAll: 'Measurement is on',
+    stateNecessary: 'Necessary only',
+    stateUndecided: 'Not chosen — “necessary only” applies',
+    chooseAll: 'Turn measurement on',
+    chooseNecessary: 'Turn measurement off',
+    saved: 'Choice saved.',
+
+    necessaryTitle: 'Necessary',
+    necessaryText:
+      'Without these the service does not work, so we do not ask for consent — just as nobody asks for consent to make the “sign in” button work.',
+    measurementTitle: 'Visit measurement',
+    measurementText:
+      'A single marker in the browser session that tells a first visit from a repeat one. Without consent we do not write it: the view is still counted, but as a repeat one, so the number of unique visitors is lower than the real one.',
+    noTrackingTitle: 'What is not here',
+    noTrackingText:
+      'No advertising cookies, no cross-site tracking, no profiling and no third parties that could recognise you. Statistics are a daily total per invitation, with nothing about an individual.',
+
+    columnName: 'Name',
+    columnKind: 'Kind',
+    columnPurpose: 'Purpose',
+    columnDuration: 'Duration',
+
+    purposeSession: 'Keeps you signed in.',
+    purposeCsrf: 'Protects forms from requests made by other sites.',
+    purposeLocale: 'Remembers the language you picked.',
+    purposePin: 'Proof that you entered the correct PIN for a protected invitation.',
+    purposeConsent: 'Remembers your choice from this page.',
+    purposeFavorites: 'Templates you marked with a heart, on your device.',
+    purposeVisit: 'Tells a first visit to an invitation from a repeat one.',
+  },
+
   admin: {
     title: 'Administration',
     subtitle: 'Platform, billing and catalogue overview.',

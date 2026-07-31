@@ -25,6 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: appUrl('/kontakt'), lastModified: now, changeFrequency: 'yearly', priority: 0.4 },
     { url: appUrl('/uslovi-koriscenja'), lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: appUrl('/politika-privatnosti'), lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
+    { url: appUrl('/kolacici'), lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
   ];
 
   // Ako baza nije dostupna, sitemap i dalje treba da se generiše sa statičkim

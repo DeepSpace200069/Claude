@@ -100,6 +100,7 @@ export default async function MarketingLayout({
             links={[
               { href: '/uslovi-koriscenja', label: t('nav.terms') },
               { href: '/politika-privatnosti', label: t('nav.privacy') },
+              { href: '/kolacici', label: t('cookies.title') },
             ]}
           />
         </div>

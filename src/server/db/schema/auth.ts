@@ -45,6 +45,14 @@ export const users = pgTable(
 
     lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
 
+    /**
+     * Kraj poslednjeg poslatog rezimea odgovora.
+     *
+     * Granica je nužna da rezime ne bi ponovo slao iste odgovore: sledeći
+     * obuhvata tačno ono što je stiglo posle ovog trenutka (zahtev 28).
+     */
+    lastDigestAt: timestamp('last_digest_at', { withTimezone: true }),
+
     ...timestamps,
     ...softDelete,
   },

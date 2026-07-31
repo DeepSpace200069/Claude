@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 
 import { Toaster } from '@/components/ui/toaster';
+import { ConsentBanner } from '@/features/consent/consent-banner';
 import { brand, appUrl } from '@/config/brand';
 import { LOCALE_META } from '@/i18n/config';
 import { getRequestLocale, getTranslations } from '@/i18n/server';
@@ -64,6 +65,20 @@ export default async function RootLayout({
         </a>
         {children}
         <Toaster />
+        {/*
+          Traka je klijentska i čita kolačić u pregledaču, pa keširane rute
+          (javna pozivnica) ostaju keširane. Prikazuje se samo dok odluka ne
+          postoji.
+        */}
+        <ConsentBanner
+          labels={{
+            title: t('cookies.bannerTitle'),
+            text: t('cookies.bannerText'),
+            acceptAll: t('cookies.bannerAcceptAll'),
+            necessaryOnly: t('cookies.bannerNecessaryOnly'),
+            more: t('cookies.bannerMore'),
+          }}
+        />
       </body>
     </html>
   );

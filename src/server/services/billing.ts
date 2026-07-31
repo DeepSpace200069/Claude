@@ -24,6 +24,7 @@ import {
 } from '@/server/adapters/payments/types';
 
 import { writeAuditLog } from './audit';
+import { sendPaymentReceipt } from './notifications';
 
 /**
  * Naplata objavljivanja (zahtev 17 i 39.7).
@@ -427,6 +428,26 @@ async function ensurePaymentIntent(input: {
  * broj iskorišćenja promo koda dvaput.
  */
 export async function settleOrder(input: {
+  orderId: string;
+  reason: 'payment' | 'promo' | 'admin';
+  actor?: { id: string; email: string | null } | null;
+}): Promise<{ changed: boolean }> {
+  const result = await settleOrderTransaction(input);
+
+  /*
+   * Potvrda se šalje **posle** transakcije i van nje: sporo ili neuspelo slanje
+   * ne sme da drži zaključan red narudžbine niti da poništi naplatu koja je
+   * prošla. Ponovljena isporuka webhooka ovde ne stiže - `changed` je tada
+   * `false`.
+   */
+  if (result.changed) {
+    await sendPaymentReceipt(input.orderId).catch(() => false);
+  }
+
+  return result;
+}
+
+async function settleOrderTransaction(input: {
   orderId: string;
   reason: 'payment' | 'promo' | 'admin';
   actor?: { id: string; email: string | null } | null;

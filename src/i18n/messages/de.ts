@@ -1452,6 +1452,78 @@ const messages: Messages = {
     },
   },
 
+  notifications: {
+    newResponseSubject: 'Neue Antwort · {event}',
+    newResponseHeading: 'Neue Antwort auf „{event}“',
+    newResponseBody: '{guest} hat geantwortet: {status}. Personen: {people}.',
+    openResponses: 'Antworten ansehen',
+
+    digestDailyHeading: 'Tägliche Antwortübersicht',
+    digestWeeklyHeading: 'Wöchentliche Antwortübersicht',
+    digestLine:
+      '{event}: {yes} kommen, {no} kommen nicht, {maybe} vielleicht. Personen insgesamt: {people}.',
+    openApp: 'Dashboard öffnen',
+
+    frequencyNote:
+      'Wie oft wir diese Nachrichten senden – oder ob überhaupt – ändern Sie in Ihrem Profil.',
+
+    receiptSubject: 'Zahlungsbestätigung · {event}',
+    receiptHeading: 'Ihre Zahlung ist erfasst',
+    receiptBody: 'Das Paket „{plan}“ für die Einladung „{event}“ ist aktiv. Betrag: {amount}.',
+    openBilling: 'Paket und Abrechnung öffnen',
+
+    status: {
+      yes: 'kommt',
+      no: 'kommt nicht',
+      maybe: 'kommt vielleicht',
+    },
+  },
+
+  cookies: {
+    title: 'Cookies und Browser-Speicher',
+    subtitle:
+      'Die genaue Liste von allem, was wir in Ihrem Browser speichern, wozu es dient und wie lange es gilt.',
+
+    bannerTitle: 'Cookies',
+    bannerText:
+      'Notwendige Cookies sorgen dafür, dass Anmeldung, Sprache und geschützte Einladungen funktionieren. Die Besuchsmessung aktivieren wir nur mit Ihrer Zustimmung.',
+    bannerAcceptAll: 'Alle akzeptieren',
+    bannerNecessaryOnly: 'Nur notwendige',
+    bannerMore: 'Details',
+
+    choiceTitle: 'Ihre Wahl',
+    currentLabel: 'Aktueller Stand:',
+    stateAll: 'Messung ist aktiv',
+    stateNecessary: 'Nur notwendige',
+    stateUndecided: 'Nicht gewählt – es gilt „nur notwendige“',
+    chooseAll: 'Messung aktivieren',
+    chooseNecessary: 'Messung deaktivieren',
+    saved: 'Auswahl gespeichert.',
+
+    necessaryTitle: 'Notwendig',
+    necessaryText:
+      'Ohne diese funktioniert der Dienst nicht, deshalb fragen wir dafür nicht um Zustimmung – so wie niemand um Zustimmung bittet, damit die Schaltfläche „Anmelden“ funktioniert.',
+    measurementTitle: 'Besuchsmessung',
+    measurementText:
+      'Eine einzige Markierung in der Browser-Sitzung, die einen ersten Besuch von einem wiederholten unterscheidet. Ohne Zustimmung schreiben wir sie nicht: Der Aufruf wird weiterhin gezählt, aber als wiederholt – die Zahl der eindeutigen Besucher ist dann niedriger als in Wirklichkeit.',
+    noTrackingTitle: 'Was es nicht gibt',
+    noTrackingText:
+      'Keine Werbe-Cookies, kein seitenübergreifendes Tracking, kein Profiling und keine Dritten, die Sie wiedererkennen könnten. Die Statistik ist eine Tagessumme pro Einladung, ohne jede Angabe zu einer Person.',
+
+    columnName: 'Name',
+    columnKind: 'Art',
+    columnPurpose: 'Zweck',
+    columnDuration: 'Dauer',
+
+    purposeSession: 'Hält Sie angemeldet.',
+    purposeCsrf: 'Schützt Formulare vor Anfragen anderer Seiten.',
+    purposeLocale: 'Merkt sich die gewählte Sprache.',
+    purposePin: 'Nachweis, dass Sie die richtige PIN einer geschützten Einladung eingegeben haben.',
+    purposeConsent: 'Merkt sich Ihre Wahl von dieser Seite.',
+    purposeFavorites: 'Vorlagen, die Sie mit einem Herz markiert haben – auf Ihrem Gerät.',
+    purposeVisit: 'Unterscheidet den ersten Besuch einer Einladung von einem wiederholten.',
+  },
+
   admin: {
     title: 'Administration',
     subtitle: 'Überblick über Plattform, Abrechnung und Katalog.',

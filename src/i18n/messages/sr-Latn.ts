@@ -1445,6 +1445,78 @@ const messages = {
     },
   },
 
+  notifications: {
+    newResponseSubject: 'Nov odgovor · {event}',
+    newResponseHeading: 'Nov odgovor na pozivnicu „{event}”',
+    newResponseBody: '{guest} je odgovorio: {status}. Broj osoba: {people}.',
+    openResponses: 'Pogledaj odgovore',
+
+    digestDailyHeading: 'Dnevni rezime odgovora',
+    digestWeeklyHeading: 'Nedeljni rezime odgovora',
+    digestLine:
+      '{event}: dolazi {yes}, ne dolazi {no}, možda {maybe}. Ukupno osoba: {people}.',
+    openApp: 'Otvori kontrolni panel',
+
+    frequencyNote:
+      'Učestalost ovih poruka menjate u profilu - možete ih i potpuno isključiti.',
+
+    receiptSubject: 'Potvrda uplate · {event}',
+    receiptHeading: 'Uplata je evidentirana',
+    receiptBody: 'Paket „{plan}” za pozivnicu „{event}” je aktivan. Iznos: {amount}.',
+    openBilling: 'Otvori plan i naplatu',
+
+    status: {
+      yes: 'dolazi',
+      no: 'ne dolazi',
+      maybe: 'možda dolazi',
+    },
+  },
+
+  cookies: {
+    title: 'Kolačići i čuvanje u pregledaču',
+    subtitle:
+      'Tačan spisak svega što upisujemo u vaš pregledač, čemu služi i koliko traje.',
+
+    bannerTitle: 'Kolačići',
+    bannerText:
+      'Neophodne kolačiće koristimo da bi prijava, jezik i zaštićene pozivnice radili. Merenje poseta uključujemo samo ako pristanete.',
+    bannerAcceptAll: 'Prihvati sve',
+    bannerNecessaryOnly: 'Samo neophodno',
+    bannerMore: 'Detalji',
+
+    choiceTitle: 'Vaš izbor',
+    currentLabel: 'Trenutno stanje:',
+    stateAll: 'Merenje je uključeno',
+    stateNecessary: 'Samo neophodno',
+    stateUndecided: 'Niste birali - važi „samo neophodno”',
+    chooseAll: 'Uključi merenje',
+    chooseNecessary: 'Isključi merenje',
+    saved: 'Izbor je sačuvan.',
+
+    necessaryTitle: 'Neophodno',
+    necessaryText:
+      'Bez ovoga usluga ne radi, pa za njih ne tražimo pristanak - isto kao što se ne traži pristanak da bi dugme „prijavi se” radilo.',
+    measurementTitle: 'Merenje poseta',
+    measurementText:
+      'Jedna oznaka u sesiji pregledača, po kojoj razlikujemo prvu posetu od ponovljene. Bez pristanka je ne upisujemo: pregled se i dalje broji, ali kao ponovljen, pa je broj jedinstvenih posetilaca manji od stvarnog.',
+    noTrackingTitle: 'Čega nema',
+    noTrackingText:
+      'Nema reklamnih kolačića, nema praćenja između sajtova, nema profilisanja i nema trećih strana koje bi vas prepoznale. Statistika je dnevni zbir po pozivnici, bez ijednog podatka o pojedincu.',
+
+    columnName: 'Naziv',
+    columnKind: 'Vrsta',
+    columnPurpose: 'Čemu služi',
+    columnDuration: 'Koliko traje',
+
+    purposeSession: 'Održava vas prijavljenim.',
+    purposeCsrf: 'Štiti obrasce od zahteva sa drugih sajtova.',
+    purposeLocale: 'Pamti jezik koji ste izabrali.',
+    purposePin: 'Dokaz da ste uneli tačan PIN za zaštićenu pozivnicu.',
+    purposeConsent: 'Pamti vaš izbor sa ove stranice.',
+    purposeFavorites: 'Šabloni koje ste označili srcem, na vašem uređaju.',
+    purposeVisit: 'Razlikuje prvu posetu pozivnici od ponovljene.',
+  },
+
   admin: {
     title: 'Administracija',
     subtitle: 'Pregled platforme, naplate i kataloga.',
