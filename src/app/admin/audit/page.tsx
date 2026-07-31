@@ -29,7 +29,12 @@ export default async function AdminAuditPage() {
         <p className="text-sm text-muted-foreground">{t('admin.auditEmpty')}</p>
       ) : (
         <Card>
-          <CardContent className="overflow-x-auto p-0">
+          <CardContent
+            className="overflow-x-auto p-0"
+            tabIndex={0}
+            role="region"
+            aria-label={t('admin.auditTitle')}
+          >
             <table className="w-full min-w-[44rem] text-sm">
               <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>

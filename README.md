@@ -43,6 +43,8 @@ organizator prati potvrde dolaska i pravi raspored sedenja.
 - [Naplata i paketi](#naplata-i-paketi)
 - [Saradnici](#saradnici)
 - [Administracija](#administracija)
+- [Privatnost i pristanak](#privatnost-i-pristanak)
+- [Obaveštenja](#obaveštenja)
 - [Adapteri](#adapteri)
 - [Environment varijable](#environment-varijable)
 - [Komande](#komande)
@@ -1063,6 +1065,87 @@ korisnik obriše nalog.
 
 ---
 
+## Privatnost i pristanak
+
+### Preuzimanje podataka
+
+`/app/profil/podaci` vraća JSON sa svime što o korisniku čuvamo: profil,
+događaji, pozivnice sa sekcijama, gosti, domaćinstva, odgovori, knjiga želja,
+narudžbine i saradnici. **Tokeni i heševi se ne izvoze** - oni su tajne, a ne
+podaci; test to i proverava tražeći ih u serijalizovanom izvozu.
+
+### Brisanje naloga
+
+Lični sadržaj se stvarno briše: događaji odlaze sa pozivnicama, gostima,
+odgovorima i rasporedom. Sam red korisnika se **anonimizuje**, jer narudžbine
+po poreskim propisima moraju da postoje, a `orders.user_id` je
+`on delete restrict`. Email postaje tehnički (`obrisan-<id>@obrisano.invalid`),
+ime i slika nestaju, sesije i povezani nalozi se brišu - prijava prestaje da
+radi odmah.
+
+Audit zapis o brisanju **ne** nosi email. Zapis koji čuva adresu bio bi brisanje
+samo na papiru.
+
+Ekran potvrde kaže tačne brojeve („događaja 1, gostiju 12, odgovora 8”) i traži
+ukucanu reč: to je jedina radnja u aplikaciji koja se ne može poništiti.
+
+### Retencija
+
+`pruneExpiredData()` (kroz `pnpm maintenance`) briše meko obrisane događaje
+starije od `DATA_RETENTION_DAYS`, staru statistiku pregleda, obrađene
+webhookove, istekle sesije i tokene, i uklanja tajnu iz istekih poziva
+saradnicima - red ostaje, da vlasnik vidi da poziv nije prihvaćen. Audit log se
+ne dira: on je pravni trag i ne sadrži sadržaj pozivnica.
+
+### Pristanak (`/kolacici`)
+
+Sve što aplikacija upisuje u pregledač popisano je u `STORAGE_INVENTORY`, i
+stranica o kolačićima se pravi **iz tog spiska** - tekst pisan zasebno zastari
+prvog dana kada neko doda kolačić.
+
+| Kategorija | Šta | Traži pristanak |
+|------------|-----|-----------------|
+| neophodno | sesija, CSRF, jezik, dokaz o PIN-u, sam izbor, omiljeni šabloni | ne |
+| merenje | oznaka sesije koja razlikuje prvu posetu od ponovljene | **da** |
+
+Bez pristanka se pregled i dalje broji, ali kao ponovljen, pa je broj
+jedinstvenih posetilaca manji od stvarnog - poštenija zamena nego merenje bez
+pitanja.
+
+Odluka se čita **u pregledaču** (`useSyncExternalStore` nad `document.cookie`),
+pa keširana javna pozivnica ostaje keširana: čitanje kolačića pri renderovanju
+ukinulo bi keš svima zbog trake koja se vidi jednom.
+
+---
+
+## Obaveštenja
+
+Učestalost bira primalac, u profilu, i poštuje se na **jednom** mestu
+(`services/notifications.ts`) - pa „nikad” zaista znači nikad.
+
+| Podešavanje | Ponašanje |
+|-------------|-----------|
+| `immediate` | poruka po svakom novom odgovoru |
+| `daily` | jedan rezime dnevno, samo ako je nešto stiglo |
+| `weekly` | jedan rezime nedeljno, samo ako je nešto stiglo |
+| `never` | ništa |
+
+Rezime se sastavlja iz samih odgovora, uz granicu `users.last_digest_at`: ako
+zadatak jednom ne odradi posao, sledeći put ide sve što je u međuvremenu
+stiglo. Neuspelo slanje **ne** pomera granicu, pa se odgovori ne gube zato što
+je provajder bio nedostupan.
+
+Poruka o odgovoru nosi ime gosta i status, ali ne i njegov kontakt: mejl putuje
+kroz tuđe servere, a organizator kontakt ionako vidi u aplikaciji. Izmena
+postojećeg odgovora ne šalje ništa - gost koji se dvaput predomisli ne treba da
+napuni sanduče.
+
+Potvrda uplate se šalje uvek, bez obzira na podešavanje: to je račun, a ne
+obaveštenje o tuđoj radnji. Šalje se van transakcije naplate, da sporo slanje ne
+drži zaključan red narudžbine.
+
+---
+
 ## Adapteri
 
 Svaka spoljna integracija je iza interfejsa, sa implementacijom koja radi bez
@@ -1171,6 +1254,9 @@ pnpm db:seed             # demo podaci (idempotentno)
 pnpm db:reset            # brisanje svih podataka (šema ostaje)
 pnpm db:studio           # Drizzle Studio
 
+# Održavanje (cron, jednom dnevno)
+pnpm maintenance         # rezimei odgovora + brisanje po pravilima retencije
+
 # Testovi
 pnpm test                # unit
 pnpm test:watch
@@ -1185,9 +1271,9 @@ pnpm test:e2e            # Playwright
 
 | Vrsta | Broj | Pokriva |
 |-------|------|---------|
-| Unit | 298 | Zod šeme sekcija, migracije verzija, slug, tokeni, dozvole, entitlements, prelazi stanja naplate, kontrast tema, i18n i množina, registri sekcija/renderera/editora, tokeni teme u CSS, grupisanje boja, demo kontekst, seed šabloni, operacije nad dokumentom uređivača, istorija poništi/ponovi, spajanje pri promeni šablona, uklanjanje EXIF-a iz JPEG/PNG/WebP, QR matrica i SVG/PNG izlaz, kraj dana u vremenskoj zoni i dan agregata, **CSV parser i generator (razdvajač, navodnici, prelom reda u polju, zaštita od formula, prepoznavanje kolona)**, **potpisani ključ obrasca (prebrzo slanje, istek, tuđi opseg, izmenjeno vreme)**, provera odgovora na svih šest tipova pitanja, **geometrija rasporeda (rotacija, granice stola, sto koji ostaje u sali, redni broj mesta, slobodan naziv)**, **idempotencija dev provajdera preživljava restart procesa (nova instanca, isti `providerRef`) i referenca ne otkriva ključ** |
-| Integracioni | 185 | Kreiranje događaja u transakciji, jedinstvenost sluga, limiti paketa, meko brisanje, cascade pravila, `CHECK` ograničenja, snimak verzije šablona, čuvanje nacrta i sudar revizija, limiti i zaključane sekcije pri čuvanju, snimci verzija i orezivanje, otpremanje fotografija i odbijanje fajla sa EXIF-om, **objavljivanje i isključivanje linka**, **sva četiri režima privatnosti**, **istek do kraja dana**, **PIN i tokeni samo kao heš**, dnevni agregat i spisak kolona statistike, **gosti uz `eventId` (tuđi gost i tuđe domaćinstvo se ne vide)**, **meko brisanje gasi lični link**, **token i token za izmenu samo kao heš**, **jedan primalac = jedan odgovor**, **granica osoba sa linka domaćinstva**, **uvoz CSV-a i granica paketa**, moderacija knjige želja, **raspored: zaključana verzija odbija svaku izmenu, kapacitet zaustavlja gosta viška, jedan sto po gostu, kopija verzije ne deli redove sa originalom, brisanje vraća goste među neraspoređene, upozorenja o pravilima**, **paket po pozivnici (plaćeno venčanje ne otključava krštenje, plaćeni događaji van kvote nacrta)**, **naplata: dvostruki klik ne pravi drugu narudžbinu, ponovljen webhook vraća `duplicate`, zakasneli „pending” posle uspeha se odbacuje, propao pokušaj dozvoljava nov, promo kodovi i pun popust bez provajdera**, **administracija: ručna aktivacija uz razlog i trag u audit logu, odbijanje aktivacije bez razloga, validacija oblika paketa, arhiviranje prethodne verzije šablona**, **saradnici: token samo kao heš, tuđi nalog ne prihvata poziv, istekao poziv, limit paketa, opoziv ostaje u evidenciji** |
-| E2E | 126 (63 × desktop/mobilni) | Marketing, prijava, zaštita ruta, čarobnjak sa izborom šablona, dashboard, izmena bez promene linka, brisanje uz potvrdu, profil, galerija i filteri, favoriti, demo na tri veličine ekrana, cenovnik, česta pitanja, sitemap, uređivač (živi pregled, autosave, biblioteka, redosled bez miša, kontrast, otpremanje fotografije), javna pozivnica (nacrt i istek se ne prikazuju, PIN kapija, indeksiranje po režimu, deljenje i QR, poništavanje keša), **spisak gostiju: dodavanje, oznake, lični link koji se vidi samo jednom, filtriranje kroz URL, izvoz kao CSV**, **gost šalje odgovor sa javne pozivnice i dobija link za izmenu**, **izmena odgovora ne pravi drugi odgovor**, lični link sa velikim slovima ostaje ispravan, **raspored sedenja: dodavanje stola i sedanje gostiju bez miša, kapacitet, zaključana verzija, CSV i prikaz za štampu**, **naplata: nacrt se ne objavljuje bez plaćenog paketa, narudžbina u čekanju ne daje prava, administrator je potvrđuje uz razlog, tek onda javni link radi; dvostruko pokretanje naplate ne pravi drugu narudžbinu** |
+| Unit | 308 | Zod šeme sekcija, migracije verzija, slug, tokeni, dozvole, entitlements, prelazi stanja naplate, kontrast tema, i18n i množina, registri sekcija/renderera/editora, tokeni teme u CSS, grupisanje boja, demo kontekst, seed šabloni, operacije nad dokumentom uređivača, istorija poništi/ponovi, spajanje pri promeni šablona, uklanjanje EXIF-a iz JPEG/PNG/WebP, QR matrica i SVG/PNG izlaz, kraj dana u vremenskoj zoni i dan agregata, **CSV parser i generator (razdvajač, navodnici, prelom reda u polju, zaštita od formula, prepoznavanje kolona)**, **potpisani ključ obrasca (prebrzo slanje, istek, tuđi opseg, izmenjeno vreme)**, provera odgovora na svih šest tipova pitanja, **geometrija rasporeda (rotacija, granice stola, sto koji ostaje u sali, redni broj mesta, slobodan naziv)**, **idempotencija dev provajdera preživljava restart procesa (nova instanca, isti `providerRef`) i referenca ne otkriva ključ**, **pristanak: bez odluke se ne meri, pokvarena ili starija vrednost se odbacuje, spisak kolačića ima svrhu i trajanje za svaki upis** |
+| Integracioni | 220 | Kreiranje događaja u transakciji, jedinstvenost sluga, limiti paketa, meko brisanje, cascade pravila, `CHECK` ograničenja, snimak verzije šablona, čuvanje nacrta i sudar revizija, limiti i zaključane sekcije pri čuvanju, snimci verzija i orezivanje, otpremanje fotografija i odbijanje fajla sa EXIF-om, **objavljivanje i isključivanje linka**, **sva četiri režima privatnosti**, **istek do kraja dana**, **PIN i tokeni samo kao heš**, dnevni agregat i spisak kolona statistike, **gosti uz `eventId` (tuđi gost i tuđe domaćinstvo se ne vide)**, **meko brisanje gasi lični link**, **token i token za izmenu samo kao heš**, **jedan primalac = jedan odgovor**, **granica osoba sa linka domaćinstva**, **uvoz CSV-a i granica paketa**, moderacija knjige želja, **raspored: zaključana verzija odbija svaku izmenu, kapacitet zaustavlja gosta viška, jedan sto po gostu, kopija verzije ne deli redove sa originalom, brisanje vraća goste među neraspoređene, upozorenja o pravilima**, **paket po pozivnici (plaćeno venčanje ne otključava krštenje, plaćeni događaji van kvote nacrta)**, **naplata: dvostruki klik ne pravi drugu narudžbinu, ponovljen webhook vraća `duplicate`, zakasneli „pending” posle uspeha se odbacuje, propao pokušaj dozvoljava nov, promo kodovi i pun popust bez provajdera**, **administracija: ručna aktivacija uz razlog i trag u audit logu, odbijanje aktivacije bez razloga, validacija oblika paketa, arhiviranje prethodne verzije šablona**, **saradnici: token samo kao heš, tuđi nalog ne prihvata poziv, istekao poziv, limit paketa, opoziv ostaje u evidenciji**, **rate limit: isti paket testova nad oba skladišta, deset paralelnih zahteva ne probija granicu od pet, brojač važi između instanci**, **privatnost: izvoz bez tajni i bez tuđih podataka, brisanje anonimizuje i gasi sesije, narudžbina ostaje bez veze sa osobom, retencija ne dira sveže obrisano**, **obaveštenja: „nikad” ne šalje ništa, rezime se ne ponavlja u istom periodu, neuspelo slanje ne pomera granicu, meko obrisan događaj ne ulazi u rezime** |
+| E2E | 174 (87 × desktop/mobilni) | Marketing, prijava, zaštita ruta, čarobnjak sa izborom šablona, dashboard, izmena bez promene linka, brisanje uz potvrdu, profil, galerija i filteri, favoriti, demo na tri veličine ekrana, cenovnik, česta pitanja, sitemap, uređivač (živi pregled, autosave, biblioteka, redosled bez miša, kontrast, otpremanje fotografije), javna pozivnica (nacrt i istek se ne prikazuju, PIN kapija, indeksiranje po režimu, deljenje i QR, poništavanje keša), **spisak gostiju: dodavanje, oznake, lični link koji se vidi samo jednom, filtriranje kroz URL, izvoz kao CSV**, **gost šalje odgovor sa javne pozivnice i dobija link za izmenu**, **izmena odgovora ne pravi drugi odgovor**, lični link sa velikim slovima ostaje ispravan, **raspored sedenja: dodavanje stola i sedanje gostiju bez miša, kapacitet, zaključana verzija, CSV i prikaz za štampu**, **naplata: nacrt se ne objavljuje bez plaćenog paketa, narudžbina u čekanju ne daje prava, administrator je potvrđuje uz razlog, tek onda javni link radi; dvostruko pokretanje naplate ne pravi drugu narudžbinu**, **ceo scenario iz specifikacije u jednom testu: čarobnjak → uređivač → naplata → objavljivanje → gost odgovara → organizator vidi odgovor → raspored sedenja → izvoz**, **pristupačnost (`axe`, nivoi A i AA) nad javnim stranicama, aplikacijom, dijalogom i objavljenom pozivnicom**, **sigurnosna zaglavlja i CSP bez ijedne prijave u konzoli**, **privatnost: preuzimanje vraća JSON, neprijavljen dobija 401, brisanje traži ukucanu potvrdu**, **pristanak: dva ravnopravna dugmeta, ništa se ne upisuje pre odluke**, **font stek se stvarno primenjuje i nema zahteva ka tuđim domenima** |
 
 ```bash
 pnpm test                # unit — bez baze
@@ -1286,7 +1372,10 @@ Implementirano do kraja Faze 7:
 
 ## Deployment
 
-Projekat je Vercel-kompatibilan. Potrebno je:
+Projekat je Vercel-kompatibilan, ali radi i na običnom Node serveru
+(`pnpm build && pnpm start`).
+
+### Pre prvog puštanja
 
 1. PostgreSQL 16 (Neon, Supabase, RDS…) i `DATABASE_URL`.
 2. `AUTH_SECRET`, `APP_URL`, `NEXT_PUBLIC_APP_URL`, `AUTH_TRUST_HOST=true`.
@@ -1295,16 +1384,81 @@ Projekat je Vercel-kompatibilan. Potrebno je:
    fotografije. `NEXT_PUBLIC_MEDIA_HOSTS` treba postaviti samo ako se negde
    koristi `next/image`; sekcije pozivnice namerno koriste običan `<img>` da
    novi storage host ne bi tražio izmenu `next.config.ts`.
-5. `PAYMENT_DRIVER` postaviti na provajdera dozvoljenog u produkciji.
-6. Migracije pokrenuti pre puštanja saobraćaja: `pnpm db:migrate`.
+5. `PAYMENT_DRIVER` postaviti na provajdera dozvoljenog u produkciji. `dev` to
+   **nije** — fabrika adaptera baca grešku pri pokretanju, namerno.
+6. `RATE_LIMIT_DRIVER` ostaviti na `postgres` (podrazumevano) ako aplikacija
+   radi u više instanci. `memory` daje svakoj instanci pun kvot pokušaja.
+7. Migracije pokrenuti **pre** puštanja saobraćaja: `pnpm db:migrate`.
 
-Seed nije namenjen produkciji — puni bazu demo sadržajem.
+Seed nije namenjen produkciji — puni bazu demo sadržajem. Prvi administrator se
+postavlja ručno:
+
+```sql
+update users set role = 'admin' where email = 'vasa.adresa@primer.rs';
+```
+
+### Redovni poslovi
+
+| Kada | Šta | Zašto |
+|------|-----|-------|
+| jednom dnevno | `pnpm maintenance` | šalje dnevne i nedeljne rezimee odgovora, briše po pravilima retencije (meko obrisani događaji, stara statistika, obrađeni webhookovi, istekle sesije i pozivi, istekli brojači) |
+
+Skripta namerno ne hvata greške: ako čišćenje ne uspe, cron mora da vidi
+neuspeh, a ne uredan izlaz sa nulom. Bezbedno je pokrenuti je više puta —
+rezime se ne šalje dvaput u istom periodu.
+
+Primer cron zapisa (03:30 svakog dana):
+
+```cron
+30 3 * * * cd /put/do/aplikacije && pnpm maintenance >> /var/log/pozivnica-odrzavanje.log 2>&1
+```
+
+### Nadgledanje
+
+- **`GET /api/zdravlje`** vraća 200 dok baza odgovara, 503 kada ne odgovara.
+  Namerno proverava samo bazu: provera koja uvek vraća „ok” ne služi ničemu, a
+  provera koja obilazi pola aplikacije pravi lažne uzbune.
+- **Webhook naplate** (`POST /api/webhooks/naplata`) vraća 400 na neispravan
+  potpis i 200 na ponovljenu isporuku. Niz 400 odgovora znači pogrešnu tajnu
+  (`PAYMENT_WEBHOOK_SECRET`), ne napad.
+- **`webhook_events` sa praznim `processed_at` i popunjenim `error`** je događaj
+  koji je stigao, ali nije primenjen — jedino mesto gde naplata može tiho da
+  zapne. Vredi ga proveravati.
+- **`orders` u stanju `pending` starije od nekoliko dana** znače započeto pa
+  napušteno plaćanje; kod ručne naplate su to uplate koje čekaju potvrdu u
+  admin panelu.
+
+### Nadogradnja verzije
+
+1. `pnpm db:migrate` (migracije su aditivne; nijedna ne briše kolonu).
+2. `pnpm build` pa restart.
+3. Posle izmene kataloga direktno u bazi (SQL, migracija) keš šablona i paketa
+   se osvežava sam najkasnije za sat vremena; izmena kroz admin panel ga
+   poništava odmah.
+
+### Rezervna kopija i vraćanje
+
+Cela država aplikacije je u PostgreSQL bazi i u skladištu fotografija. Nema
+stanja u memoriji procesa koje bi trebalo čuvati — brojači zahteva su u bazi, a
+keš se ponovo napuni sam.
+
+```bash
+# Kopija
+pg_dump "$DATABASE_URL" --format=custom --file=pozivnica-$(date +%F).dump
+
+# Vraćanje u praznu bazu
+pg_restore --dbname="$DATABASE_URL" --clean --if-exists pozivnica-2026-07-31.dump
+```
+
+Fotografije se čuvaju u S3 skladištu i imaju sopstveni ciklus kopiranja; baza
+pamti samo ključeve, pa vraćanje baze bez skladišta daje pozivnice sa praznim
+mestima umesto slika.
 
 ---
 
 ## Poznata ograničenja
 
-Iskreni pregled onoga što **još ne postoji** na kraju Faze 7. Detaljan plan je u
+Iskreni pregled onoga što **još ne postoji** na kraju Faze 8. Detaljan plan je u
 [`TASKS.md`](./TASKS.md).
 
 | Oblast | Stanje |
@@ -1326,8 +1480,8 @@ Iskreni pregled onoga što **još ne postoji** na kraju Faze 7. Detaljan plan je
 | Raspored sedenja i paket | Traži paket sa mogućnošću `seating`; stranica se prikazuje uz jasnu poruku, ali izmene su onemogućene i server ih odbija |
 | Kartično plaćanje | Postoje `dev` (zabranjen u produkciji) i `manual` (uplatnica/transfer, potvrđuje administrator uz obavezan razlog). Kartični provajder se dodaje kao nov adapter, bez izmena poslovne logike |
 | Prijavljen sadržaj | Admin panel pokriva korisnike, narudžbine, pakete, šablone, vrste događaja i audit log; prijavljivanje neprimerenog sadržaja iz javne pozivnice dolazi u Fazi 8 |
-| Rate limiting | In-memory, po instanci procesa. Za više instanci potreban Redis — interfejs je izdvojen |
-| Preuzimanje/brisanje podataka | Najavljeno u interfejsu, obrađuje se ručno do Faze 8. `orders.user_id` je namerno `on delete restrict` — finansijski trag ne nestaje sa nalogom, pa brisanje mora da anonimizuje, a ne da briše |
+| Rate limiting | Podrazumevano u bazi, pa važi za sve instance; `memory` drajver ostaje za razvoj. Redis bi bio brži, ali bi doneo još jedan servis koji mora da radi |
+| Preuzimanje/brisanje podataka | Rade iz profila. Brisanje **anonimizuje** nalog umesto da ga briše, jer `orders.user_id` je namerno `on delete restrict` — finansijski trag ne nestaje sa nalogom |
 | Saradnici | Poziv, prihvatanje, uloge i opoziv rade. Ako slanje mejla ne uspe, interfejs to kaže — link se ne prikazuje u aplikaciji, pa se poziv šalje ponovo |
 
 Nijedan ekran ne prikazuje dugme koje ne radi. Tamo gde funkcionalnost još ne

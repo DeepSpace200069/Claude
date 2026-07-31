@@ -31,8 +31,12 @@ export default async function CookiesPage() {
   const necessary = STORAGE_INVENTORY.filter((item) => item.category === 'neophodno');
   const measurement = STORAGE_INVENTORY.filter((item) => item.category === 'merenje');
 
-  const table = (items: typeof STORAGE_INVENTORY) => (
-    <div className="overflow-x-auto">
+  const table = (items: typeof STORAGE_INVENTORY, label: string) => (
+    /*
+     * `tabIndex` na oblasti koja se pomera vodoravno: na telefonu se tabela ne
+     * vidi cela, a bez fokusa korisnik tastature nema čime da je pomeri.
+     */
+    <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={label}>
       <table className="w-full min-w-[36rem] text-sm">
         <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
@@ -92,7 +96,7 @@ export default async function CookiesPage() {
           {t('cookies.necessaryTitle')}
         </h2>
         <p className="text-sm text-muted-foreground">{t('cookies.necessaryText')}</p>
-        {table(necessary)}
+        {table(necessary, t('cookies.necessaryTitle'))}
       </section>
 
       <section className="space-y-3">
@@ -100,7 +104,7 @@ export default async function CookiesPage() {
           {t('cookies.measurementTitle')}
         </h2>
         <p className="text-sm text-muted-foreground">{t('cookies.measurementText')}</p>
-        {table(measurement)}
+        {table(measurement, t('cookies.measurementTitle'))}
       </section>
 
       <section className="space-y-3">

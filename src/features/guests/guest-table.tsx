@@ -228,7 +228,12 @@ export function GuestTable({
         ))}
       </ul>
 
-      <div className="hidden overflow-x-auto rounded-[var(--radius-lg)] border border-border bg-surface md:block">
+      <div
+        className="hidden overflow-x-auto rounded-[var(--radius-lg)] border border-border bg-surface md:block"
+        tabIndex={0}
+        role="region"
+        aria-label={t('guests.title')}
+      >
         <table className="w-full min-w-[52rem] border-collapse text-sm">
           <caption className="sr-only">{t('guests.title')}</caption>
           <thead>

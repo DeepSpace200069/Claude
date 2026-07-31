@@ -120,22 +120,22 @@ Legenda: ✅ gotovo · 🔄 u toku · ⬜ nije započeto
 | 7.8 | Pregled audit loga | ✅ |
 | 7.9 | Saradnici: pozivanje, dozvole, prihvatanje poziva | ✅ |
 
-## Faza 8 — Stabilizacija ⬜
+## Faza 8 — Stabilizacija ✅
 
 | # | Zadatak | Status |
 |---|---------|--------|
-| 8.1 | Bezbednosna revizija (uključujući rate limit na deljenoj infrastrukturi) | ⬜ |
-| 8.2 | Revizija pristupačnosti (WCAG AA) | ⬜ |
-| 8.3 | Performanse: bundle, slike, fontovi, broj upita | ⬜ |
-| 8.4 | Email obaveštenja: svi šabloni + poštovanje učestalosti | ⬜ |
-| 8.5 | Privatnost: preuzimanje podataka, brisanje naloga, retencija | ⬜ |
-| 8.6 | Cookie consent za neobavezne kolačiće | ⬜ |
-| 8.7 | Kompletiranje E2E scenarija iz specifikacije (koraci 7–12) | ⬜ |
-| 8.8 | Priprema za deployment i dokumentacija operacija | ⬜ |
+| 8.1 | Bezbednosna revizija (uključujući rate limit na deljenoj infrastrukturi) | ✅ |
+| 8.2 | Revizija pristupačnosti (WCAG AA) | ✅ |
+| 8.3 | Performanse: bundle, slike, fontovi, broj upita | ✅ |
+| 8.4 | Email obaveštenja: svi šabloni + poštovanje učestalosti | ✅ |
+| 8.5 | Privatnost: preuzimanje podataka, brisanje naloga, retencija | ✅ |
+| 8.6 | Cookie consent za neobavezne kolačiće | ✅ |
+| 8.7 | Kompletiranje E2E scenarija iz specifikacije (koraci 7–12) | ✅ |
+| 8.8 | Priprema za deployment i dokumentacija operacija | ✅ |
 
 ---
 
-## Poznata ograničenja na kraju Faze 7
+## Poznata ograničenja na kraju Faze 8
 
 Sve navedeno je svesna odluka o obimu, a ne propust:
 
@@ -169,9 +169,20 @@ Sve navedeno je svesna odluka o obimu, a ne propust:
   kanalom. Kontakt gosta je dat organizatoru za tu proslavu, a ne nama za
   slanje; automatsko slanje bi tražilo posebnu saglasnost gosta.
 - **Zaštita javnih formi** je polje-mamac, potpisani ključ obrasca sa donjom
-  granicom vremena i ograničenje po otisku klijenta. To pokriva automatizovano
-  zatrpavanje, ali **nije** CAPTCHA: napadač koji jednom učita stranicu dobija
-  ispravan ključ. Adapter za CAPTCHA je posao Faze 8.
+  granicom vremena i ograničenje po otisku klijenta (sada u bazi, pa važi za sve
+  instance). To pokriva automatizovano zatrpavanje, ali **nije** CAPTCHA:
+  napadač koji jednom učita stranicu dobija ispravan ključ.
+- **CSP zadržava `'unsafe-inline'` za skripte.** Next ubacuje inline RSC podatke
+  u svaku stranicu, a nonce mora da se računa po zahtevu, što isključuje
+  keširanje cele rute - a javna pozivnica se namerno kešira. Umesto lažnog
+  izbora, uklonjen je razlog za XSS: aplikacija nigde ne prikazuje korisnički
+  HTML.
+- **Merenje jedinstvenih posetilaca čeka pristanak.** Bez njega se pregled i
+  dalje broji, ali kao ponovljen, pa je broj jedinstvenih posetilaca manji od
+  stvarnog. To je svesna zamena: radije netačan broj nego merenje bez pitanja.
+- **Automatska provera pristupačnosti hvata oko trećine problema.** `axe` ne zna
+  ništa o smislu teksta ni o redosledu fokusa; ono što ne vidi provereno je
+  ručno i zapisano u samom testu.
 - **Odgovor bez ličnog linka se ne spaja po imenu.** Dva gosta sa istim imenom
   su realnost, pa javni RSVP uvek pravi nov odgovor; spajanje bi tiho prepisalo
   tuđu potvrdu. Preko ličnog linka odgovor je jedan i menja se.
