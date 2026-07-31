@@ -138,6 +138,7 @@ const PRIVACY_SR_LATN: LegalDocument = {
       heading: 'Koliko dugo čuvamo podatke',
       paragraphs: [
         'Podatke o događaju i gostima čuvamo dok postoji vaš nalog, a najduže godinu dana nakon datuma događaja.',
+        'Obrisan događaj ostaje u bazi kratko, da biste mogli da se predomislite; posle isteka roka retencije briše ga automatsko održavanje, a ne čovek koji se toga seti.',
         'Po isteku tog roka podaci gostiju se brišu ili anonimizuju.',
         'Podatke o plaćanju čuvamo onoliko koliko nalažu poreski propisi.',
       ],
@@ -146,9 +147,9 @@ const PRIVACY_SR_LATN: LegalDocument = {
       heading: 'Vaša prava',
       paragraphs: [
         'Imate pravo da zatražite kopiju svojih podataka, ispravku netačnih podataka i brisanje naloga.',
-        'Nalog i sve povezane podatke možete obrisati sami. Do trenutka dok ta opcija ne bude dostupna u interfejsu, zahtev pošaljite na ' +
-          brand.supportEmail +
-          ' i obradićemo ga u roku od 30 dana.',
+        'Kopiju svojih podataka preuzimate sami, u JSON fajlu, na stranici profila. Fajl sadrži profil, događaje, pozivnice, goste, odgovore i narudžbine.',
+        'Nalog i sve povezane podatke brišete sami, takođe na stranici profila. Događaji, pozivnice, gosti i odgovori se brišu odmah; sam nalog se anonimizuje, jer podaci o plaćanju po poreskim propisima moraju da postoje - ali bez ijednog podatka koji vodi do vas.',
+        'Ako vam je potrebna pomoć, pišite na ' + brand.supportEmail + '.',
         'Ako smatrate da vaše podatke obrađujemo nezakonito, možete se obratiti Povereniku za informacije od javnog značaja i zaštitu podataka o ličnosti.',
       ],
     },

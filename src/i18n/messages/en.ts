@@ -258,10 +258,20 @@ const messages: Messages = {
     dataTitle: 'Your data',
     dataSubtitle:
       'You can download a copy of your data or permanently delete your account.',
-    dataComingSoon:
-      'Data download and account deletion are coming soon. Until then, write to us and we will handle your request manually.',
-    downloadData: 'Download my data',
-    deleteAccount: 'Delete account',
+    exportTitle: 'Download your data',
+    exportText:
+      'You get a JSON file with everything we keep about you: profile, events, invitations, guests, responses and orders. Tokens and hashes are not included — those are secrets, not data.',
+    exportAction: 'Download my data',
+
+    deleteTitle: 'Delete account',
+    deleteText:
+      'Events, invitations, guests and responses are deleted immediately and cannot be restored. The account is anonymised, and soft-deleted data disappears within {days} days at the latest.',
+    deleteAction: 'Delete account',
+    deleteSummary:
+      'This deletes: {events} events, {guests} guests and recipients, {responses} responses.',
+    deleteOrdersNote:
+      'Your orders ({orders}) stay as a financial record, but with nothing that leads back to you — the law requires the invoice to exist.',
+    deleteConfirmLabel: 'Type {word} to confirm',
     saved: 'Profile saved.',
   },
 

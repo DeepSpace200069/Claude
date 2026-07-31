@@ -263,10 +263,20 @@ const messages = {
     dataTitle: 'Vaši podaci',
     dataSubtitle:
       'Možete preuzeti kopiju svojih podataka ili trajno obrisati nalog.',
-    dataComingSoon:
-      'Preuzimanje i brisanje podataka biće dostupni uskoro. Do tada nam pišite i obradićemo zahtev ručno.',
-    downloadData: 'Preuzmi moje podatke',
-    deleteAccount: 'Obriši nalog',
+    exportTitle: 'Preuzimanje podataka',
+    exportText:
+      'Dobijate JSON fajl sa svime što o vama čuvamo: profil, događaji, pozivnice, gosti, odgovori i narudžbine. Tokeni i heševi nisu u fajlu - oni su tajne, a ne podaci.',
+    exportAction: 'Preuzmi moje podatke',
+
+    deleteTitle: 'Brisanje naloga',
+    deleteText:
+      'Događaji, pozivnice, gosti i odgovori se brišu odmah i ne mogu se vratiti. Nalog se anonimizuje, a podaci koje meko brišemo nestaju najkasnije za {days} dana.',
+    deleteAction: 'Obriši nalog',
+    deleteSummary:
+      'Biće obrisano: događaja {events}, gostiju i primalaca {guests}, odgovora {responses}.',
+    deleteOrdersNote:
+      'Narudžbina ({orders}) ostaje kao finansijski trag, ali bez ijednog podatka koji vodi do vas - zakon traži da račun postoji.',
+    deleteConfirmLabel: 'Ukucajte {word} za potvrdu',
     saved: 'Profil je sačuvan.',
   },
 

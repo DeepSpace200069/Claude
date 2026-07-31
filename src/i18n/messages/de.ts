@@ -264,10 +264,20 @@ const messages: Messages = {
     dataTitle: 'Ihre Daten',
     dataSubtitle:
       'Sie können eine Kopie Ihrer Daten herunterladen oder Ihr Konto dauerhaft löschen.',
-    dataComingSoon:
-      'Datenexport und Kontolöschung folgen in Kürze. Schreiben Sie uns bis dahin — wir bearbeiten Ihre Anfrage manuell.',
-    downloadData: 'Meine Daten herunterladen',
-    deleteAccount: 'Konto löschen',
+    exportTitle: 'Daten herunterladen',
+    exportText:
+      'Sie erhalten eine JSON-Datei mit allem, was wir über Sie speichern: Profil, Veranstaltungen, Einladungen, Gäste, Antworten und Bestellungen. Tokens und Hashes sind nicht enthalten – das sind Geheimnisse, keine Daten.',
+    exportAction: 'Meine Daten herunterladen',
+
+    deleteTitle: 'Konto löschen',
+    deleteText:
+      'Veranstaltungen, Einladungen, Gäste und Antworten werden sofort gelöscht und können nicht wiederhergestellt werden. Das Konto wird anonymisiert, weich gelöschte Daten verschwinden spätestens nach {days} Tagen.',
+    deleteAction: 'Konto löschen',
+    deleteSummary:
+      'Gelöscht werden: {events} Veranstaltungen, {guests} Gäste und Empfänger, {responses} Antworten.',
+    deleteOrdersNote:
+      'Ihre Bestellungen ({orders}) bleiben als Finanzbeleg erhalten, jedoch ohne jeden Bezug zu Ihnen – der Beleg muss gesetzlich existieren.',
+    deleteConfirmLabel: 'Tippen Sie {word} zur Bestätigung',
     saved: 'Profil gespeichert.',
   },
 
