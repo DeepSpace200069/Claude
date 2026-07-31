@@ -41,10 +41,18 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
     env: {
-      // The E2E suite drives the dev payment provider and the console email
-      // adapter so no external service is required.
+      // Bez spoljnih servisa: pošta ide u konzolu.
       EMAIL_DRIVER: 'console',
-      PAYMENT_DRIVER: 'dev',
+      /*
+       * `manual`, a ne `dev`.
+       *
+       * E2E vrti **produkcijski** build (`pnpm start`), a fabrika adaptera
+       * namerno odbija `dev` provajdera u produkciji - da korisnik nikad ne bi
+       * video lažnu potvrdu uplate. Ručna naplata je ono što bi pravi
+       * deployment koristio za uplatnicu i bankovni transfer: narudžbina
+       * ostaje u čekanju dok je administrator ne potvrdi.
+       */
+      PAYMENT_DRIVER: 'manual',
     },
   },
 });

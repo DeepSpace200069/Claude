@@ -1348,6 +1348,42 @@ const messages = {
     featureLockedText: 'Ova mogućnost je dostupna u paketu {plan}.',
   },
 
+  collaborators: {
+    title: 'Saradnici',
+    subtitle: 'Pozovite nekoga da vam pomogne oko pozivnice i spiska gostiju.',
+
+    invite: 'Pozovi saradnika',
+    emailLabel: 'Email adresa',
+    emailHint: 'Šaljemo poziv na tu adresu; poziv važi sedam dana.',
+    roleLabel: 'Uloga',
+    roleEditor: 'Uređivanje pozivnice',
+    roleGuestManager: 'Gosti i odgovori',
+    roleViewer: 'Samo pregled',
+    invited: 'Poziv je poslat.',
+    invitedNoEmail:
+      'Poziv je sačuvan, ali mejl nije poslat. Pokušajte ponovo ili prosledite link ručno.',
+    empty: 'Još nema saradnika na ovom događaju.',
+
+    statusPending: 'Čeka prihvatanje',
+    statusAccepted: 'Prihvaćeno',
+
+    revoke: 'Ukloni',
+    revokeTitle: 'Uklanjanje saradnika',
+    revokeText: 'Osoba {email} više neće imati pristup ovom događaju.',
+    revoked: 'Pristup je uklonjen.',
+
+    planLockedTitle: 'Saradnici nisu u vašem paketu',
+    planLockedText:
+      'Paket „{plan}” ne uključuje saradnike. Nadogradite paket ove pozivnice da biste nekoga pozvali.',
+    seePlans: 'Pogledaj pakete',
+
+    inviteTitle: 'Poziv za saradnju',
+    inviteInvalid: 'Ovaj poziv više ne važi ili je već iskorišćen.',
+    inviteExpired: 'Poziv je istekao. Zamolite organizatora da vam pošalje novi.',
+    inviteWrongAccount:
+      'Poziv je poslat na adresu {email}. Prijavite se tom adresom da biste ga prihvatili.',
+  },
+
   billing: {
     title: 'Plan i naplata',
     subtitle: 'Paket se plaća za pozivnicu „{event}”, jednom i bez obnavljanja.',

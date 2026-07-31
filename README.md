@@ -40,6 +40,9 @@ organizator prati potvrde dolaska i pravi raspored sedenja.
 - [Gosti, RSVP i knjiga želja](#gosti-rsvp-i-knjiga-želja)
 - [Raspored sedenja](#raspored-sedenja)
 - [Tok kreiranja i objavljivanja](#tok-kreiranja-i-objavljivanja)
+- [Naplata i paketi](#naplata-i-paketi)
+- [Saradnici](#saradnici)
+- [Administracija](#administracija)
 - [Adapteri](#adapteri)
 - [Environment varijable](#environment-varijable)
 - [Komande](#komande)
@@ -202,7 +205,10 @@ Ključna pravila:
 │   │   ├── p/[publicSlug]/     JAVNA POZIVNICA
 │   │   │                       + /[token]            lični link gosta
 │   │   │                       + /odgovor/[token]    izmena odgovora
+│   │   ├── admin/              ADMIN PANEL (korisnici, narudžbine, paketi,
+│   │   │                       promo kodovi, šabloni, vrste, audit log)
 │   │   ├── api/auth/           Auth.js rute
+│   │   ├── api/webhooks/       Prijem webhookova naplate (potpis nad sirovim telom)
 │   │   ├── api/uploads/local/  Prijem fotografija u razvojnom režimu
 │   │   ├── api/p/…/pregled/    Beleženje pregleda (dnevni zbir)
 │   │   ├── error.tsx           Granica greške
@@ -213,8 +219,10 @@ Ključna pravila:
 │   │   └── ui/                 Dizajn sistem
 │   ├── config/brand.ts         Naziv, domen, kontakt — sve iz env-a
 │   ├── features/
+│   │   ├── admin/              ADMINISTRACIJA (kontrole, forma paketa, promo)
 │   │   ├── auth/
-│   │   ├── billing/            Entitlements (prava po paketu)
+│   │   ├── billing/            Prava po paketu, izbor paketa i naplata
+│   │   ├── collaborators/      Pozivanje saradnika i uloge
 │   │   ├── editor/             UREĐIVAČ POZIVNICE
 │   │   │   ├── document.ts     Model dokumenta i sve operacije (čiste funkcije)
 │   │   │   ├── history.ts      Poništi/ponovi sa objedinjavanjem izmena
@@ -931,6 +939,130 @@ sadržaja. Promena sluga je zasebna, kontrolisana operacija
 
 ---
 
+## Naplata i paketi
+
+### Paket se kupuje po pozivnici, ne po nalogu (zahtev 17)
+
+Cenovnik obećava „plaćate jednom, po događaju”, i sistem prava radi tačno tako:
+`getEventEntitlements(eventId)` uzima **najviši plaćeni paket kupljen baš za taj
+događaj**. Ko je platio venčanje ne dobija automatski i krštenje sledeće godine.
+
+Jedini limit koji ostaje na nivou naloga je broj događaja
+(`getAccountEntitlements`), i tu se **plaćeni događaji ne broje u kvotu**: kvota
+postoji da neograničeno pravljenje besplatnih nacrta ne bi bilo način da se
+sistem zatrpa, a ne da kazni onoga ko plaća.
+
+### Tok naplate
+
+```
+korisnik bira paket
+  → startCheckout: narudžbina (pending) + intent kod provajdera
+  → provajder vraća korisnika na /app/dogadjaji/<id>/naplata?naplata=povratak
+  → potvrda uplate: webhook provajdera ILI ručna aktivacija administratora
+  → narudžbina paid → getEventEntitlements vraća plaćeni paket
+  → dugme „Objavi pozivnicu” radi
+```
+
+Narudžbina u čekanju **ne daje nikakva prava**. Do potvrde uplate dugme za
+objavljivanje ostaje onemogućeno, uz razlog i vezu ka naplati baš te pozivnice.
+
+### Idempotencija stoji na bazi, ne na kodu (zahtev 39.7)
+
+Tri jedinstvena indeksa su prava odbrana:
+
+| Indeks | Šta hvata |
+|--------|-----------|
+| `orders (idempotency_key)` | dvostruki klik na „Plati” |
+| `payments (provider, provider_ref)` | ponovljen poziv provajderu |
+| `webhook_events (provider, external_id)` | ponovljenu isporuku webhooka |
+
+Kod ne proverava „postoji li već” pa onda upisuje — to je trka koju baza uvek
+dobija. Upisuje, hvata sudar jedinstvenog indeksa i vraća postojeći zapis. Zbog
+toga `isUniqueViolation` prolazi ceo lanac `cause`: drizzle umotava grešku
+drajvera u svoju, pa bi provera samo gornjeg sloja uvek bila netačna.
+
+Ključ idempotencije narudžbine se izvodi iz događaja, paketa i **rednog broja
+pokušaja** — bez rednog broja bi propao pokušaj zauvek zaključao korisnika na
+istu neuspelu narudžbinu.
+
+I dev adapter mora da se ponaša kao pravi provajder: `providerRef` se izvodi
+HMAC potpisom ključa idempotencije, pa isti ključ daje istu referencu i posle
+restarta procesa. Potpis, a ne običan heš — referenca putuje kroz logove i
+webhookove, a ključ se iz nje ne sme rekonstruisati.
+
+### Promo kodovi
+
+Procenat, fiksni iznos ili pun popust. Nevažeći kod je **greška**, a ne tiho
+ignorisanje: korisnik koji je otkucao kod mora da sazna da nije primenjen. Kod
+koji pokriva ceo iznos aktivira paket bez provajdera — tu stvarno nema šta da se
+naplati, pa to nije lažna uplata nego besplatna narudžbina.
+
+### Webhook ruta — `/api/webhooks/naplata`
+
+Telo se čita kao **tekst**, ne kao JSON: potpis se računa nad tačnim bajtima koje
+je provajder poslao. Neispravan potpis daje 400 (ponavljanje nema smisla),
+ponovljena isporuka daje 200 sa `{"result":"duplicate"}` — obrađena je time što
+nije promenila ništa. Nepoznat `providerRef` se ne prelazi ćutke: provajder zna
+za uplatu za koju mi ne znamo, i to je stvar za istragu.
+
+---
+
+## Saradnici
+
+Poziv nosi token koji u bazi postoji **samo kao heš** (`invite_token_hash`); sam
+token živi jedino u poslatom mejlu. Poziv važi sedam dana i troši se
+prihvatanjem, pa prosleđen link ne radi dvaput.
+
+Adresa naloga mora da se poklopi sa pozvanom — bez te provere bi svako ko dobije
+prosleđen mejl ušao u tuđ događaj. Ponovni poziv iste adrese ne pravi drugi red
+nego osvežava token i rok („pošalji ponovo” je normalna radnja, ne greška).
+
+Opoziv ne briše red nego ga prevodi u `revoked`: vidi se da je neko imao pristup
+i da mu je oduzet. Broj saradnika je limit paketa te pozivnice, a `collaborators`
+je vlasničko pravo — saradnik ne može da dovede još saradnika.
+
+---
+
+## Administracija
+
+`/admin` je zaštićen ulogom u layoutu (403, ne 404 — korisnik zna da stranica
+postoji), ali **svaka akcija ponavlja `requireAdmin()`**: layout štiti prikaz, ne
+mutacije.
+
+| Stranica | Šta radi |
+|----------|----------|
+| `/admin` | Korisnici, događaji, objavljene pozivnice, narudžbine, prihod |
+| `/admin/korisnici` | Pretraga i promena uloge (ne sebi) |
+| `/admin/narudzbine` | Filter po statusu i ručna aktivacija uz **obavezan razlog** |
+| `/admin/paketi` | Cene, mogućnosti i limiti — izvor istine za ceo sistem prava |
+| `/admin/promo-kodovi` | Pravljenje i uključivanje/isključivanje kodova |
+| `/admin/sabloni` | Nacrt → objavljena verzija → arhiviranje |
+| `/admin/vrste-dogadjaja` | Uključivanje i isključivanje vrsta proslave |
+| `/admin/audit` | Pregled audit loga, samo za čitanje |
+
+Odluke koje se vide u kodu:
+
+- **Ručna aktivacija traži razlog.** To je jedini put kojim narudžbina postaje
+  plaćena bez provajdera; bez zapisa o razlogu evidencija naplate ima rupu.
+- **Administrator ne menja sopstvenu ulogu** — jedan pogrešan klik inače može da
+  ostavi sistem bez ijednog administratora.
+- **Podrazumevani paket ne može da se isključi**, jer bi novi korisnici ostali
+  bez ijednog paketa.
+- **Oblik `features` se validira šemom pre upisa** u JSONB: pogrešan ključ ne bi
+  srušio upis, ali bi tiho isključio mogućnost svim korisnicima tog paketa.
+- **Objavljivanje nove verzije šablona arhivira prethodnu** umesto da je briše, i
+  ne dira postojeće pozivnice — one nose svoj snimak sekcija.
+- **Vrsta događaja se isključuje, ne briše**: šema to ograničava, a postojeći
+  događaji te vrste ostali bi bez naziva.
+
+Audit log (`audit_logs`) se piše u istoj transakciji kao i radnja koju opisuje —
+naplata koja je uspela, a nije zapisana, gora je od naplate koja nije uspela.
+Zapisi se ne menjaju i ne brišu, pa `services/audit.ts` nema `update` ni
+`delete`. Uz `actor_id` se pamti i `actor_email`, da trag ostane čitljiv i pošto
+korisnik obriše nalog.
+
+---
+
 ## Adapteri
 
 Svaka spoljna integracija je iza interfejsa, sa implementacijom koja radi bez
@@ -1053,9 +1185,9 @@ pnpm test:e2e            # Playwright
 
 | Vrsta | Broj | Pokriva |
 |-------|------|---------|
-| Unit | 296 | Zod šeme sekcija, migracije verzija, slug, tokeni, dozvole, entitlements, prelazi stanja naplate, kontrast tema, i18n i množina, registri sekcija/renderera/editora, tokeni teme u CSS, grupisanje boja, demo kontekst, seed šabloni, operacije nad dokumentom uređivača, istorija poništi/ponovi, spajanje pri promeni šablona, uklanjanje EXIF-a iz JPEG/PNG/WebP, QR matrica i SVG/PNG izlaz, kraj dana u vremenskoj zoni i dan agregata, **CSV parser i generator (razdvajač, navodnici, prelom reda u polju, zaštita od formula, prepoznavanje kolona)**, **potpisani ključ obrasca (prebrzo slanje, istek, tuđi opseg, izmenjeno vreme)**, provera odgovora na svih šest tipova pitanja, **geometrija rasporeda (rotacija, granice stola, sto koji ostaje u sali, redni broj mesta, slobodan naziv)** |
-| Integracioni | 134 | Kreiranje događaja u transakciji, jedinstvenost sluga, limiti paketa, meko brisanje, cascade pravila, `CHECK` ograničenja, snimak verzije šablona, čuvanje nacrta i sudar revizija, limiti i zaključane sekcije pri čuvanju, snimci verzija i orezivanje, otpremanje fotografija i odbijanje fajla sa EXIF-om, **objavljivanje i isključivanje linka**, **sva četiri režima privatnosti**, **istek do kraja dana**, **PIN i tokeni samo kao heš**, dnevni agregat i spisak kolona statistike, **gosti uz `eventId` (tuđi gost i tuđe domaćinstvo se ne vide)**, **meko brisanje gasi lični link**, **token i token za izmenu samo kao heš**, **jedan primalac = jedan odgovor**, **granica osoba sa linka domaćinstva**, **uvoz CSV-a i granica paketa**, moderacija knjige želja, **raspored: zaključana verzija odbija svaku izmenu, kapacitet zaustavlja gosta viška, jedan sto po gostu, kopija verzije ne deli redove sa originalom, brisanje vraća goste među neraspoređene, upozorenja o pravilima** |
-| E2E | 122 (61 × desktop/mobilni) | Marketing, prijava, zaštita ruta, čarobnjak sa izborom šablona, dashboard, izmena bez promene linka, brisanje uz potvrdu, profil, galerija i filteri, favoriti, demo na tri veličine ekrana, cenovnik, česta pitanja, sitemap, uređivač (živi pregled, autosave, biblioteka, redosled bez miša, kontrast, otpremanje fotografije), javna pozivnica (nacrt i istek se ne prikazuju, PIN kapija, indeksiranje po režimu, deljenje i QR, poništavanje keša), **spisak gostiju: dodavanje, oznake, lični link koji se vidi samo jednom, filtriranje kroz URL, izvoz kao CSV**, **gost šalje odgovor sa javne pozivnice i dobija link za izmenu**, **izmena odgovora ne pravi drugi odgovor**, lični link sa velikim slovima ostaje ispravan, **raspored sedenja: dodavanje stola i sedanje gostiju bez miša, kapacitet, zaključana verzija, CSV i prikaz za štampu** |
+| Unit | 298 | Zod šeme sekcija, migracije verzija, slug, tokeni, dozvole, entitlements, prelazi stanja naplate, kontrast tema, i18n i množina, registri sekcija/renderera/editora, tokeni teme u CSS, grupisanje boja, demo kontekst, seed šabloni, operacije nad dokumentom uređivača, istorija poništi/ponovi, spajanje pri promeni šablona, uklanjanje EXIF-a iz JPEG/PNG/WebP, QR matrica i SVG/PNG izlaz, kraj dana u vremenskoj zoni i dan agregata, **CSV parser i generator (razdvajač, navodnici, prelom reda u polju, zaštita od formula, prepoznavanje kolona)**, **potpisani ključ obrasca (prebrzo slanje, istek, tuđi opseg, izmenjeno vreme)**, provera odgovora na svih šest tipova pitanja, **geometrija rasporeda (rotacija, granice stola, sto koji ostaje u sali, redni broj mesta, slobodan naziv)**, **idempotencija dev provajdera preživljava restart procesa (nova instanca, isti `providerRef`) i referenca ne otkriva ključ** |
+| Integracioni | 185 | Kreiranje događaja u transakciji, jedinstvenost sluga, limiti paketa, meko brisanje, cascade pravila, `CHECK` ograničenja, snimak verzije šablona, čuvanje nacrta i sudar revizija, limiti i zaključane sekcije pri čuvanju, snimci verzija i orezivanje, otpremanje fotografija i odbijanje fajla sa EXIF-om, **objavljivanje i isključivanje linka**, **sva četiri režima privatnosti**, **istek do kraja dana**, **PIN i tokeni samo kao heš**, dnevni agregat i spisak kolona statistike, **gosti uz `eventId` (tuđi gost i tuđe domaćinstvo se ne vide)**, **meko brisanje gasi lični link**, **token i token za izmenu samo kao heš**, **jedan primalac = jedan odgovor**, **granica osoba sa linka domaćinstva**, **uvoz CSV-a i granica paketa**, moderacija knjige želja, **raspored: zaključana verzija odbija svaku izmenu, kapacitet zaustavlja gosta viška, jedan sto po gostu, kopija verzije ne deli redove sa originalom, brisanje vraća goste među neraspoređene, upozorenja o pravilima**, **paket po pozivnici (plaćeno venčanje ne otključava krštenje, plaćeni događaji van kvote nacrta)**, **naplata: dvostruki klik ne pravi drugu narudžbinu, ponovljen webhook vraća `duplicate`, zakasneli „pending” posle uspeha se odbacuje, propao pokušaj dozvoljava nov, promo kodovi i pun popust bez provajdera**, **administracija: ručna aktivacija uz razlog i trag u audit logu, odbijanje aktivacije bez razloga, validacija oblika paketa, arhiviranje prethodne verzije šablona**, **saradnici: token samo kao heš, tuđi nalog ne prihvata poziv, istekao poziv, limit paketa, opoziv ostaje u evidenciji** |
+| E2E | 126 (63 × desktop/mobilni) | Marketing, prijava, zaštita ruta, čarobnjak sa izborom šablona, dashboard, izmena bez promene linka, brisanje uz potvrdu, profil, galerija i filteri, favoriti, demo na tri veličine ekrana, cenovnik, česta pitanja, sitemap, uređivač (živi pregled, autosave, biblioteka, redosled bez miša, kontrast, otpremanje fotografije), javna pozivnica (nacrt i istek se ne prikazuju, PIN kapija, indeksiranje po režimu, deljenje i QR, poništavanje keša), **spisak gostiju: dodavanje, oznake, lični link koji se vidi samo jednom, filtriranje kroz URL, izvoz kao CSV**, **gost šalje odgovor sa javne pozivnice i dobija link za izmenu**, **izmena odgovora ne pravi drugi odgovor**, lični link sa velikim slovima ostaje ispravan, **raspored sedenja: dodavanje stola i sedanje gostiju bez miša, kapacitet, zaključana verzija, CSV i prikaz za štampu**, **naplata: nacrt se ne objavljuje bez plaćenog paketa, narudžbina u čekanju ne daje prava, administrator je potvrđuje uz razlog, tek onda javni link radi; dvostruko pokretanje naplate ne pravi drugu narudžbinu** |
 
 ```bash
 pnpm test                # unit — bez baze
@@ -1081,7 +1213,7 @@ Integracioni testovi se **preskaču** ako `TEST_DATABASE_URL` nije postavljen, p
 
 ## Bezbednost
 
-Implementirano do kraja Faze 6:
+Implementirano do kraja Faze 7:
 
 - **Autorizacija na serveru** za svaku akciju i stranicu; interfejs nikad nije
   jedina odbrana.
@@ -1133,8 +1265,22 @@ Implementirano do kraja Faze 6:
 - **Sigurnosna zaglavlja**; `X-Robots-Tag: noindex` stoji na putanjama sa tokenom
   (`/p/:slug/:token*`), a ne na celom `/p/*` — inače bi pregazio režim „javno"
   koji organizator bira u interfejsu.
-- **Provera potpisa webhooka** i idempotentna obrada uplata.
-- **Audit log** za administrativne radnje.
+- **Provera potpisa webhooka** nad sirovim telom zahteva; neispravan potpis daje
+  400, ponovljena isporuka 200 bez ijedne izmene stanja.
+- **Idempotencija naplate na nivou baze** — jedinstveni indeksi nad
+  `orders (idempotency_key)`, `payments (provider, provider_ref)` i
+  `webhook_events (provider, external_id)`. Kod hvata sudar indeksa umesto da se
+  oslanja na proveru pre upisa.
+- **Dev provajder naplate je zabranjen u produkciji**; fabrika adaptera baca
+  grešku, pa lažna potvrda uplate ne može da se prikaže korisniku.
+- **Ručna aktivacija narudžbine traži razlog** i završava u audit logu, uz email
+  administratora koji ju je izvršio.
+- **Administrator ne može sebi da promeni ulogu**, pa sistem ne može da ostane
+  bez ijednog administratora.
+- **Pozivi saradnicima** čuvaju se samo kao heš tokena, ističu za sedam dana,
+  troše se prihvatanjem i prihvata ih isključivo nalog sa pozvanom adresom.
+- **Audit log** za administrativne radnje piše se u istoj transakciji kao i sama
+  radnja; zapisi se ne menjaju i ne brišu.
 
 ---
 
@@ -1158,12 +1304,12 @@ Seed nije namenjen produkciji — puni bazu demo sadržajem.
 
 ## Poznata ograničenja
 
-Iskreni pregled onoga što **još ne postoji** na kraju Faze 6. Detaljan plan je u
+Iskreni pregled onoga što **još ne postoji** na kraju Faze 7. Detaljan plan je u
 [`TASKS.md`](./TASKS.md).
 
 | Oblast | Stanje |
 |--------|--------|
-| Objavljivanje | Traži paket sa pravom `publish`; tok narudžbine i plaćanja je Faza 7. Na besplatnom paketu dugme postoji, ali je onemogućeno uz tačan razlog |
+| Objavljivanje | Traži plaćen paket **za tu pozivnicu**. Na besplatnom paketu dugme postoji, ali je onemogućeno uz tačan razlog i vezu ka naplati te pozivnice |
 | Spisak gostiju | Traži paket sa granicom `maxGuests`; besplatan paket ima 0 i stranica to kaže iznad spiska, pre nego što korisnik popuni formu |
 | Zaštita javnih formi | Polje-mamac, potpisani ključ obrasca i ograničenje po otisku klijenta. Pokriva automatizovano zatrpavanje, ali nije CAPTCHA — adapter dolazi u Fazi 8 |
 | Slanje podsetnika | Spisak gostiju bez odgovora i kontakti za kopiranje; samo slanje radi organizator svojim kanalom. Automatsko slanje bi tražilo posebnu saglasnost gosta |
@@ -1178,11 +1324,11 @@ Iskreni pregled onoga što **još ne postoji** na kraju Faze 6. Detaljan plan je
 | Pravni dokumenti | Radna verzija napisana prema stvarnom ponašanju aplikacije; traži pregled pravnika, i stranica to kaže |
 | PDF rasporeda | Pravi ga pregledač iz prikaza za štampu; serverski PDF sa standardnim fontovima nema srpska slova, pa ugrađivanje fonta ide u Fazu 8 |
 | Raspored sedenja i paket | Traži paket sa mogućnošću `seating`; stranica se prikazuje uz jasnu poruku, ali izmene su onemogućene i server ih odbija |
-| Naplata | Adapter, prelazi stanja i idempotencija testirani; tok objavljivanja u Fazi 7 |
-| Admin panel | Uloga i audit log postoje; stranice u Fazi 7 |
+| Kartično plaćanje | Postoje `dev` (zabranjen u produkciji) i `manual` (uplatnica/transfer, potvrđuje administrator uz obavezan razlog). Kartični provajder se dodaje kao nov adapter, bez izmena poslovne logike |
+| Prijavljen sadržaj | Admin panel pokriva korisnike, narudžbine, pakete, šablone, vrste događaja i audit log; prijavljivanje neprimerenog sadržaja iz javne pozivnice dolazi u Fazi 8 |
 | Rate limiting | In-memory, po instanci procesa. Za više instanci potreban Redis — interfejs je izdvojen |
-| Preuzimanje/brisanje podataka | Najavljeno u interfejsu, obrađuje se ručno do Faze 8 |
-| Saradnici | Model, pozivnice i dozvole u bazi; tok prihvatanja poziva u Fazi 7 |
+| Preuzimanje/brisanje podataka | Najavljeno u interfejsu, obrađuje se ručno do Faze 8. `orders.user_id` je namerno `on delete restrict` — finansijski trag ne nestaje sa nalogom, pa brisanje mora da anonimizuje, a ne da briše |
+| Saradnici | Poziv, prihvatanje, uloge i opoziv rade. Ako slanje mejla ne uspe, interfejs to kaže — link se ne prikazuje u aplikaciji, pa se poziv šalje ponovo |
 
 Nijedan ekran ne prikazuje dugme koje ne radi. Tamo gde funkcionalnost još ne
 postoji, interfejs to jasno kaže.

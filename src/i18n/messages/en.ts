@@ -1336,6 +1336,42 @@ const messages: Messages = {
     featureLockedText: 'This feature is available on the {plan} plan.',
   },
 
+  collaborators: {
+    title: 'Collaborators',
+    subtitle: 'Invite someone to help with the invitation and the guest list.',
+
+    invite: 'Invite a collaborator',
+    emailLabel: 'Email address',
+    emailHint: 'We send the invitation to that address; it is valid for seven days.',
+    roleLabel: 'Role',
+    roleEditor: 'Edit the invitation',
+    roleGuestManager: 'Guests and responses',
+    roleViewer: 'View only',
+    invited: 'Invitation sent.',
+    invitedNoEmail:
+      'The invitation was saved, but the email could not be sent. Try again or share the link yourself.',
+    empty: 'No collaborators on this event yet.',
+
+    statusPending: 'Awaiting acceptance',
+    statusAccepted: 'Accepted',
+
+    revoke: 'Remove',
+    revokeTitle: 'Remove collaborator',
+    revokeText: '{email} will no longer have access to this event.',
+    revoked: 'Access removed.',
+
+    planLockedTitle: 'Collaborators are not in your plan',
+    planLockedText:
+      'The “{plan}” plan does not include collaborators. Upgrade this invitation’s plan to invite someone.',
+    seePlans: 'See plans',
+
+    inviteTitle: 'Collaboration invitation',
+    inviteInvalid: 'This invitation is no longer valid or has already been used.',
+    inviteExpired: 'The invitation has expired. Ask the organiser to send a new one.',
+    inviteWrongAccount:
+      'The invitation was sent to {email}. Sign in with that address to accept it.',
+  },
+
   billing: {
     title: 'Plan and billing',
     subtitle: 'The plan is paid for the “{event}” invitation — once, with no renewals.',

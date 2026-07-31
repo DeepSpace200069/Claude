@@ -105,19 +105,20 @@ Legenda: ✅ gotovo · 🔄 u toku · ⬜ nije započeto
 | 6.6 | Verzije rasporeda i zaključavanje | ✅ |
 | 6.7 | CSV izvoz i prikaz za štampu iz kog pregledač pravi PDF | ✅ |
 
-## Faza 7 — Naplata i administracija ⬜
+## Faza 7 — Naplata i administracija ✅
 
 | # | Zadatak | Status |
 |---|---------|--------|
-| 7.1 | Tok objavljivanja: narudžbina → plaćanje → aktivan javni link | ⬜ |
-| 7.2 | Webhook ruta sa proverom potpisa i idempotentnom obradom | ⬜ |
-| 7.3 | Promo kodovi i besplatne admin aktivacije | ⬜ |
-| 7.4 | Stranica „plan i naplata” | ⬜ |
-| 7.5 | Admin: korisnici, narudžbine, prijavljeni sadržaj, statistika | ⬜ |
-| 7.6 | Admin: uređivanje šablona, draft → objavljena verzija, arhiviranje | ⬜ |
-| 7.7 | Admin: vrste događaja, paketi i limiti | ⬜ |
-| 7.8 | Pregled audit loga | ⬜ |
-| 7.9 | Saradnici: pozivanje, dozvole, prihvatanje poziva | ⬜ |
+| 7.0 | Paket po pozivnici: prava vezana za događaj, ne za nalog | ✅ |
+| 7.1 | Tok objavljivanja: narudžbina → plaćanje → aktivan javni link | ✅ |
+| 7.2 | Webhook ruta sa proverom potpisa i idempotentnom obradom | ✅ |
+| 7.3 | Promo kodovi i besplatne admin aktivacije | ✅ |
+| 7.4 | Stranica „plan i naplata” | ✅ |
+| 7.5 | Admin: korisnici, narudžbine, statistika | ✅ |
+| 7.6 | Admin: šabloni, draft → objavljena verzija, arhiviranje | ✅ |
+| 7.7 | Admin: vrste događaja, paketi i limiti | ✅ |
+| 7.8 | Pregled audit loga | ✅ |
+| 7.9 | Saradnici: pozivanje, dozvole, prihvatanje poziva | ✅ |
 
 ## Faza 8 — Stabilizacija ⬜
 
@@ -134,14 +135,31 @@ Legenda: ✅ gotovo · 🔄 u toku · ⬜ nije započeto
 
 ---
 
-## Poznata ograničenja na kraju Faze 6
+## Poznata ograničenja na kraju Faze 7
 
 Sve navedeno je svesna odluka o obimu, a ne propust:
 
-- **Objavljivanje traži paket sa pravom `publish`.** Tok narudžbine i plaćanja
-  dolazi u Fazi 7; do tada plaćen paket evidentira administrator, kao što i
-  adapter naplate predviđa. Na besplatnom paketu dugme postoji, ali je
-  onemogućeno uz tačan razlog — nema lažnog uspeha.
+- **Objavljivanje traži paket sa pravom `publish`.** Paket se kupuje **po
+  pozivnici**: plaćeno venčanje ne otključava sledeći događaj. Na besplatnom
+  paketu dugme postoji, ali je onemogućeno uz tačan razlog i vezu ka naplati baš
+  te pozivnice — nema lažnog uspeha.
+- **Nijedan provajder još stvarno ne naplaćuje.** Postoje dva adaptera: `dev`
+  (ne sme u produkciju, fabrika ga odbija) i `manual` (uplatnica i bankovni
+  transfer — narudžbina čeka dok je administrator ne potvrdi uz obavezan
+  razlog). Adapter za kartično plaćanje se dodaje bez izmena poslovne logike,
+  jer sve ide kroz `PaymentAdapter`.
+- **Idempotencija naplate stoji na bazi, ne na kodu.** Tri jedinstvena indeksa —
+  `orders (idempotency_key)`, `payments (provider, provider_ref)` i
+  `webhook_events (provider, external_id)` — hvataju dvostruki klik, ponovljen
+  poziv provajderu i ponovljenu isporuku webhooka. Kod ne proverava „postoji li
+  već” pa upisuje; upisuje, pa hvata sudar.
+- **Brisanje naloga sa narudžbinama nije rešeno.** `orders.user_id` je
+  namerno `on delete restrict` — finansijski trag ne sme da nestane zato što je
+  neko obrisao nalog. Tok brisanja naloga (anonimizacija umesto brisanja) je
+  posao Faze 8, zadatak 8.5.
+- **Poziv saradniku šaljemo mejlom, ali link ne prikazujemo u interfejsu.** Ako
+  slanje ne uspe, interfejs to kaže i poziv ostaje zapisan; ponovni poziv iste
+  adrese osvežava token i rok.
 - **Spisak gostiju traži paket sa granicom `maxGuests`.** Besplatan paket ima
   granicu 0, pa stranica gostiju to kaže odmah, iznad spiska, umesto da pusti
   korisnika da popuni formu pa dobije odbijenicu. Server istu granicu proverava

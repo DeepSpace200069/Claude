@@ -15,7 +15,13 @@ const connectionString =
   process.env.DATABASE_URL ??
   'postgresql://pozivnica:pozivnica@localhost:5432/pozivnica';
 
-const sql = postgres(connectionString, { max: 2 });
+/**
+ * Direktan pristup bazi iz testova.
+ *
+ * Koristi se za ono što interfejs ne izlaže: sesija umesto magic linka i
+ * čitanje referenci koje inače postoje samo kod provajdera naplate.
+ */
+export const sql = postgres(connectionString, { max: 2 });
 
 export type TestUser = {
   id: string;
@@ -23,13 +29,16 @@ export type TestUser = {
   sessionToken: string;
 };
 
-export async function createSignedInUser(): Promise<TestUser> {
+export async function createSignedInUser(
+  options: { role?: 'user' | 'admin' } = {},
+): Promise<TestUser> {
   const email = `e2e-${randomUUID()}@primer.rs`;
   const sessionToken = randomBytes(32).toString('hex');
+  const role = options.role ?? 'user';
 
   const [user] = await sql<{ id: string }[]>`
     insert into users (email, name, email_verified, role, locale)
-    values (${email}, 'E2E Korisnik', now(), 'user', 'sr-Latn')
+    values (${email}, 'E2E Korisnik', now(), ${role}, 'sr-Latn')
     returning id
   `;
 
@@ -43,7 +52,16 @@ export async function createSignedInUser(): Promise<TestUser> {
   return { id: user.id, email, sessionToken };
 }
 
+/**
+ * Uklanjanje test korisnika.
+ *
+ * Narudžbine se brišu prvo: `orders.user_id` ima `on delete restrict`, jer
+ * finansijski trag ne sme da nestane zato što je neko obrisao nalog. Brisanje
+ * naloga u proizvodu (Faza 8) mora da reši isto pitanje - ovde je dovoljno da
+ * test za sobom počisti i narudžbine.
+ */
 export async function deleteUser(userId: string): Promise<void> {
+  await sql`delete from orders where user_id = ${userId}`;
   await sql`delete from users where id = ${userId}`;
 }
 

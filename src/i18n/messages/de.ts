@@ -1352,6 +1352,43 @@ const messages: Messages = {
     featureLockedText: 'Diese Funktion ist im Paket {plan} verfügbar.',
   },
 
+  collaborators: {
+    title: 'Mitwirkende',
+    subtitle: 'Laden Sie jemanden ein, bei Einladung und Gästeliste zu helfen.',
+
+    invite: 'Mitwirkende einladen',
+    emailLabel: 'E-Mail-Adresse',
+    emailHint: 'Wir senden die Einladung an diese Adresse; sie gilt sieben Tage.',
+    roleLabel: 'Rolle',
+    roleEditor: 'Einladung bearbeiten',
+    roleGuestManager: 'Gäste und Antworten',
+    roleViewer: 'Nur ansehen',
+    invited: 'Einladung gesendet.',
+    invitedNoEmail:
+      'Die Einladung wurde gespeichert, aber die E-Mail konnte nicht gesendet werden. Versuchen Sie es erneut oder teilen Sie den Link selbst.',
+    empty: 'Noch keine Mitwirkenden bei dieser Veranstaltung.',
+
+    statusPending: 'Wartet auf Annahme',
+    statusAccepted: 'Angenommen',
+
+    revoke: 'Entfernen',
+    revokeTitle: 'Mitwirkende entfernen',
+    revokeText: '{email} hat dann keinen Zugriff mehr auf diese Veranstaltung.',
+    revoked: 'Zugriff entfernt.',
+
+    planLockedTitle: 'Mitwirkende sind nicht in Ihrem Paket',
+    planLockedText:
+      'Das Paket „{plan}“ enthält keine Mitwirkenden. Führen Sie für diese Einladung ein Upgrade durch, um jemanden einzuladen.',
+    seePlans: 'Pakete ansehen',
+
+    inviteTitle: 'Einladung zur Mitarbeit',
+    inviteInvalid: 'Diese Einladung ist nicht mehr gültig oder wurde bereits verwendet.',
+    inviteExpired:
+      'Die Einladung ist abgelaufen. Bitten Sie den Organisator um eine neue.',
+    inviteWrongAccount:
+      'Die Einladung wurde an {email} gesendet. Melden Sie sich mit dieser Adresse an, um sie anzunehmen.',
+  },
+
   billing: {
     title: 'Paket und Abrechnung',
     subtitle:

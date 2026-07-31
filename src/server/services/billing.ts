@@ -258,6 +258,11 @@ export async function startCheckout(input: {
   promoCode?: string | null;
   returnUrl: string;
 }): Promise<CheckoutResult> {
+  // Provajder se traži **pre** upisa narudžbine: fabrika odbija adapter koji ne
+  // sme u produkciju, a narudžbina bez ijedne uplate iza sebe je samo smeće u
+  // bazi i pogrešan trag u admin panelu.
+  getPaymentAdapter();
+
   const plan = await requirePurchasablePlan(input.planId);
   const invitation = await requireInvitation(input.eventId);
 
@@ -650,7 +655,13 @@ export async function listOrdersForEvent(eventId: string): Promise<OrderSummary[
     .orderBy(desc(orders.createdAt));
 }
 
-/** URL na koji provajder vraća korisnika posle plaćanja. */
+/**
+ * URL na koji provajder vraća korisnika posle plaćanja.
+ *
+ * Vraća se na stranicu naplate, a ne na objavljivanje: tu se vidi stanje
+ * narudžbine, pa korisnik čija uplata još nije potvrđena dobija odgovor na
+ * pitanje „je li prošlo”, umesto dugmeta koje i dalje ne radi.
+ */
 export function checkoutReturnUrl(eventId: string): string {
-  return `${getEnv().APP_URL}/app/dogadjaji/${eventId}/objavljivanje?naplata=povratak`;
+  return `${getEnv().APP_URL}/app/dogadjaji/${eventId}/naplata?naplata=povratak`;
 }

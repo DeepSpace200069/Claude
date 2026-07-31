@@ -10,6 +10,7 @@ import {
   Settings,
   SquarePen,
   Users,
+  UsersRound,
 } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -89,6 +90,11 @@ export default async function EventDashboardPage({
       href: `/app/dogadjaji/${eventId}/objavljivanje`,
       label: t('publishing.title'),
       icon: Send,
+    },
+    {
+      href: `/app/dogadjaji/${eventId}/saradnici`,
+      label: t('collaborators.title'),
+      icon: UsersRound,
     },
     {
       href: `/app/dogadjaji/${eventId}/naplata`,
