@@ -144,6 +144,40 @@ export function can(entitlements: Entitlements, flag: FeatureFlag): boolean {
   return entitlements.features.flags[flag] === true;
 }
 
+/** Paket sveden na ono što određuje hijerarhiju. */
+export type PlanRank = { code: string; sortOrder: number };
+
+/**
+ * Da li paket pokriva šablon koji traži `requiredPlanCode` (zahtev 7 i 18).
+ *
+ * Pravilo proizvoda: **izbor** šablona je slobodan dok je pozivnica nacrt -
+ * korisnik treba da vidi šta bira i da ima razlog da plati. Tek objavljivanje
+ * traži paket koji taj šablon pokriva.
+ *
+ * Poređenje ide preko `sortOrder`, jer hijerarhiju paketa definiše
+ * administrator, a ne redosled slova u kodu. Paket sa `allTemplates` pokriva
+ * svaki šablon i bez poređenja - to je smisao te mogućnosti.
+ *
+ * Nepoznat `requiredPlanCode` (paket obrisan ili preimenovan) namerno **ne**
+ * prolazi: to je greška u podacima koja treba glasno da se vidi, a tiho
+ * propuštanje bi značilo da premium šablon postane besplatan.
+ */
+export function planCoversTemplate(
+  ranks: readonly PlanRank[],
+  entitlements: Entitlements,
+  requiredPlanCode: string,
+): boolean {
+  if (can(entitlements, 'allTemplates')) return true;
+
+  const required = ranks.find((rank) => rank.code === requiredPlanCode);
+  if (!required) return false;
+
+  const current = ranks.find((rank) => rank.code === entitlements.planCode);
+  if (!current) return false;
+
+  return current.sortOrder >= required.sortOrder;
+}
+
 /** Limit za dati resurs; `null` = neograničeno. */
 export function limitFor(
   entitlements: Entitlements,

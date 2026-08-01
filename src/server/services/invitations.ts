@@ -38,7 +38,7 @@ import {
   ValidationError,
 } from '@/server/authz/errors';
 
-import { getEventEntitlements } from './entitlements';
+import { coversTemplate, getEventEntitlements } from './entitlements';
 import { listEventMedia, mediaMapFrom, type MediaAsset } from './media';
 
 /**
@@ -435,6 +435,42 @@ function isFeatureFlag(value: string): value is FeatureFlag {
   return (FEATURE_FLAGS as readonly string[]).includes(value);
 }
 
+/**
+ * Da li paket pozivnice dozvoljava upravo izabrani šablon.
+ *
+ * Pravilo je vezano za **stanje** pozivnice, a ne za samu radnju:
+ *
+ * - nacrt (i povučena pozivnica) sme da koristi bilo koji šablon, pa korisnik
+ *   vidi šta bira i ima razlog da plati;
+ * - objavljena pozivnica ne sme da pređe na šablon koji njen paket ne pokriva -
+ *   inače bi se premium izgled dobio besplatno tako što se prvo objavi na
+ *   jeftinijem paketu, pa naknadno promeni šablon.
+ *
+ * Provera pri samom objavljivanju je u `publishInvitation`; ova ovde zatvara
+ * put obrnutim redosledom.
+ */
+async function assertTemplateAllowed(
+  eventId: string,
+  requiredPlanCode: string,
+): Promise<void> {
+  const [invitation] = await db
+    .select({ status: invitations.status })
+    .from(invitations)
+    .where(eq(invitations.eventId, eventId))
+    .limit(1);
+
+  if (!invitation) throw new NotFoundError('Pozivnica ne postoji.');
+  if (invitation.status !== 'published') return;
+
+  const entitlements = await getEventEntitlements(eventId);
+  if (await coversTemplate(entitlements, requiredPlanCode)) return;
+
+  throw new LimitExceededError(
+    `Izabrani šablon je uključen tek u paket „${requiredPlanCode}”.`,
+    { limit: 0, current: 1, feature: 'allTemplates' },
+  );
+}
+
 // --- Šabloni ----------------------------------------------------------------
 
 /**
@@ -463,6 +499,7 @@ export async function switchInvitationTemplate(input: {
       .select({
         templateId: templates.id,
         versionId: templateVersions.id,
+        requiredPlanCode: templates.requiredPlanCode,
         themeTokens: templateVersions.themeTokens,
         sections: templateVersions.sections,
       })
@@ -477,6 +514,8 @@ export async function switchInvitationTemplate(input: {
       .limit(1);
 
     if (!snapshot) throw new NotFoundError('Izabrani šablon nije dostupan.');
+
+    await assertTemplateAllowed(input.eventId, snapshot.requiredPlanCode);
 
     templateVersionId = snapshot.versionId;
     nextDocument = applyTemplateToDocument(input.document, {

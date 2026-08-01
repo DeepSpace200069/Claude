@@ -5,13 +5,25 @@ import { defaultThemeTokens } from '@/features/themes/tokens';
 import { db } from '@/server/db';
 import {
   eventTypes,
+  featurePlans,
   invitationSections,
   invitations,
+  orders,
   templateVersions,
   templates,
   themes,
 } from '@/server/db/schema';
+import { LimitExceededError, ValidationError } from '@/server/authz/errors';
+import { startCheckout } from '@/server/services/billing';
 import { createEvent } from '@/server/services/events';
+import {
+  getInvitationForEditor,
+  switchInvitationTemplate,
+} from '@/server/services/invitations';
+import {
+  getPublicationState,
+  publishInvitation,
+} from '@/server/services/publishing';
 import { getTemplateBySlug, listTemplates } from '@/server/services/templates';
 
 import {
@@ -268,5 +280,258 @@ describe.skipIf(!hasTestDatabase)('šabloni i snimak verzije', () => {
     await expect(
       db.delete(eventTypes).where(eq(eventTypes.id, weddingTypeId)),
     ).rejects.toThrow();
+  });
+});
+
+/**
+ * Premium šablon i paket pozivnice.
+ *
+ * Pravilo: izbor šablona je slobodan dok je pozivnica nacrt, ali objavljivanje
+ * traži paket koji taj šablon pokriva. Provera mora biti integraciona - suština
+ * je u tome šta servisi urade nad pravim redovima, ne u čistoj funkciji (nju
+ * pokriva `tests/unit/entitlements.test.ts`).
+ */
+describe.skipIf(!hasTestDatabase)('pokrivenost premium šablona paketom', () => {
+  let weddingTypeId: string;
+  let premiumTemplateId: string;
+  let premiumPlanId: string;
+  let standardPlanId: string;
+
+  beforeEach(async () => {
+    await truncateAll();
+    ({ weddingTypeId } = await seedCatalog());
+    await raiseEventLimit(null);
+
+    const plans = await db
+      .select({ id: featurePlans.id, code: featurePlans.code })
+      .from(featurePlans);
+
+    premiumPlanId = plans.find((p) => p.code === 'premium')?.id ?? '';
+    standardPlanId = plans.find((p) => p.code === 'standard')?.id ?? '';
+    if (!premiumPlanId || !standardPlanId) throw new Error('Paketi nisu zasejani.');
+
+    premiumTemplateId = await makeTemplate('premium-sablon', 'premium');
+  });
+
+  /** Objavljen šablon sa verzijom - bez verzije servisi ga ne bi ni našli. */
+  async function makeTemplate(slug: string, requiredPlanCode: string) {
+    const [template] = await db
+      .insert(templates)
+      .values({
+        slug,
+        name: `Šablon ${slug}`,
+        eventTypeId: weddingTypeId,
+        style: 'editorial',
+        dominantColor: '#101010',
+        requiredPlanCode,
+        status: 'published',
+      })
+      .returning({ id: templates.id });
+
+    if (!template) throw new Error('Šablon nije napravljen.');
+
+    const [version] = await db
+      .insert(templateVersions)
+      .values({
+        templateId: template.id,
+        version: 1,
+        status: 'published',
+        themeTokens: defaultThemeTokens,
+        sections: [],
+        publishedAt: new Date(),
+      })
+      .returning({ id: templateVersions.id });
+
+    if (!version) throw new Error('Verzija šablona nije napravljena.');
+
+    await db
+      .update(templates)
+      .set({ publishedVersionId: version.id })
+      .where(eq(templates.id, template.id));
+
+    return template.id;
+  }
+
+  const eventInput = () => ({
+    eventTypeId: weddingTypeId,
+    name: 'Proba šablona',
+    details: {},
+    date: '',
+    time: '',
+    timeZone: 'Europe/Belgrade',
+    city: '',
+    venueName: '',
+    primaryLocale: 'sr-Latn' as const,
+  });
+
+  /** Označava paket kao plaćen za dati događaj - isto što radi webhook. */
+  async function markPaid(userId: string, eventId: string, planId: string) {
+    const [invitation] = await db
+      .select({ id: invitations.id })
+      .from(invitations)
+      .where(eq(invitations.eventId, eventId))
+      .limit(1);
+
+    await db.insert(orders).values({
+      userId,
+      eventId,
+      invitationId: invitation?.id ?? null,
+      planId,
+      status: 'paid',
+      subtotalMinor: 100000,
+      totalMinor: 100000,
+      currency: 'RSD',
+      idempotencyKey: `test-${eventId}-${planId}`,
+      paidAt: new Date(),
+    });
+  }
+
+  async function applyTemplate(userId: string, eventId: string, templateId: string) {
+    const editor = await getInvitationForEditor(eventId);
+    if (!editor) throw new Error('Pozivnica ne postoji.');
+
+    return switchInvitationTemplate({
+      eventId,
+      userId,
+      baseRevision: editor.revision,
+      templateId,
+      document: editor.document,
+    });
+  }
+
+  it('nacrt sme da primeni premium šablon i bez plaćanja', async () => {
+    const user = await createTestUser();
+    const created = await createEvent(user.id, eventInput());
+
+    await applyTemplate(user.id, created.eventId, premiumTemplateId);
+
+    const [row] = await db
+      .select({ templateId: invitations.templateId })
+      .from(invitations)
+      .where(eq(invitations.eventId, created.eventId));
+
+    expect(row?.templateId).toBe(premiumTemplateId);
+  });
+
+  it('objavljivanje se odbija dok paket ne pokriva šablon', async () => {
+    const user = await createTestUser();
+    const created = await createEvent(user.id, eventInput());
+
+    await applyTemplate(user.id, created.eventId, premiumTemplateId);
+    // Standard daje pravo `publish`, ali ne pokriva premium šablon.
+    await markPaid(user.id, created.eventId, standardPlanId);
+
+    await expect(publishInvitation(created.eventId)).rejects.toBeInstanceOf(
+      ValidationError,
+    );
+
+    const [row] = await db
+      .select({ status: invitations.status })
+      .from(invitations)
+      .where(eq(invitations.eventId, created.eventId));
+    expect(row?.status).toBe('draft');
+  });
+
+  it('objavljivanje prolazi kada paket pokriva šablon', async () => {
+    const user = await createTestUser();
+    const created = await createEvent(user.id, eventInput());
+
+    await applyTemplate(user.id, created.eventId, premiumTemplateId);
+    await markPaid(user.id, created.eventId, premiumPlanId);
+
+    await publishInvitation(created.eventId);
+
+    const [row] = await db
+      .select({ status: invitations.status })
+      .from(invitations)
+      .where(eq(invitations.eventId, created.eventId));
+    expect(row?.status).toBe('published');
+  });
+
+  it('stanje objavljivanja imenuje paket koji šablon traži', async () => {
+    const user = await createTestUser();
+    const created = await createEvent(user.id, eventInput());
+
+    await applyTemplate(user.id, created.eventId, premiumTemplateId);
+    await markPaid(user.id, created.eventId, standardPlanId);
+
+    const state = await getPublicationState(created.eventId);
+
+    expect(state?.canPublish).toBe(true);
+    expect(state?.templateRequiresPlan).toBe('premium');
+  });
+
+  it('objavljena pozivnica ne može da pređe na nepokriven šablon', async () => {
+    const user = await createTestUser();
+    const created = await createEvent(user.id, eventInput());
+
+    await markPaid(user.id, created.eventId, standardPlanId);
+    await publishInvitation(created.eventId);
+
+    await expect(
+      applyTemplate(user.id, created.eventId, premiumTemplateId),
+    ).rejects.toBeInstanceOf(LimitExceededError);
+
+    const [row] = await db
+      .select({ templateId: invitations.templateId })
+      .from(invitations)
+      .where(eq(invitations.eventId, created.eventId));
+    expect(row?.templateId).not.toBe(premiumTemplateId);
+  });
+
+  it('objavljena pozivnica sme da pređe na pokriven šablon', async () => {
+    const user = await createTestUser();
+    const created = await createEvent(user.id, eventInput());
+    const standardTemplateId = await makeTemplate('standard-sablon', 'standard');
+
+    await markPaid(user.id, created.eventId, standardPlanId);
+    await publishInvitation(created.eventId);
+
+    await applyTemplate(user.id, created.eventId, standardTemplateId);
+
+    const [row] = await db
+      .select({ templateId: invitations.templateId })
+      .from(invitations)
+      .where(eq(invitations.eventId, created.eventId));
+    expect(row?.templateId).toBe(standardTemplateId);
+  });
+
+  it('checkout odbija paket koji ne pokriva šablon pozivnice', async () => {
+    const user = await createTestUser();
+    const created = await createEvent(user.id, eventInput());
+
+    await applyTemplate(user.id, created.eventId, premiumTemplateId);
+
+    // Bez ove provere bi novac bio uzet, a objavljivanje zatim odbijeno.
+    await expect(
+      startCheckout({
+        userId: user.id,
+        eventId: created.eventId,
+        planId: standardPlanId,
+        returnUrl: 'http://localhost:3000/app',
+      }),
+    ).rejects.toBeInstanceOf(ValidationError);
+
+    const rows = await db
+      .select({ id: orders.id })
+      .from(orders)
+      .where(eq(orders.eventId, created.eventId));
+    expect(rows).toHaveLength(0);
+  });
+
+  it('checkout prolazi za paket koji pokriva šablon', async () => {
+    const user = await createTestUser();
+    const created = await createEvent(user.id, eventInput());
+
+    await applyTemplate(user.id, created.eventId, premiumTemplateId);
+
+    const result = await startCheckout({
+      userId: user.id,
+      eventId: created.eventId,
+      planId: premiumPlanId,
+      returnUrl: 'http://localhost:3000/app',
+    });
+
+    expect(result.order.planCode).toBe('premium');
   });
 });

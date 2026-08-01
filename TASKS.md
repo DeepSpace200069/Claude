@@ -143,6 +143,10 @@ Sve navedeno je svesna odluka o obimu, a ne propust:
   pozivnici**: plaćeno venčanje ne otključava sledeći događaj. Na besplatnom
   paketu dugme postoji, ali je onemogućeno uz tačan razlog i vezu ka naplati baš
   te pozivnice — nema lažnog uspeha.
+- **Premium šablon se bira slobodno, ali se ne objavljuje bez paketa.** Nacrt
+  sme bilo koji šablon (korisnik treba da vidi šta bira); objavljivanje traži
+  paket koji ga pokriva, i to se proverava pri objavljivanju, pri promeni
+  šablona na već objavljenoj pozivnici i pri samoj kupovini.
 - **Nijedan provajder još stvarno ne naplaćuje.** Postoje dva adaptera: `dev`
   (ne sme u produkciju, fabrika ga odbija) i `manual` (uplatnica i bankovni
   transfer — narudžbina čeka dok je administrator ne potvrdi uz obavezan
