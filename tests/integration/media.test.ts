@@ -68,6 +68,14 @@ class FakeStorage implements StorageAdapter {
     const file = this.files.get(storageKey);
     return file ? file.subarray(0, length) : null;
   }
+
+  async putObject(storageKey: string, data: Uint8Array): Promise<void> {
+    this.files.set(storageKey, data);
+  }
+
+  async readObject(storageKey: string): Promise<Uint8Array | null> {
+    return this.files.get(storageKey) ?? null;
+  }
 }
 
 /** Minimalan WebP bez metapodataka. */

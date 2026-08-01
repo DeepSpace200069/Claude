@@ -1,5 +1,5 @@
 import { createHmac, randomUUID } from 'node:crypto';
-import { mkdir, open, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, open, readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import {
@@ -83,6 +83,21 @@ export class LocalStorageAdapter implements StorageAdapter {
     const target = this.resolvePath(storageKey);
     await mkdir(path.dirname(target), { recursive: true });
     await writeFile(target, data);
+  }
+
+  async putObject(storageKey: string, data: Uint8Array): Promise<void> {
+    await this.writeFile(storageKey, Buffer.from(data));
+  }
+
+  async readObject(storageKey: string): Promise<Uint8Array | null> {
+    const target = this.resolvePath(storageKey);
+    return readFile(target).then(
+      (buffer) => new Uint8Array(buffer),
+      (error: NodeJS.ErrnoException) => {
+        if (error.code === 'ENOENT') return null;
+        throw error;
+      },
+    );
   }
 
   sign(storageKey: string, expiresAtMs: number): string {

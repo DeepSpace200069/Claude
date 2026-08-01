@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="sr-Latn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ana i Marko</title>
+    <meta property="og:title" content="Ana i Marko" />
+    <link rel="stylesheet" href="css/stil.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Probni" />
+    <script src="https://cdn.primer.test/animacije-1.0.js"></script>
+  </head>
+  <body class="tamna">
+    <header id="naslovna" style="background-image: url('img/pozadina.png')">
+      <h1 id="imena">Ana i Marko</h1>
+      <p id="poziv">Pozivamo vas na naše venčanje</p>
+      <time id="datum" datetime="2026-09-12">12. septembar 2026.</time>
+    </header>
+
+    <section id="prica">
+      <h2>Naša priča</h2>
+      <p id="tekst-price">Upoznali smo se na Adi, jednog kišnog utorka.</p>
+      <img id="fotografija" src="img/nas.png" alt="Ana i Marko" />
+    </section>
+
+    <section id="mesto">
+      <h2>Gde slavimo</h2>
+      <iframe
+        src="https://www.google.com/maps/embed?pb=!1m18!salas"
+        width="600"
+        height="450"
+      ></iframe>
+      <a href="https://www.salas137.rs">Sajt salaša</a>
+    </section>
+
+    <section id="dolazak">
+      <h2>Potvrda dolaska</h2>
+      <form id="ukrasna-forma">
+        <input type="text" name="ime" placeholder="Vaše ime" />
+        <button type="submit">Potvrdi</button>
+      </form>
+    </section>
+
+    <script src="js/odbrojavanje.js"></script>
+    <script>
+      document.body.dataset.ucitano = 'da';
+    </script>
+  </body>
+</html>

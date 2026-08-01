@@ -61,6 +61,21 @@ export interface StorageAdapter {
    * stiglo, bez povlačenja celog fajla kroz aplikaciju (zahtev 24).
    */
   readHead(storageKey: string, length: number): Promise<Uint8Array | null>;
+  /**
+   * Upis fajla sa servera, bez potpisanog URL-a.
+   *
+   * Postoji zbog uvoza HTML šablona: fajlove šablona ne otprema pregledač nego
+   * CLI koji ih čita sa diska. Zato ovde nema ograničenja tipa i veličine iz
+   * `validateUpload` - to su pravila za sadržaj korisnika, a šablone uvozi
+   * administrator (zahtev 39.3).
+   */
+  putObject(
+    storageKey: string,
+    data: Uint8Array,
+    contentType: string,
+  ): Promise<void>;
+  /** Ceo fajl; koristi ga ruta koja servira fajlove šablona sa našeg domena. */
+  readObject(storageKey: string): Promise<Uint8Array | null>;
 }
 
 /** Koliko početnih bajtova čitamo pri proveri metapodataka. */

@@ -533,6 +533,104 @@ korisnik popunio, a šablon ih nema, premeštaju se na kraj umesto da nestanu.
 
 ---
 
+## HTML šabloni: uvoz gotovih sajtova
+
+Pored šablona od **sekcija**, platforma poznaje i drugu vrstu: gotov, ručno
+pravljen jednostrani sajt sa sopstvenim animacijama (`templates.kind = 'html'`).
+Takav sajt se **ne prevodi** u sekcije. Njegova vrednost je baš u onome što
+model sekcija ne ume da izrazi — tajming animacije, scroll efekti, tipografija
+napravljena za taj jedan raspored — pa bi prevođenje uništilo ono zbog čega
+šablon i postoji.
+
+Umesto sekcija, HTML šablon ima **polja**. Organizator popunjava imena, datume i
+tekstove kroz formu; raspored i animacije ostaju onakvi kakvim ih je autor
+napravio. Sve oko toga — objavljivanje, slug, režimi privatnosti, PIN, istek,
+personalizovani linkovi, statistika, QR, deljenje, naplata i paketi — radi
+identično kao za šablone od sekcija.
+
+### Uvoz je administratorska radnja preko CLI-ja
+
+Korisnici platforme **ne otpremaju** svoj HTML. Šablon se servira sa našeg
+domena, u istom poreklu kao i sesija svakog organizatora; forma za otpremanje
+HTML-a bila bi servis za XSS. Zato uvoza nema u aplikaciji — postoji samo
+skripta koju pokreće neko ko već ima pristup bazi:
+
+```bash
+pnpm template:import imports/salas-137 --analiza   # prvi prolaz: predlog
+pnpm template:import imports/salas-137             # drugi prolaz: uvoz
+```
+
+Folder `imports/` je u `.gitignore`: u njemu je tuđi rad, koji ne ide u
+repozitorijum.
+
+### Dva prolaza
+
+**Prvi prolaz** (`--analiza`) ne dira ni bazu ni fajlove. Pročita sajt i napiše
+`template.json`: koje adrese vode van našeg domena, gde je ugrađena mapa, koja
+forma liči na RSVP i šta bi mogla da budu polja. To je **predlog**, ne rezultat
+— nijedna heuristika ne zna šta je u tuđem sajtu „ime mlade”, a šta ukrasni
+natpis. Postojeći `template.json` se nikad ne prepisuje.
+
+**Drugi prolaz** čita fajl onakav kakav ga je operator ostavio i tek tada radi:
+
+1. preuzima spoljne resurse (CDN biblioteke, Google fontove) u sam folder i
+   servira ih sa našeg domena — folder time postaje keš, pa sledeće pokretanje
+   ne ide na mrežu,
+2. zamenjuje ugrađene mape karticom sa linkom,
+3. zamenjuje ukrasnu RSVP formu mestom za pravu formu platforme,
+4. mesta na kojima stoji sadržaj pretvara u tokene polja,
+5. putanje ka fajlovima šablona pretvara u `{{asset:...}}`,
+6. proverava da nije ostala **nijedna** adresa ka tuđem domenu — i staje ako
+   jeste.
+
+Uvoz je idempotentan po slug-u: ponovno pokretanje zamenjuje radnu verziju istog
+šablona i briše fajlove prethodnog pokušaja. **Objavljene verzije se ne diraju**
+— na njima vise već napravljene pozivnice.
+
+### Tokeni nose kontekst
+
+Dokument se u bazi čuva jednom obrađen: na mestima sadržaja stoje tokeni, a
+svaki token nosi i kontekst u kom se nalazi.
+
+| Token | Gde stoji | Bekstvovanje |
+|-------|-----------|--------------|
+| `{{text:kljuc}}` | tekst elementa | `&`, `<`, `>` |
+| `{{attr:kljuc}}` | vrednost atributa | plus `"` i `'` |
+| `{{js:kljuc}}` | string u JavaScriptu | navodnici, `\`, `<`, prelomi, U+2028/9 |
+| `{{asset:putanja}}` | fajl šablona | razrešava se u URL, ne u sadržaj |
+
+Zbog toga prikaz ne mora da parsira HTML: jedan prolaz kroz tekst je dovoljan, a
+način bekstvovanja se ne pogađa nego čita iz samog tokena. **Nijedna vrednost
+polja nikad ne ulazi u dokument kao HTML** — ako organizator otkuca `<b>`, gost
+vidi `<b>`, a ne podebljan tekst.
+
+### Zašto nijedan spoljni domen
+
+Provera na kraju uvoza je uslov, ne preporuka:
+
+- **CSP.** Politika dozvoljava skripte i stilove samo sa našeg domena. Šablon sa
+  `<script src="https://cdn...">` radio bi u razvoju, a pao u produkciji.
+- **Privatnost.** Svaki zahtev ka tuđem serveru odaje IP adresu gosta pre nego
+  što je iko išta pitao. Mapa u `<iframe>` je najčešći primer i zato se uvek
+  zamenjuje karticom sa linkom.
+- **Trajnost.** Pozivnica živi mesecima; CDN koji nestane pokvari tuđu proslavu.
+
+Jedini izuzetak je `<a href>`: link ne šalje nijedan zahtev dok se ne klikne, a
+pozivnica bez linka ka mapama ne bi bila upotrebljiva.
+
+### Fajl ili ugrađivanje
+
+CSS i JS koji **nose vrednost polja** ulaze u sam dokument; fajlovi se serviraju
+isti za sve pozivnice, pa u njima nema kome da se zameni vrednost. Sve ostalo
+(biblioteke, stilovi) ostaje zaseban fajl pod
+`/sabloni-fajlovi/<idVerzije>/...`, koji pregledač onda i kešira. Adresa nosi id
+verzije, a verzija je nepromenljiva — nema pitanja o invalidaciji keša.
+
+`jsdom` se koristi **samo** u uvozniku i ostaje `devDependency`; u aplikaciju ne
+ulazi.
+
+---
+
 ## Javna pozivnica
 
 Stranica `/p/[publicSlug]` je jedino što gost vidi. Ona je i najlakši deo
@@ -1256,6 +1354,11 @@ pnpm db:studio           # Drizzle Studio
 
 # Održavanje (cron, jednom dnevno)
 pnpm maintenance         # rezimei odgovora + brisanje po pravilima retencije
+
+# Uvoz gotovog HTML sajta kao šablona (samo administrator)
+pnpm template:import imports/<ime> --analiza   # predlog template.json
+pnpm template:import imports/<ime>             # uvoz kao radna verzija
+pnpm template:import imports/<ime> --offline   # bez odlaska na mrežu
 
 # Testovi
 pnpm test                # unit

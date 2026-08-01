@@ -1,0 +1,123 @@
+{
+  "note": "Uputstvo uvoza za probni sajt. Koriste ga testovi Faze 2.",
+  "slug": "proba-vencanje",
+  "name": "Probni sajt",
+  "description": "Mali ručno pravljen sajt na kom se proverava uvoznik.",
+  "eventType": "vencanje",
+  "style": "elegant",
+  "dominantColor": "#101010",
+  "usesPhotos": true,
+  "requiredPlan": "premium",
+  "entry": "index.html",
+  "vendor": [
+    { "url": "https://cdn.primer.test/animacije-1.0.js", "path": "vendor/animacije-1.0.js" },
+    { "url": "https://fonts.googleapis.com/css2?family=Probni", "path": "vendor/fontovi.css" }
+  ],
+  "rsvp": { "selector": "#ukrasna-forma" },
+  "maps": [
+    {
+      "selector": "#mesto iframe",
+      "nameField": "mestoNaziv",
+      "addressField": "mestoAdresa",
+      "urlField": "mestoLink",
+      "label": "Otvori u mapama"
+    }
+  ],
+  "strip": [],
+  "form": {
+    "groups": [
+      { "key": "osnovno", "label": { "sr-Latn": "Osnovno", "en": "Basics" } },
+      { "key": "prica", "label": { "sr-Latn": "Priča" } },
+      { "key": "lokacije", "label": { "sr-Latn": "Lokacije" } }
+    ],
+    "fields": [
+      {
+        "key": "imena",
+        "type": "text",
+        "group": "osnovno",
+        "label": { "sr-Latn": "Imena", "en": "Names" },
+        "required": true,
+        "default": "Ana i Marko",
+        "bind": [{ "kind": "text", "selector": "#imena" }]
+      },
+      {
+        "key": "poziv",
+        "type": "text",
+        "group": "osnovno",
+        "label": { "sr-Latn": "Poziv" },
+        "required": false,
+        "default": "Pozivamo vas na naše venčanje",
+        "bind": [{ "kind": "text", "selector": "#poziv" }]
+      },
+      {
+        "key": "datum",
+        "type": "date",
+        "group": "osnovno",
+        "label": { "sr-Latn": "Datum" },
+        "required": true,
+        "default": "2026-09-12",
+        "bind": [
+          { "kind": "attr", "selector": "#datum", "attr": "datetime" },
+          { "kind": "script", "file": "js/odbrojavanje.js", "token": "2026-09-12T17:00:00" }
+        ]
+      },
+      {
+        "key": "datumTekst",
+        "type": "text",
+        "group": "osnovno",
+        "label": { "sr-Latn": "Datum, ispisan" },
+        "required": false,
+        "default": "12. septembar 2026.",
+        "bind": [{ "kind": "text", "selector": "#datum" }]
+      },
+      {
+        "key": "pricaTekst",
+        "type": "longtext",
+        "group": "prica",
+        "label": { "sr-Latn": "Naša priča" },
+        "required": false,
+        "default": "Upoznali smo se na Adi, jednog kišnog utorka.",
+        "maxLength": 600,
+        "bind": [{ "kind": "text", "selector": "#tekst-price" }]
+      },
+      {
+        "key": "fotografija",
+        "type": "image",
+        "group": "prica",
+        "label": { "sr-Latn": "Fotografija" },
+        "required": false,
+        "default": "img/nas.png",
+        "bind": [{ "kind": "attr", "selector": "#fotografija", "attr": "src" }]
+      },
+      {
+        "key": "mestoNaziv",
+        "type": "text",
+        "group": "lokacije",
+        "label": { "sr-Latn": "Naziv lokacije" },
+        "required": false,
+        "default": "Salaš 137",
+        "bind": [{ "kind": "text", "selector": "[data-mapa=\"mestoNaziv\"] .pozivnica-mapa__naziv" }]
+      },
+      {
+        "key": "mestoAdresa",
+        "type": "text",
+        "group": "lokacije",
+        "label": { "sr-Latn": "Adresa" },
+        "required": false,
+        "default": "Čenej, Novi Sad",
+        "bind": [
+          { "kind": "text", "selector": "[data-mapa=\"mestoNaziv\"] .pozivnica-mapa__adresa" }
+        ]
+      },
+      {
+        "key": "mestoLink",
+        "type": "url",
+        "group": "lokacije",
+        "label": { "sr-Latn": "Link ka mapama" },
+        "required": false,
+        "default": "https://www.google.com/maps/search/?api=1&query=Sala%C5%A1+137",
+        "bind": [{ "kind": "attr", "selector": "[data-mapa=\"mestoNaziv\"]", "attr": "href" }]
+      }
+    ]
+  }
+}

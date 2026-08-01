@@ -22,6 +22,9 @@ blob-report/
 # local storage adapter (dev uploads)
 public/uploads/
 
+# gotovi HTML sajtovi koji se uvoze kao šabloni (tuđi rad, ne ide u repozitorijum)
+imports/
+
 # env
 .env
 .env.local

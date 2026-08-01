@@ -1,0 +1,23 @@
+@font-face {
+  font-family: 'Probni';
+  src: url('../img/probni.woff2') format('woff2');
+}
+
+body {
+  margin: 0;
+  font-family: 'Probni', serif;
+  background: #101010 url(../img/pozadina.png) center / cover;
+  color: #f5f5f5;
+}
+
+#naslovna {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+#imena {
+  font-size: clamp(2.5rem, 10vw, 6rem);
+  letter-spacing: 0.08em;
+}

@@ -82,6 +82,36 @@ export class S3StorageAdapter implements StorageAdapter {
     return new Uint8Array(await response.arrayBuffer());
   }
 
+  async putObject(
+    storageKey: string,
+    data: Uint8Array,
+    contentType: string,
+  ): Promise<void> {
+    const url = this.presignPut(storageKey, 900, contentType);
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': contentType },
+      // Kopija zbog tipa: `fetch` traži pogled nad običnim `ArrayBuffer`-om.
+      body: new Uint8Array(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Upis fajla nije uspeo (${response.status}).`);
+    }
+  }
+
+  async readObject(storageKey: string): Promise<Uint8Array | null> {
+    const url = this.presign('GET', storageKey, 300, {});
+    const response = await fetch(url);
+
+    if (response.status === 404) return null;
+    if (!response.ok) {
+      throw new Error(`Čitanje fajla nije uspelo (${response.status}).`);
+    }
+
+    return new Uint8Array(await response.arrayBuffer());
+  }
+
   // --- SigV4 -------------------------------------------------------------
 
   private presignPut(key: string, expiresIn: number, contentType: string): string {
