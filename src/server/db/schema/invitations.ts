@@ -11,6 +11,10 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 
+import type {
+  FieldDefinitions,
+  FieldValues,
+} from '@/features/templates/html-schema';
 import type { ThemeTokens } from '@/features/themes/tokens';
 
 import { primaryId, softDelete, timestamps } from './_shared';
@@ -57,6 +61,17 @@ export const invitations = pgTable(
       () => templateVersions.id,
       { onDelete: 'set null' },
     ),
+    /*
+     * Snimak HTML šablona (`kind = 'html'`).
+     *
+     * Isti princip kao kod sekcija: pozivnica pri kreiranju **kopira**
+     * definicije polja i podrazumevane vrednosti iz verzije šablona, pa
+     * kasnija izmena šablona ne dira već napravljenu pozivnicu (zahtev 39.2).
+     * Za sections pozivnice obe kolone ostaju `null`.
+     */
+    fieldDefinitions: jsonb('field_definitions').$type<FieldDefinitions>(),
+    fieldValues: jsonb('field_values').$type<FieldValues>(),
+
     /** Tema pozivnice; kopija tokena iz verzije šablona + korisničke izmene. */
     themeTokens: jsonb('theme_tokens').$type<ThemeTokens>().notNull(),
 
@@ -151,6 +166,8 @@ export const invitationRevisions = pgTable(
         }>
       >()
       .notNull(),
+    /** Vrednosti polja kod HTML pozivnica; kod sections pozivnica `null`. */
+    fieldValues: jsonb('field_values').$type<FieldValues>(),
     createdById: uuid('created_by_id').references(() => users.id, {
       onDelete: 'set null',
     }),

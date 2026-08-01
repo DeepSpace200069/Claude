@@ -73,6 +73,17 @@ export const templateStatusEnum = pgEnum('template_status', [
   'archived',
 ]);
 
+/**
+ * Vrsta šablona (zahtev 7).
+ *
+ * `sections` je model koji platforma renderuje iz registra sekcija.
+ * `html` je gotov jednostrani sajt sa sopstvenim animacijama, koji se **ne**
+ * prevodi u sekcije - prevođenje bi uništilo ono zbog čega takav šablon i
+ * postoji. Podrazumevana vrednost je `sections`, pa svi postojeći šabloni
+ * ostaju netaknuti.
+ */
+export const templateKindEnum = pgEnum('template_kind', ['sections', 'html']);
+
 export const mediaStatusEnum = pgEnum('media_status', [
   'pending', // izdat je upload URL, fajl još nije potvrđen
   'ready',

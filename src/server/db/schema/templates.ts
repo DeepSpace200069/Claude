@@ -11,12 +11,16 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 
+import type {
+  FieldDefinitions,
+  TemplateAsset,
+} from '@/features/templates/html-schema';
 import type { ThemeTokens } from '@/features/themes/tokens';
 
 import { primaryId, timestamps } from './_shared';
 import { users } from './auth';
 import { eventTypes } from './events';
-import { templateStatusEnum } from './enums';
+import { templateKindEnum, templateStatusEnum } from './enums';
 
 /**
  * Tema kao samostalan entitet.
@@ -52,6 +56,9 @@ export const templates = pgTable(
     eventTypeId: uuid('event_type_id')
       .notNull()
       .references(() => eventTypes.id, { onDelete: 'restrict' }),
+
+    /** Sekcije ili gotov HTML sajt; vidi `templateKindEnum`. */
+    kind: templateKindEnum('kind').notNull().default('sections'),
 
     /** Filteri u galeriji (zahtev 7, korak 3). */
     style: text('style').notNull().default('minimal'),
@@ -119,6 +126,23 @@ export const templateVersions = pgTable(
 
     /** Demo podaci za javnu demo stranicu šablona (`/demo/[slug]`). */
     demoContext: jsonb('demo_context').$type<Record<string, unknown>>(),
+
+    /*
+     * Tri kolone ispod postoje samo za `kind = 'html'`.
+     *
+     * Namerno u **istoj** tabeli, a ne u novoj: objavljivanje verzije,
+     * arhiviranje i `published_version_id` time rade za obe vrste šablona bez
+     * ijedne izmene u admin panelu.
+     */
+
+    /** Obrađen dokument sa tokenima polja i asseta; `null` za sections šablone. */
+    htmlDocument: text('html_document'),
+
+    /** Definicije polja koja organizator popunjava (`fieldDefinitionsSchema`). */
+    fieldDefinitions: jsonb('field_definitions').$type<FieldDefinitions>(),
+
+    /** Popis fajlova šablona u storage-u (`templateAssetsSchema`). */
+    assets: jsonb('assets').$type<TemplateAsset[]>(),
 
     publishedAt: timestamp('published_at', { withTimezone: true }),
     createdById: uuid('created_by_id').references(() => users.id, {
