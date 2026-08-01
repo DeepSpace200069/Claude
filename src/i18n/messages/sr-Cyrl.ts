@@ -430,6 +430,8 @@ const messages: Messages = {
     backToGallery: 'Назад на галерију',
     aboutTemplate: 'О шаблону',
     includedSections: 'Секције у шаблону',
+    demoRsvpNote: 'У правој позивници овде стоји форма за потврду доласка. У демоу се ништа не шаље.',
+    demoHtmlFrame: 'Демо приказ шаблона',
     demoNote: 'Ово је демо приказ са измишљеним подацима. Одговори и поруке се не чувају.',
     deviceDesktop: 'Рачунар',
     deviceTablet: 'Таблет',
@@ -922,6 +924,7 @@ const messages: Messages = {
   },
 
   publicInvitation: {
+    rsvpTitle: 'Потврда доласка',
     greeting: 'Драги {name},',
     skipIntro: 'Прескочи увод',
     poweredBy: 'Направљено на {brand}',

@@ -12,7 +12,7 @@ import {
   rsvpSubmissionSchema,
   updateQuestionSchema,
 } from '@/features/rsvp/schemas';
-import { readRsvpSection } from '@/features/rsvp/section-data';
+import { defaultRsvpSection, readRsvpSection } from '@/features/rsvp/section-data';
 import { checkFormNonce } from '@/lib/form-nonce';
 import { requireEventAccess } from '@/server/authz';
 import { RATE_LIMITS, rateLimit } from '@/server/rate-limit';
@@ -115,7 +115,14 @@ export async function submitRsvpAction(
     }
 
     const invitation = access.invitation;
-    const section = readRsvpSection(invitation.document);
+    /*
+     * Pozivnica od uvezenog sajta nema sekcije; podešavanja su podrazumevana,
+     * ista ona kojima je forma i iscrtana (`buildLiveContext`).
+     */
+    const section =
+      invitation.html?.status === 'ok'
+        ? defaultRsvpSection()
+        : readRsvpSection(invitation.document);
 
     if (!section) {
       return failure('not_found', 'Ova pozivnica ne prikuplja potvrde dolaska.');

@@ -3,6 +3,7 @@ import 'server-only';
 import { and, asc, desc, eq, inArray, sql, type SQL } from 'drizzle-orm';
 import { cache } from 'react';
 
+import type { FieldDefinitions } from '@/features/templates/html-schema';
 import type { ThemeTokens } from '@/features/themes/tokens';
 import { db } from '@/server/db';
 
@@ -19,6 +20,7 @@ import { eventTypes, templateVersions, templates } from '@/server/db/schema';
 export type TemplateSummary = {
   id: string;
   slug: string;
+  kind: 'sections' | 'html';
   name: string;
   description: string;
   style: string;
@@ -45,6 +47,8 @@ export type TemplateFilters = {
 const summarySelection = {
   id: templates.id,
   slug: templates.slug,
+  /** Sekcije ili uvezen gotov sajt; galerija po tome bira način prikaza. */
+  kind: templates.kind,
   name: templates.name,
   description: templates.description,
   style: templates.style,
@@ -118,6 +122,9 @@ export type TemplateDetail = TemplateSummary & {
     data: unknown;
   }>;
   demoContext: Record<string, unknown> | null;
+  /** Popunjeno samo za `kind = 'html'`. */
+  htmlDocument: string | null;
+  fieldDefinitions: FieldDefinitions | null;
 };
 
 export const getTemplateBySlug = cache(
@@ -129,6 +136,9 @@ export const getTemplateBySlug = cache(
         version: templateVersions.version,
         sections: templateVersions.sections,
         demoContext: templateVersions.demoContext,
+        /* Popunjeno samo za `kind = 'html'`; kod sekcija ostaje `null`. */
+        htmlDocument: templateVersions.htmlDocument,
+        fieldDefinitions: templateVersions.fieldDefinitions,
       })
       .from(templates)
       .innerJoin(eventTypes, eq(templates.eventTypeId, eventTypes.id))

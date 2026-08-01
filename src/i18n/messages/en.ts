@@ -427,6 +427,8 @@ const messages: Messages = {
     backToGallery: 'Back to gallery',
     aboutTemplate: 'About this template',
     includedSections: 'Sections in this template',
+    demoRsvpNote: 'In a real invitation the attendance form goes here. Nothing is sent from the demo.',
+    demoHtmlFrame: 'Template demo',
     demoNote: 'This is a demo with made-up details. Replies and messages are not saved.',
     deviceDesktop: 'Desktop',
     deviceTablet: 'Tablet',
@@ -915,6 +917,7 @@ const messages: Messages = {
   },
 
   publicInvitation: {
+    rsvpTitle: 'Confirm your attendance',
     greeting: 'Dear {name},',
     skipIntro: 'Skip intro',
     poweredBy: 'Made with {brand}',

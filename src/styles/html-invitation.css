@@ -1,0 +1,111 @@
+/*
+ * Prava RSVP forma unutar uvezenog sajta (zahtev 39.4).
+ *
+ * Sajt je tuđi rad sa svojim fontovima, bojama i mrakom ili svetlom; naša forma
+ * mora da izgleda kao da je oduvek tu. Zato se ovde **ne** postavlja izgled nego
+ * se nasleđuje: font i boja teksta dolaze iz šablona, a kartica i linije se
+ * računaju iz te iste boje kroz `color-mix`. Isti stil radi i na crnoj i na
+ * beloj pozadini, bez ijedne izmene po šablonu.
+ *
+ * Same kontrole stiliše `invitation.css`, isti fajl koji koristi i pozivnica od
+ * sekcija - forma je jedna, pa je i njen izgled na jednom mestu. Ovde se samo
+ * postavljaju promenljive koje taj fajl čita.
+ *
+ * Zašto uopšte nema `globals.css`: on nosi Tailwind reset, koji bi poništio
+ * stilove šablona. Ono zbog čega takav šablon i postoji nestalo bi u trenutku.
+ */
+
+.pozivnica-rsvp {
+  --inv-font-body: inherit;
+  --inv-font-display: inherit;
+  --inv-font-size: 1rem;
+
+  --inv-bg: transparent;
+  --inv-text: currentColor;
+  --inv-text-muted: color-mix(in oklab, currentColor 65%, transparent);
+  --inv-surface: color-mix(in oklab, currentColor 7%, transparent);
+  --inv-border: color-mix(in oklab, currentColor 28%, transparent);
+  --inv-accent: currentColor;
+  --inv-accent-contrast: currentColor;
+
+  --inv-radius: 0.75rem;
+  --inv-shadow: none;
+  --inv-gap: 1rem;
+  --inv-section-space: 3rem;
+  --inv-inline-space: 1.5rem;
+
+  box-sizing: border-box;
+  color: inherit;
+  font-family: inherit;
+  margin-inline: auto;
+  max-width: 34rem;
+  padding: var(--inv-section-space) var(--inv-inline-space);
+  width: 100%;
+}
+
+.pozivnica-rsvp *,
+.pozivnica-rsvp *::before,
+.pozivnica-rsvp *::after {
+  box-sizing: border-box;
+}
+
+.pozivnica-rsvp__title {
+  font-family: inherit;
+  margin: 0 0 1rem;
+  text-align: center;
+}
+
+/*
+ * Dugme je obrisano, a ne popunjeno.
+ *
+ * Popunjeno bi tražilo boju teksta koja se garantovano vidi na naglasku, a
+ * naglasak je ovde `currentColor` - boja koju tek nasleđujemo. Obris se vidi na
+ * svakoj pozadini i ne pogađa ništa.
+ */
+.pozivnica-rsvp .inv-button {
+  background: transparent;
+  border: 1px solid currentColor;
+  color: inherit;
+}
+
+.pozivnica-rsvp .inv-button:hover {
+  background: color-mix(in oklab, currentColor 12%, transparent);
+}
+
+.pozivnica-rsvp .inv-input {
+  background: color-mix(in oklab, currentColor 4%, transparent);
+  color: inherit;
+}
+
+/* Fokus mora da se vidi i na tamnom i na svetlom (WCAG 2.4.7). */
+.pozivnica-rsvp :focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+/* --- Potpis platforme ----------------------------------------------------- */
+
+.pozivnica-potpis {
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.75rem;
+  opacity: 0.7;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.pozivnica-potpis a {
+  color: inherit;
+}
+
+/*
+ * Omotači oko HTML-a šablona.
+ *
+ * `display: contents` znači da ih nema u rasporedu: sadržaj šablona se ponaša
+ * kao da je i dalje direktno u `<body>`, pa `flex` i `grid` iz šablona rade
+ * neizmenjeno. Postoje samo zato što React sadržaj ubacuje u element, a ne u
+ * prazan prostor.
+ */
+.pozivnica-omotac {
+  display: contents;
+}

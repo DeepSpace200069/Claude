@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/feedback';
 import { DevicePreview } from '@/features/templates/device-preview';
+import { HtmlDemoFrame } from '@/features/templates/html-demo-frame';
 import { InvitationRenderer } from '@/features/invitations/invitation-renderer';
 import { buildDemoContext } from '@/features/invitations/demo-context';
 import { getSectionDefinition } from '@/features/sections/registry';
@@ -106,12 +107,19 @@ export default async function TemplateDetailPage({
             }}
             fullscreenHref={`/demo/${template.slug}`}
           >
-            <InvitationRenderer
-              sections={sections}
-              theme={template.themeTokens}
-              locale={locale}
-              context={context}
-            />
+            {template.kind === 'html' ? (
+              <HtmlDemoFrame
+                slug={template.slug}
+                title={t('templates.demoHtmlFrame')}
+              />
+            ) : (
+              <InvitationRenderer
+                sections={sections}
+                theme={template.themeTokens}
+                locale={locale}
+                context={context}
+              />
+            )}
           </DevicePreview>
         </div>
 

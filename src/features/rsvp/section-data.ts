@@ -21,6 +21,21 @@ export function readRsvpSection(document: EditorDocument): RsvpSectionData | nul
   return readSection(document, 'rsvp', rsvpSection.schema);
 }
 
+/**
+ * Podešavanja RSVP-a za pozivnicu od uvezenog sajta (zahtev 39.4).
+ *
+ * Takva pozivnica nema sekcije, pa nema ni gde da čuva ova podešavanja - forma
+ * radi sa podrazumevanim vrednostima iz iste šeme. Bitno je da je to **ista**
+ * šema: server akcija koja prima odgovor čita podešavanja odavde, pa se ne može
+ * desiti da forma pita jedno, a server prihvata drugo.
+ *
+ * Rok za odgovor ovde ne postoji. Uvezen sajt ga nosi u svom tekstu, a rok koji
+ * bismo mi izmislili gasio bi formu u trenutku o kom organizator ništa ne zna.
+ */
+export function defaultRsvpSection(): RsvpSectionData {
+  return rsvpSection.schema.parse({});
+}
+
 export function readGuestbookSection(
   document: EditorDocument,
 ): GuestbookSectionData | null {

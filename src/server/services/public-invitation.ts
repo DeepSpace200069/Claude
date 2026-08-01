@@ -6,6 +6,11 @@ import { unstable_cache as cache, updateTag } from 'next/cache';
 import { documentFromRecords, type EditorDocument } from '@/features/editor/document';
 import type { EventDetails } from '@/features/events/details';
 import type { InvitationRenderContext } from '@/features/sections/types';
+import type {
+  FieldDefinitions,
+  FieldValues,
+  HtmlTemplateSnapshot,
+} from '@/features/templates/html-schema';
 import type { Locale } from '@/i18n/config';
 import { hashToken, safeCompare } from '@/lib/ids';
 import { db } from '@/server/db';
@@ -16,6 +21,7 @@ import {
   invitationSections,
   invitationViewStats,
   invitations,
+  templateVersions,
 } from '@/server/db/schema';
 
 import { resolveMediaByIds } from './media';
@@ -74,6 +80,14 @@ export type PublicInvitation = {
   };
   locale: Locale;
   document: EditorDocument;
+  /**
+   * Pozivnica napravljena od uvezenog sajta; `null` za pozivnice od sekcija.
+   *
+   * Dokument dolazi iz **verzije šablona**, a vrednosti polja iz same pozivnice.
+   * Verzija je nepromenljiva, pa ovo i dalje poštuje pravilo da izmena šablona
+   * ne dira već napravljenu pozivnicu (zahtev 39.2).
+   */
+  html: HtmlTemplateSnapshot | null;
   context: InvitationRenderContext;
   eventTypeKey: string;
   startsAt: Date | null;
@@ -113,10 +127,18 @@ async function loadInvitation(slug: string): Promise<PublicInvitation | null> {
       details: events.details,
       primaryLocale: events.primaryLocale,
       eventTypeKey: eventTypes.key,
+      templateVersionId: invitations.templateVersionId,
+      fieldDefinitions: invitations.fieldDefinitions,
+      fieldValues: invitations.fieldValues,
+      htmlDocument: templateVersions.htmlDocument,
     })
     .from(invitations)
     .innerJoin(events, eq(invitations.eventId, events.id))
     .innerJoin(eventTypes, eq(events.eventTypeId, eventTypes.id))
+    .leftJoin(
+      templateVersions,
+      eq(invitations.templateVersionId, templateVersions.id),
+    )
     .where(
       and(
         eq(invitations.publicSlug, slug),
@@ -166,6 +188,7 @@ async function loadInvitation(slug: string): Promise<PublicInvitation | null> {
     },
     locale: row.primaryLocale,
     document,
+    html: htmlSnapshotFrom(row),
     eventTypeKey: row.eventTypeKey,
     startsAt: row.startsAt,
     timeZone: row.timeZone,
@@ -185,6 +208,31 @@ async function loadInvitation(slug: string): Promise<PublicInvitation | null> {
        */
       live: null,
     },
+  };
+}
+
+/**
+ * HTML deo pozivnice.
+ *
+ * `missing` znači da je verzija šablona nestala: pozivnica i dalje zna svoja
+ * polja, ali nema šta da prikaže. Gost tada dobija poruku, a ne praznu stranicu
+ * - i to je istina koju stranica sme da kaže, jer ne otkriva ništa o sadržaju.
+ */
+function htmlSnapshotFrom(row: {
+  fieldDefinitions: FieldDefinitions | null;
+  fieldValues: FieldValues | null;
+  htmlDocument: string | null;
+  templateVersionId: string | null;
+}): HtmlTemplateSnapshot | null {
+  if (!row.fieldDefinitions) return null;
+  if (!row.htmlDocument || !row.templateVersionId) return { status: 'missing' };
+
+  return {
+    status: 'ok',
+    document: row.htmlDocument,
+    definitions: row.fieldDefinitions,
+    values: row.fieldValues ?? {},
+    versionId: row.templateVersionId,
   };
 }
 

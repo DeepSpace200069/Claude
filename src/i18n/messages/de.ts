@@ -436,6 +436,8 @@ const messages: Messages = {
     backToGallery: 'Zurück zur Galerie',
     aboutTemplate: 'Über diese Vorlage',
     includedSections: 'Abschnitte in dieser Vorlage',
+    demoRsvpNote: 'In einer echten Einladung steht hier das Zusageformular. Aus der Demo wird nichts gesendet.',
+    demoHtmlFrame: 'Vorlagen-Demo',
     demoNote: 'Dies ist eine Demo mit erfundenen Daten. Antworten werden nicht gespeichert.',
     deviceDesktop: 'Desktop',
     deviceTablet: 'Tablet',
@@ -926,6 +928,7 @@ const messages: Messages = {
   },
 
   publicInvitation: {
+    rsvpTitle: 'Teilnahme bestätigen',
     greeting: 'Liebe/r {name},',
     skipIntro: 'Intro überspringen',
     poweredBy: 'Erstellt mit {brand}',

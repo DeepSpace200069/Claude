@@ -146,7 +146,7 @@ sekcija rade neizmenjeno.
 | 9.1 | Model podataka: `templates.kind`, HTML kolone verzije, polja pozivnice, Zod ugovor | ✅ |
 | 9.2 | Uvoznik (CLI): dva prolaza, preuzimanje spoljnih resursa, zamena mapa i RSVP forme, provera | ✅ |
 | 9.3 | Uređivač polja umesto uređivača sekcija (živi pregled, ruta za fajlove šablona) | ✅ |
-| 9.4 | Javni prikaz uvezenog sajta sa pravom RSVP formom | ⬜ |
+| 9.4 | Javni prikaz uvezenog sajta sa pravom RSVP formom (odvojen korenski layout, demo u galeriji) | ✅ |
 | 9.5 | Admin, E2E testovi, dokumentacija | ⬜ |
 
 ---

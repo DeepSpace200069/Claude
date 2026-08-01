@@ -21,6 +21,7 @@ import {
   validateFieldValues,
   type FieldDefinitions,
   type FieldValues,
+  type HtmlTemplateSnapshot,
 } from '@/features/templates/html-schema';
 import { getSectionDefinition } from '@/features/sections/registry';
 import type { InvitationRenderContext, MediaResolution } from '@/features/sections/types';
@@ -81,26 +82,6 @@ export type EditorEvent = {
   primaryLocale: Locale;
 };
 
-/**
- * HTML deo pozivnice, kad je napravljena od uvezenog sajta (zahtev 39.4).
- *
- * Tri stanja, jer se razlikuju i za korisnika: `null` je obična pozivnica od
- * sekcija; `ok` je HTML pozivnica koju uređivač prikazuje kao formu polja;
- * `missing` je HTML pozivnica čija verzija šablona više ne postoji - definicije
- * polja su tu, ali dokumenta nema, pa uređivač mora da kaže šta se desilo
- * umesto da prikaže praznu listu sekcija.
- */
-export type EditorHtmlTemplate =
-  | {
-      status: 'ok';
-      document: string;
-      definitions: FieldDefinitions;
-      values: FieldValues;
-      /** Id verzije šablona; od njega zavise adrese fajlova šablona. */
-      versionId: string;
-    }
-  | { status: 'missing' };
-
 export type EditorInvitation = {
   invitationId: string;
   publicSlug: string;
@@ -114,7 +95,7 @@ export type EditorInvitation = {
   /** Sekcije koje nisu mogle da se pročitaju - prikazuju se kao upozorenje. */
   issues: Array<{ sectionId: string; message: string }>;
   /** `null` za pozivnice od sekcija; sve ostalo ide kroz istu stranicu. */
-  html: EditorHtmlTemplate | null;
+  html: HtmlTemplateSnapshot | null;
 };
 
 export async function getInvitationForEditor(
@@ -216,7 +197,7 @@ function htmlTemplateFrom(row: {
   fieldValues: FieldValues | null;
   htmlDocument: string | null;
   templateVersionId: string | null;
-}): EditorHtmlTemplate | null {
+}): HtmlTemplateSnapshot | null {
   if (!row.fieldDefinitions) return null;
   if (!row.htmlDocument || !row.templateVersionId) return { status: 'missing' };
 

@@ -5,6 +5,7 @@ import { brand } from '@/config/brand';
 import { getTranslations } from '@/i18n/server';
 import type { PublicInvitation } from '@/server/services/public-invitation';
 
+import { HtmlInvitationView } from './html-invitation-view';
 import { IntroOverlay } from './intro-overlay';
 import { InvitationFooterBranding } from './notice-page';
 import { ViewBeacon } from './view-beacon';
@@ -32,6 +33,22 @@ export async function PublicInvitationView({
    */
   live: LiveInteractionContext | null;
 }) {
+  /*
+   * Pozivnica napravljena od uvezenog sajta ide sasvim drugim putem: nema
+   * sekcija, nema teme, a sam sajt se servira onakav kakav je. Grananje je
+   * ovde, na jednom mestu, pa sve tri javne rute (obična, lični link, izmena
+   * odgovora) rade bez ijedne izmene.
+   */
+  if (invitation.html) {
+    return (
+      <HtmlInvitationView
+        invitation={invitation}
+        greetingName={greetingName}
+        live={live}
+      />
+    );
+  }
+
   // Pozivnica se prikazuje na jeziku koji je organizator izabrao za događaj, a
   // ne na jeziku pregledača gosta: tekst koji je organizator uneo i okvir oko
   // njega moraju da budu na istom jeziku.

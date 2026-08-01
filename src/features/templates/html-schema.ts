@@ -187,6 +187,28 @@ export const fieldValuesSchema = z.record(fieldKeySchema, z.string());
 
 export type FieldValues = z.infer<typeof fieldValuesSchema>;
 
+/**
+ * Sve što je potrebno da bi se HTML pozivnica prikazala.
+ *
+ * Jedan tip za uređivač i za javni prikaz, da se ne bi razišli. Tri stanja, jer
+ * se razlikuju i za korisnika: `null` (nije HTML pozivnica) obrađuje pozivalac,
+ * `ok` je pozivnica koja može da se prikaže, a `missing` je pozivnica čija
+ * verzija šablona više ne postoji - definicije polja su tu, ali dokumenta nema,
+ * pa i uređivač i javna stranica moraju da kažu šta se desilo umesto da prikažu
+ * prazno.
+ */
+export type HtmlTemplateSnapshot =
+  | {
+      status: 'ok';
+      /** Dokument sa tokenima; popunjava ga `renderInvitationHtml`. */
+      document: string;
+      definitions: FieldDefinitions;
+      values: FieldValues;
+      /** Id verzije šablona; od njega zavise adrese fajlova šablona. */
+      versionId: string;
+    }
+  | { status: 'missing' };
+
 /** Asset šablona; putanja je relativna na koren uvezenog sajta. */
 export const templateAssetSchema = z
   .object({

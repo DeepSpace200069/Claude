@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { renderTemplateDocument } from '@/features/invitations/html-document';
 import type { FieldDefinitions } from '@/features/templates/html-schema';
 import {
   isUploadedPhoto,
@@ -122,5 +123,54 @@ describe('popunjavanje dokumenta', () => {
     expect(html).toContain('<h1 id="imena">Ana &amp; Marko</h1>');
     expect(html).toContain('src="/sabloni-fajlovi/v1/img/hero.webp"');
     expect(html).toContain('href="/sabloni-fajlovi/v1/css/stil.css"');
+  });
+});
+
+describe('rastavljanje popunjenog dokumenta', () => {
+  const document = [
+    '<!DOCTYPE html><html lang="sr-Latn"><head>',
+    '<link rel="stylesheet" href="{{asset:css/stil.css}}">',
+    '</head><body class="tamna">',
+    '<h1 id="imena">{{text:imena}}</h1>',
+    '</body></html>',
+  ].join('');
+
+  it('tokeni u glavi se razrešavaju kao i oni u telu', () => {
+    // Glava i telo se čitaju na dva mesta (layout i stranica); dok se dokument
+    // popunjavao dvaput, u glavi je znalo da ostane doslovno `{{asset:...}}` -
+    // i sajt bi ostao bez ijednog svog stila.
+    const parts = renderTemplateDocument({
+      document,
+      definitions,
+      values: { imena: 'Ana i Marko' },
+      versionId: 'v1',
+    });
+
+    expect(parts?.headHtml).toContain('href="/sabloni-fajlovi/v1/css/stil.css"');
+    expect(parts?.headHtml).not.toContain('{{');
+    expect(parts?.bodyHtml).toContain('<h1 id="imena">Ana i Marko</h1>');
+  });
+
+  it('atributi korena ostaju autorovi', () => {
+    const parts = renderTemplateDocument({
+      document,
+      definitions,
+      values: {},
+      versionId: 'v1',
+    });
+
+    expect(parts?.htmlAttributes.lang).toBe('sr-Latn');
+    expect(parts?.bodyAttributes.class).toBe('tamna');
+  });
+
+  it('dokument koji se ne može rastaviti daje `null`', () => {
+    expect(
+      renderTemplateDocument({
+        document: '<p>bez korena</p>',
+        definitions,
+        values: {},
+        versionId: 'v1',
+      }),
+    ).toBeNull();
   });
 });

@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 
 import { buildDemoContext } from '@/features/invitations/demo-context';
 import { InvitationRenderer } from '@/features/invitations/invitation-renderer';
+import { HtmlDemoFrame } from '@/features/templates/html-demo-frame';
 import { appUrl } from '@/config/brand';
 import { getRequestLocale, getTranslations } from '@/i18n/server';
 import { staticParamsOrEmpty } from '@/server/services/build-safe';
@@ -91,12 +92,24 @@ export default async function TemplateDemoPage({
       </div>
 
       <main id="glavni-sadrzaj">
-        <InvitationRenderer
-          sections={sections}
-          theme={template.themeTokens}
-          locale={locale}
-          context={context}
-        />
+        {/*
+          Uvezen sajt ima svoj dokument, pa se prikazuje kroz okvir. Šablon od
+          sekcija se renderuje istom komponentom kao prava pozivnica.
+        */}
+        {template.kind === 'html' ? (
+          <HtmlDemoFrame
+            slug={template.slug}
+            title={t('templates.demoHtmlFrame')}
+            className="h-[calc(100svh-3.5rem)] w-full border-0 bg-white"
+          />
+        ) : (
+          <InvitationRenderer
+            sections={sections}
+            theme={template.themeTokens}
+            locale={locale}
+            context={context}
+          />
+        )}
       </main>
     </>
   );

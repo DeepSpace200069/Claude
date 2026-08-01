@@ -1,6 +1,10 @@
 import 'server-only';
 
-import { readGuestbookSection, readRsvpSection } from '@/features/rsvp/section-data';
+import {
+  defaultRsvpSection,
+  readGuestbookSection,
+  readRsvpSection,
+} from '@/features/rsvp/section-data';
 import type { LiveInteractionContext } from '@/features/rsvp/types';
 import { issueFormNonce } from '@/lib/form-nonce';
 import { submitGuestbookEntryAction } from '@/server/actions/guestbook';
@@ -38,7 +42,15 @@ export async function buildLiveContext(input: {
   const recipientToken = input.recipientToken ?? null;
   const editToken = input.editToken ?? null;
 
-  const rsvpSettings = readRsvpSection(invitation.document);
+  /*
+   * Pozivnica od uvezenog sajta nema sekcije, ali ima RSVP: forma stoji tamo
+   * gde je u šablonu bila ukrasna. Podešavanja su podrazumevana iz iste šeme,
+   * pa server prihvata tačno ono što forma pita.
+   */
+  const rsvpSettings =
+    invitation.html?.status === 'ok'
+      ? defaultRsvpSection()
+      : readRsvpSection(invitation.document);
   const guestbookSettings = readGuestbookSection(invitation.document);
 
   const recipient = recipientToken

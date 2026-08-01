@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 
-import { expect, test } from './fixtures';
+import { expect, sql, test } from './fixtures';
+import { createPublishedHtmlInvitation } from './html-template-setup';
 
 /**
  * Pozivnica napravljena od uvezenog sajta (zahtev 39.4).
@@ -101,5 +102,131 @@ test.describe('uređivač gotovog sajta', () => {
     // Ni jedan zahtev ka tuđem domenu - ni za skriptu, ni za font, ni za sliku.
     expect(external).toEqual([]);
     expect(requests.some((url) => url.includes('/sabloni-fajlovi/'))).toBe(true);
+  });
+});
+
+/**
+ * Gost otvara pozivnicu napravljenu od uvezenog sajta (zahtev 39.4).
+ *
+ * Ono što se ovde proverava nije „stranica se otvorila" nego da je sajt zaista
+ * **isti sajt**: njegov `<html>`, njegovi stilovi, njegove skripte koje se
+ * stvarno izvrše. Uz to, na mestu ukrasne forme mora da stoji prava forma, a
+ * nijedan zahtev ne sme da ode van našeg domena.
+ */
+test.describe('gost otvara gotov sajt kao pozivnicu', () => {
+  const created: string[] = [];
+
+  test.afterAll(async () => {
+    for (const eventId of created) {
+      await sql`delete from events where id = ${eventId}`;
+    }
+  });
+
+  async function publish(
+    testUserId: string,
+    slug: string,
+    values?: Record<string, string>,
+  ): Promise<string> {
+    const { eventId } = await createPublishedHtmlInvitation({
+      ownerId: testUserId,
+      slug,
+      ...(values ? { values } : {}),
+    });
+    created.push(eventId);
+    return slug;
+  }
+
+  test('sajt zadržava svoj dokument, stilove i skripte', async ({
+    page,
+    testUser,
+    baseURL,
+  }) => {
+    const slug = await publish(testUser.id, `gotov-sajt-${Date.now()}`);
+
+    const requests: string[] = [];
+    page.on('request', (request) => requests.push(request.url()));
+
+    await page.goto(`/p/${slug}`);
+
+    // Atributi `<html>` i `<body>` su autorovi, ne naši.
+    await expect(page.locator('html')).toHaveAttribute('lang', 'sr-Latn');
+    await expect(page.locator('body')).toHaveClass(/tamna/);
+
+    // Vrednosti polja su upisane na serveru.
+    await expect(page.locator('#imena')).toHaveText('Ana i Marko');
+
+    // Stil šablona se stvarno primenio - naslov nije podrazumevane veličine.
+    const fontSize = await page
+      .locator('#imena')
+      .evaluate((node) => Number.parseFloat(getComputedStyle(node).fontSize));
+    expect(fontSize).toBeGreaterThan(30);
+
+    // Skripta šablona se izvršila; ona je ta koja pravi animacije.
+    await expect(page.locator('body')).toHaveAttribute('data-ucitano', 'da');
+
+    const external = requests.filter(
+      (url) =>
+        url.startsWith('http') && !url.startsWith(baseURL ?? 'http://localhost:3000'),
+    );
+    expect(external).toEqual([]);
+  });
+
+  test('ugrađena mapa je zamenjena linkom koji gost sam klikće', async ({
+    page,
+    testUser,
+  }) => {
+    const slug = await publish(testUser.id, `gotov-sajt-mapa-${Date.now()}`);
+
+    await page.goto(`/p/${slug}`);
+
+    await expect(page.locator('iframe')).toHaveCount(0);
+
+    const card = page.locator('[data-mapa]');
+    await expect(card).toHaveAttribute('rel', 'noopener noreferrer');
+    await expect(card).toContainText('Salaš 137');
+  });
+
+  test('prava RSVP forma stoji na mestu ukrasne i beleži odgovor', async ({
+    page,
+    testUser,
+  }) => {
+    const slug = await publish(testUser.id, `gotov-sajt-rsvp-${Date.now()}`);
+
+    await page.goto(`/p/${slug}`);
+
+    /*
+     * Obrazac odbija odgovor poslat u prve dve sekunde - čovek ne popuni ime i
+     * broj gostiju tako brzo, pa je to znak automata. Test čeka isto koliko bi
+     * čekao i gost.
+     */
+    await page.waitForTimeout(2500);
+
+    await page.getByLabel('Ime i prezime').fill('Jovana Jovanović');
+    await page.getByRole('radio', { name: 'Dolazim', exact: true }).check();
+    await page.getByRole('button', { name: 'Pošalji odgovor' }).click();
+
+    await expect(page.getByText('Vaš dolazak je zabeležen.')).toBeVisible();
+
+    const [row] = await sql<{ full_name: string }[]>`
+      select r.full_name from rsvp_responses r
+      join invitations i on i.id = r.invitation_id
+      where i.public_slug = ${slug}
+    `;
+    expect(row?.full_name).toBe('Jovana Jovanović');
+  });
+
+  test('vrednost polja ostaje tekst i na javnoj strani', async ({
+    page,
+    testUser,
+  }) => {
+    const slug = await publish(testUser.id, `gotov-sajt-escape-${Date.now()}`, {
+      imena: '<img src=x onerror="window.__probijeno = 1">',
+    });
+
+    await page.goto(`/p/${slug}`);
+
+    await expect(page.locator('#imena img')).toHaveCount(0);
+    await expect(page.locator('#imena')).toContainText('<img src=x');
+    expect(await page.evaluate(() => '__probijeno' in window)).toBe(false);
   });
 });

@@ -34,6 +34,66 @@ const VENDORED: Record<string, string> = {
 export type ImportedTemplate = { templateId: string; slug: string };
 
 /**
+ * Objavljena pozivnica napravljena od uvezenog sajta.
+ *
+ * Postavlja se direktno u bazi, isto kao i za pozivnice od sekcija: tok „nacrt
+ * pa objavi" ide kroz paket sa pravom objavljivanja, a ovde nas zanima šta gost
+ * vidi. Definicije polja i vrednosti se kopiraju iz verzije šablona - tačno ono
+ * što bi uradio čarobnjak (zahtev 39.2).
+ */
+export async function createPublishedHtmlInvitation(options: {
+  ownerId: string;
+  slug: string;
+  privacy?: 'public' | 'unlisted' | 'pin' | 'invite_only';
+  values?: Record<string, string>;
+}): Promise<{ eventId: string; invitationId: string }> {
+  const template = await ensureHtmlTemplate();
+
+  const [version] = await sql<
+    { id: string; theme_tokens: unknown; field_definitions: { fields: Array<{ key: string; default: string }> } }[]
+  >`
+    select tv.id, tv.theme_tokens, tv.field_definitions
+    from templates t
+    join template_versions tv on t.published_version_id = tv.id
+    where t.id = ${template.templateId}
+  `;
+  if (!version) throw new Error('Probni HTML šablon nije objavljen.');
+
+  const defaults = Object.fromEntries(
+    version.field_definitions.fields.map((field) => [field.key, field.default]),
+  );
+
+  const [type] = await sql<{ id: string }[]>`
+    select id from event_types where key = 'wedding' limit 1
+  `;
+
+  const [event] = await sql<{ id: string }[]>`
+    insert into events (owner_id, event_type_id, name, details, starts_at, time_zone, city, venue_name, primary_locale)
+    values (${options.ownerId}, ${type!.id}, 'E2E gotov sajt', '{}'::jsonb,
+            now() + interval '120 days', 'Europe/Belgrade', 'Novi Sad', 'Salaš 137', 'sr-Latn')
+    returning id
+  `;
+
+  const [invitation] = await sql<{ id: string }[]>`
+    insert into invitations (
+      event_id, public_slug, title, theme_tokens, status, privacy, published_at,
+      template_id, template_version_id, field_definitions, field_values
+    )
+    values (
+      ${event!.id}, ${options.slug}, 'Ana i Marko',
+      ${JSON.stringify(version.theme_tokens)}::jsonb,
+      'published', ${options.privacy ?? 'unlisted'}, now(),
+      ${template.templateId}, ${version.id},
+      ${JSON.stringify(version.field_definitions)}::jsonb,
+      ${JSON.stringify({ ...defaults, ...options.values })}::jsonb
+    )
+    returning id
+  `;
+
+  return { eventId: event!.id, invitationId: invitation!.id };
+}
+
+/**
  * Uvozi i **objavljuje** probni šablon; ako već postoji, samo ga vrati.
  *
  * Objavljivanje je inače administratorska radnja iz panela; ovde je SQL, jer je

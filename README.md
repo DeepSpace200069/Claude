@@ -693,6 +693,63 @@ Definicije i vrednosti se upisuju **istim** `UPDATE`-om: da je upis u dva koraka
 sudar sa drugom sesijom bi ostavio pozivnicu sa novim definicijama i starim
 vrednostima.
 
+### Javni prikaz: pozivnica ima svoj dokument
+
+`src/app` je podeljen na dve grupe sa **odvojenim korenskim layout-ima**:
+
+| Grupa | Šta pokriva | Korenski layout |
+|-------|-------------|-----------------|
+| `(sajt)` | marketing, galerija, aplikacija, admin | naš okvir: `globals.css`, navigacija, Toaster |
+| `(pozivnica)` | `/p/*` i `/demo-sajt/*` | dokument same pozivnice |
+
+Razlog je jedna vrsta šablona: uvezen sajt donosi sopstveni `<html>`, svoje
+stilove i svoj reset, pa bi ga naš Tailwind reset pregazio — a upravo je izgled
+ono zbog čega takav šablon i postoji. Pozivnica od sekcija ide kroz drugu granu
+istog layout-a i dobija isti okvir kao i pre.
+
+Podela ima i drugu, manje očiglednu korist. Next između dva korenska layout-a
+radi **tvrdu** navigaciju, pa se pozivnica uvek dobija kao svež HTML koji
+pregledač parsira — i skripte šablona se izvršavaju. Da se sadržaj menjao unutar
+iste stranice, nijedna se ne bi pokrenula: `dangerouslySetInnerHTML` na klijentu
+ne pokreće `<script>`. Na serveru to nije ubacivanje nego običan HTML u odgovoru,
+i tu razlika i leži.
+
+Atributi `<html>` i `<body>` iz šablona se prenose kakvi jesu — u njima su jezik
+autora i klase na kojima često visi ceo njegov CSS (`body.tamna`). Sadržaj
+`<head>`-a ide na početak tela: `<link>`, `<style>` i `<script>` rade i odatle, a
+pravi `<head>` popunjava Next svojim metapodacima.
+
+### RSVP forma unutar tuđeg dizajna
+
+Ukrasnu formu iz šablona uvoznik je zamenio praznim mestom; na to mesto ide
+**prava** forma platforme, ista ona koju koristi i pozivnica od sekcija. Pošto
+šablon nema sekcije, podešavanja su podrazumevana iz iste Zod šeme, pa server
+prihvata tačno ono što forma pita — a `defaultRsvpSection()` koristi i akcija
+koja prima odgovor.
+
+Forma **nasleđuje** izgled umesto da ga donosi: font i boja teksta dolaze iz
+šablona, a kartica i linije se računaju iz te iste boje kroz `color-mix`. Isti
+stil radi i na crnoj i na beloj pozadini, bez ijedne izmene po šablonu. Dugme je
+obrisano, a ne popunjeno — popunjeno bi tražilo boju teksta koja se garantovano
+vidi na naglasku, a naglasak je ovde boja koju tek nasleđujemo.
+
+`globals.css` se u taj dokument **ne** učitava; učitava se `invitation.css`
+(u kom su `inv-*` klase forme) i mali `html-invitation.css` koji postavlja
+promenljive.
+
+### Šta ostaje isto
+
+Sve oko sadržaja ne zna ni da postoje dve vrste šablona: objavljivanje, slug,
+sva četiri režima privatnosti, PIN, istek, personalizovani linkovi sa pozdravom
+po imenu, statistika pregleda, QR kod, kartica pri deljenju, naplata i paketi.
+Grananje se dešava na **jednom** mestu (`PublicInvitationView`), pa sve tri
+javne rute — obična, lični link i izmena odgovora — rade bez ijedne izmene.
+
+Demo u galeriji ide kroz `<iframe>` ka `/demo-sajt/<slug>`: sajt tako zadržava
+svoj dokument, a traka sa dugmadima ostaje u našem izgledu. Okvir je
+`sandbox="allow-scripts"` bez `allow-same-origin` — animacije rade, a sadržaj je
+u zasebnom poreklu i ne vidi ni kolačiće ni stranicu oko sebe.
+
 ---
 
 ## Javna pozivnica
@@ -1438,9 +1495,9 @@ pnpm test:e2e            # Playwright
 
 | Vrsta | Broj | Pokriva |
 |-------|------|---------|
-| Unit | 375 | Zod šeme sekcija, migracije verzija, slug, tokeni, dozvole, entitlements, prelazi stanja naplate, kontrast tema, i18n i množina, registri sekcija/renderera/editora, tokeni teme u CSS, grupisanje boja, demo kontekst, seed šabloni, operacije nad dokumentom uređivača, istorija poništi/ponovi, spajanje pri promeni šablona, uklanjanje EXIF-a iz JPEG/PNG/WebP, QR matrica i SVG/PNG izlaz, kraj dana u vremenskoj zoni i dan agregata, **CSV parser i generator (razdvajač, navodnici, prelom reda u polju, zaštita od formula, prepoznavanje kolona)**, **potpisani ključ obrasca (prebrzo slanje, istek, tuđi opseg, izmenjeno vreme)**, provera odgovora na svih šest tipova pitanja, **geometrija rasporeda (rotacija, granice stola, sto koji ostaje u sali, redni broj mesta, slobodan naziv)**, **idempotencija dev provajdera preživljava restart procesa (nova instanca, isti `providerRef`) i referenca ne otkriva ključ**, **pristanak: bez odluke se ne meri, pokvarena ili starija vrednost se odbacuje, spisak kolačića ima svrhu i trajanje za svaki upis**, **HTML šabloni: bekstvovanje po kontekstu kao pokušaji proboja, rastavljanje dokumenta i odbijanje dvosmislenog, provera spoljnih resursa sa izuzetkom `<a href>`, ceo tok uvoznika nad probnim sajtom (mapa, RSVP, ugrađivanje skripte, prikupljanje fajlova) i razrešavanje vrednosti polja** |
+| Unit | 378 | Zod šeme sekcija, migracije verzija, slug, tokeni, dozvole, entitlements, prelazi stanja naplate, kontrast tema, i18n i množina, registri sekcija/renderera/editora, tokeni teme u CSS, grupisanje boja, demo kontekst, seed šabloni, operacije nad dokumentom uređivača, istorija poništi/ponovi, spajanje pri promeni šablona, uklanjanje EXIF-a iz JPEG/PNG/WebP, QR matrica i SVG/PNG izlaz, kraj dana u vremenskoj zoni i dan agregata, **CSV parser i generator (razdvajač, navodnici, prelom reda u polju, zaštita od formula, prepoznavanje kolona)**, **potpisani ključ obrasca (prebrzo slanje, istek, tuđi opseg, izmenjeno vreme)**, provera odgovora na svih šest tipova pitanja, **geometrija rasporeda (rotacija, granice stola, sto koji ostaje u sali, redni broj mesta, slobodan naziv)**, **idempotencija dev provajdera preživljava restart procesa (nova instanca, isti `providerRef`) i referenca ne otkriva ključ**, **pristanak: bez odluke se ne meri, pokvarena ili starija vrednost se odbacuje, spisak kolačića ima svrhu i trajanje za svaki upis**, **HTML šabloni: bekstvovanje po kontekstu kao pokušaji proboja, rastavljanje dokumenta i odbijanje dvosmislenog, provera spoljnih resursa sa izuzetkom `<a href>`, ceo tok uvoznika nad probnim sajtom (mapa, RSVP, ugrađivanje skripte, prikupljanje fajlova) i razrešavanje vrednosti polja** |
 | Integracioni | 235 | Kreiranje događaja u transakciji, jedinstvenost sluga, limiti paketa, meko brisanje, cascade pravila, `CHECK` ograničenja, snimak verzije šablona, čuvanje nacrta i sudar revizija, limiti i zaključane sekcije pri čuvanju, snimci verzija i orezivanje, otpremanje fotografija i odbijanje fajla sa EXIF-om, **objavljivanje i isključivanje linka**, **sva četiri režima privatnosti**, **istek do kraja dana**, **PIN i tokeni samo kao heš**, dnevni agregat i spisak kolona statistike, **gosti uz `eventId` (tuđi gost i tuđe domaćinstvo se ne vide)**, **meko brisanje gasi lični link**, **token i token za izmenu samo kao heš**, **jedan primalac = jedan odgovor**, **granica osoba sa linka domaćinstva**, **uvoz CSV-a i granica paketa**, moderacija knjige želja, **raspored: zaključana verzija odbija svaku izmenu, kapacitet zaustavlja gosta viška, jedan sto po gostu, kopija verzije ne deli redove sa originalom, brisanje vraća goste među neraspoređene, upozorenja o pravilima**, **paket po pozivnici (plaćeno venčanje ne otključava krštenje, plaćeni događaji van kvote nacrta)**, **naplata: dvostruki klik ne pravi drugu narudžbinu, ponovljen webhook vraća `duplicate`, zakasneli „pending” posle uspeha se odbacuje, propao pokušaj dozvoljava nov, promo kodovi i pun popust bez provajdera**, **administracija: ručna aktivacija uz razlog i trag u audit logu, odbijanje aktivacije bez razloga, validacija oblika paketa, arhiviranje prethodne verzije šablona**, **saradnici: token samo kao heš, tuđi nalog ne prihvata poziv, istekao poziv, limit paketa, opoziv ostaje u evidenciji**, **rate limit: isti paket testova nad oba skladišta, deset paralelnih zahteva ne probija granicu od pet, brojač važi između instanci**, **privatnost: izvoz bez tajni i bez tuđih podataka, brisanje anonimizuje i gasi sesije, narudžbina ostaje bez veze sa osobom, retencija ne dira sveže obrisano**, **obaveštenja: „nikad” ne šalje ništa, rezime se ne ponavlja u istom periodu, neuspelo slanje ne pomera granicu, meko obrisan događaj ne ulazi u rezime**, **uvoz HTML šablona: idempotentno po slug-u, fajlovi u skladištu pod adresom iz dokumenta, objavljena verzija se ne dira, šablon od sekcija se ne prepisuje**, **HTML pozivnica: kopija definicija polja pri kreiranju, provera obaveznih polja, sudar revizija, snimak revizije sa vrednostima, promena šablona zadržava poklopljena polja, prelazak između vrsta se odbija** |
-| E2E | 182 (91 × desktop/mobilni) | Marketing, prijava, zaštita ruta, čarobnjak sa izborom šablona, dashboard, izmena bez promene linka, brisanje uz potvrdu, profil, galerija i filteri, favoriti, demo na tri veličine ekrana, cenovnik, česta pitanja, sitemap, uređivač (živi pregled, autosave, biblioteka, redosled bez miša, kontrast, otpremanje fotografije), javna pozivnica (nacrt i istek se ne prikazuju, PIN kapija, indeksiranje po režimu, deljenje i QR, poništavanje keša), **spisak gostiju: dodavanje, oznake, lični link koji se vidi samo jednom, filtriranje kroz URL, izvoz kao CSV**, **gost šalje odgovor sa javne pozivnice i dobija link za izmenu**, **izmena odgovora ne pravi drugi odgovor**, lični link sa velikim slovima ostaje ispravan, **raspored sedenja: dodavanje stola i sedanje gostiju bez miša, kapacitet, zaključana verzija, CSV i prikaz za štampu**, **naplata: nacrt se ne objavljuje bez plaćenog paketa, narudžbina u čekanju ne daje prava, administrator je potvrđuje uz razlog, tek onda javni link radi; dvostruko pokretanje naplate ne pravi drugu narudžbinu**, **ceo scenario iz specifikacije u jednom testu: čarobnjak → uređivač → naplata → objavljivanje → gost odgovara → organizator vidi odgovor → raspored sedenja → izvoz**, **pristupačnost (`axe`, nivoi A i AA) nad javnim stranicama, aplikacijom, dijalogom i objavljenom pozivnicom**, **sigurnosna zaglavlja i CSP bez ijedne prijave u konzoli**, **privatnost: preuzimanje vraća JSON, neprijavljen dobija 401, brisanje traži ukucanu potvrdu**, **pristanak: dva ravnopravna dugmeta, ništa se ne upisuje pre odluke**, **font stek se stvarno primenjuje i nema zahteva ka tuđim domenima**, **gotov sajt kao pozivnica: čarobnjak nudi uvezen šablon, uređivač prikazuje formu polja, izmena se vidi u pregledu bez ponovnog učitavanja i sama se sačuva, vrednost polja ostaje tekst i kad izgleda kao HTML, nijedan zahtev ne ide van našeg domena** |
+| E2E | 190 (95 × desktop/mobilni) | Marketing, prijava, zaštita ruta, čarobnjak sa izborom šablona, dashboard, izmena bez promene linka, brisanje uz potvrdu, profil, galerija i filteri, favoriti, demo na tri veličine ekrana, cenovnik, česta pitanja, sitemap, uređivač (živi pregled, autosave, biblioteka, redosled bez miša, kontrast, otpremanje fotografije), javna pozivnica (nacrt i istek se ne prikazuju, PIN kapija, indeksiranje po režimu, deljenje i QR, poništavanje keša), **spisak gostiju: dodavanje, oznake, lični link koji se vidi samo jednom, filtriranje kroz URL, izvoz kao CSV**, **gost šalje odgovor sa javne pozivnice i dobija link za izmenu**, **izmena odgovora ne pravi drugi odgovor**, lični link sa velikim slovima ostaje ispravan, **raspored sedenja: dodavanje stola i sedanje gostiju bez miša, kapacitet, zaključana verzija, CSV i prikaz za štampu**, **naplata: nacrt se ne objavljuje bez plaćenog paketa, narudžbina u čekanju ne daje prava, administrator je potvrđuje uz razlog, tek onda javni link radi; dvostruko pokretanje naplate ne pravi drugu narudžbinu**, **ceo scenario iz specifikacije u jednom testu: čarobnjak → uređivač → naplata → objavljivanje → gost odgovara → organizator vidi odgovor → raspored sedenja → izvoz**, **pristupačnost (`axe`, nivoi A i AA) nad javnim stranicama, aplikacijom, dijalogom i objavljenom pozivnicom**, **sigurnosna zaglavlja i CSP bez ijedne prijave u konzoli**, **privatnost: preuzimanje vraća JSON, neprijavljen dobija 401, brisanje traži ukucanu potvrdu**, **pristanak: dva ravnopravna dugmeta, ništa se ne upisuje pre odluke**, **font stek se stvarno primenjuje i nema zahteva ka tuđim domenima**, **gotov sajt kao pozivnica: čarobnjak nudi uvezen šablon, uređivač prikazuje formu polja, izmena se vidi u pregledu bez ponovnog učitavanja i sama se sačuva, vrednost polja ostaje tekst i kad izgleda kao HTML, nijedan zahtev ne ide van našeg domena**, **gost otvara gotov sajt: `<html>` i `<body>` su autorovi, stil šablona se stvarno primenio, skripta se izvršila, mapa je kartica sa linkom, prava RSVP forma beleži odgovor u bazi** |
 
 ```bash
 pnpm test                # unit — bez baze
