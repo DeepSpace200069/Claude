@@ -707,6 +707,24 @@ const messages: Messages = {
       emptyOptionHint: 'Behält Ihren Inhalt und stellt die Standardfarben wieder her.',
     },
 
+    html: {
+      title: 'Eine fertige Website als Einladung',
+      intro:
+        'Diese Vorlage ist eine fertige Website mit eigenen Animationen. Sie ändern die Feldinhalte; Layout, Farben und Animationen bleiben genau so, wie der Autor sie gebaut hat.',
+      noFields: 'Diese Vorlage hat keine ausfüllbaren Felder.',
+      refreshPreview: 'Vorschau aktualisieren',
+      scriptFieldHint:
+        'Einige Felder fließen in die Animationen der Vorlage ein und erscheinen erst nach dem Aktualisieren der Vorschau.',
+      chooseImage: 'Foto auswählen',
+      resetImage: 'Bild der Vorlage wiederherstellen',
+      pickerTitle: 'Foto für dieses Feld',
+      pickerDescription:
+        'Wählen Sie ein hochgeladenes Foto oder laden Sie ein neues hoch. Standortdaten werden entfernt.',
+      onlyTemplate: 'Für diese Art von Feier gibt es noch keine andere fertige Website.',
+      changeDescription:
+        'Es werden nur fertige Websites angeboten. Werte von Feldern, die auch die neue Vorlage hat, bleiben erhalten.',
+    },
+
     media: {
       choose: 'Foto auswählen',
       change: 'Foto wechseln',

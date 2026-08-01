@@ -145,7 +145,7 @@ sekcija rade neizmenjeno.
 |---|---------|--------|
 | 9.1 | Model podataka: `templates.kind`, HTML kolone verzije, polja pozivnice, Zod ugovor | ✅ |
 | 9.2 | Uvoznik (CLI): dva prolaza, preuzimanje spoljnih resursa, zamena mapa i RSVP forme, provera | ✅ |
-| 9.3 | Uređivač polja umesto uređivača sekcija | ⬜ |
+| 9.3 | Uređivač polja umesto uređivača sekcija (živi pregled, ruta za fajlove šablona) | ✅ |
 | 9.4 | Javni prikaz uvezenog sajta sa pravom RSVP formom | ⬜ |
 | 9.5 | Admin, E2E testovi, dokumentacija | ⬜ |
 
@@ -154,6 +154,15 @@ sekcija rade neizmenjeno.
 ## Poznata ograničenja na kraju Faze 8
 
 Sve navedeno je svesna odluka o obimu, a ne propust:
+
+- **Šablon se ne menja između vrsta.** Pozivnica od sekcija bira druge šablone od
+  sekcija, a pozivnica od uvezenog sajta druge gotove sajtove. Sadržaj nema
+  zajednički oblik, pa bi prelazak između vrsta bio tiho brisanje svega unetog -
+  vrsta se bira jednom, pri pravljenju pozivnice.
+- **Uređivač polja nema „poništi/ponovi".** Tamo gde se menja struktura istorija
+  poteza je jedina odbrana od gubitka rada; ovde je sadržaj ravan skup polja, pa
+  poništavanje kucanja radi pregledač, po polju. Istorija verzija postoji i za
+  HTML pozivnice.
 
 - **Objavljivanje traži paket sa pravom `publish`.** Paket se kupuje **po
   pozivnici**: plaćeno venčanje ne otključava sledeći događaj. Na besplatnom

@@ -1,6 +1,10 @@
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { CONTENT_TYPES, contentTypeOf, extensionOf } from '@/lib/html-template/assets';
+
+export { CONTENT_TYPES, contentTypeOf, extensionOf };
+
 /**
  * Čitanje foldera sa uvezenim sajtom (zahtev 39.3).
  *
@@ -14,33 +18,6 @@ import path from 'node:path';
  * svog domena zato što se zatekao u folderu.
  */
 
-export const CONTENT_TYPES: Record<string, string> = {
-  html: 'text/html; charset=utf-8',
-  htm: 'text/html; charset=utf-8',
-  css: 'text/css; charset=utf-8',
-  js: 'text/javascript; charset=utf-8',
-  mjs: 'text/javascript; charset=utf-8',
-  json: 'application/json; charset=utf-8',
-  svg: 'image/svg+xml',
-  png: 'image/png',
-  jpg: 'image/jpeg',
-  jpeg: 'image/jpeg',
-  gif: 'image/gif',
-  webp: 'image/webp',
-  avif: 'image/avif',
-  ico: 'image/x-icon',
-  woff2: 'font/woff2',
-  woff: 'font/woff',
-  ttf: 'font/ttf',
-  otf: 'font/otf',
-  mp4: 'video/mp4',
-  webm: 'video/webm',
-  mp3: 'audio/mpeg',
-  ogg: 'audio/ogg',
-  wav: 'audio/wav',
-  txt: 'text/plain; charset=utf-8',
-};
-
 /** Fajlovi u kojima uvoznik prepisuje putanje i traži tokene. */
 const TEXT_EXTENSIONS = new Set(['css', 'js', 'mjs']);
 
@@ -48,14 +25,6 @@ const TEXT_EXTENSIONS = new Set(['css', 'js', 'mjs']);
 const IGNORED = new Set(['template.json', '.DS_Store', 'Thumbs.db']);
 
 export type SiteFiles = Map<string, Uint8Array>;
-
-export function extensionOf(filePath: string): string {
-  return path.posix.extname(filePath).replace(/^\./, '').toLowerCase();
-}
-
-export function contentTypeOf(filePath: string): string | null {
-  return CONTENT_TYPES[extensionOf(filePath)] ?? null;
-}
 
 export function isTextAsset(filePath: string): boolean {
   return TEXT_EXTENSIONS.has(extensionOf(filePath));

@@ -7,7 +7,7 @@
   "style": "elegant",
   "dominantColor": "#101010",
   "usesPhotos": true,
-  "requiredPlan": "premium",
+  "requiredPlan": "free",
   "entry": "index.html",
   "vendor": [
     { "url": "https://cdn.primer.test/animacije-1.0.js", "path": "vendor/animacije-1.0.js" },

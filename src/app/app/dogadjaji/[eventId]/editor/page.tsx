@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 
 import { EditorApp } from '@/features/editor/editor-shell';
+import { FieldEditorApp } from '@/features/editor/html/field-editor';
 import type { TemplateOption } from '@/features/editor/template-switcher';
 import { loadMessages } from '@/i18n/messages';
 import { getRequestLocale } from '@/i18n/server';
@@ -14,12 +15,18 @@ import { countEventPhotos } from '@/server/services/media';
 import { listTemplatesForPlans, listTemplates } from '@/server/services/templates';
 
 /**
- * Uređivač pozivnice (zahtev 8 i 26).
+ * Uređivač pozivnice (zahtev 8, 26 i 39.4).
  *
  * Stranica je serverska: proverava pristup, učita sadržaj i prosledi ga
  * klijentskoj aplikaciji uređivača. Uređivač je jedina klijentska celina u
  * projektu koja je zaista velika - zato ovde i staje, a javna pozivnica je
  * nikad ne uvozi (zahtev 39.10).
+ *
+ * Odavde se granaju **dva** uređivača, prema vrsti šablona: pozivnica od sekcija
+ * dobija uređivač sekcija, a pozivnica napravljena od uvezenog sajta formu polja,
+ * jer se u njoj raspored ne menja. Grananje je ovde, na jednom mestu - dva
+ * sasvim različita stanja u istoj klijentskoj celini značila bi da svaka strana
+ * u paket vuče i onu drugu.
  */
 export default async function EditorPage({
   params,
@@ -35,22 +42,62 @@ export default async function EditorPage({
   const locale = await getRequestLocale();
   const messages = await loadMessages(locale);
 
-  const [entitlements, photoCount, templates] = await Promise.all([
+  const [entitlements, photoCount] = await Promise.all([
     getEventEntitlements(eventId),
     countEventPhotos(eventId),
-    listTemplatesForPlans(
-      // Sve šablone vidi samo paket koji ih ima; ostali biraju iz besplatnih.
-      entitledPlanCodes(),
-      invitation.event.eventTypeKey,
-    ),
   ]);
 
-  const templateOptions: TemplateOption[] = templates.map((template) => ({
-    id: template.id,
-    name: template.name,
-    description: template.description,
-    style: template.style,
-  }));
+  const config = {
+    eventId,
+    invitationId: invitation.invitationId,
+    publicSlug: invitation.publicSlug,
+    entitlements,
+    photoCount,
+  };
+
+  if (invitation.html) {
+    /*
+     * Verzija šablona je u međuvremenu nestala. Definicije polja pozivnica i
+     * dalje ima, ali dokumenta nema, pa nema šta da se uređuje - „nije nađeno"
+     * je iskrenije od prazne forme koja bi tiho čuvala vrednosti u prazno.
+     */
+    if (invitation.html.status !== 'ok') notFound();
+
+    const templates = await listTemplatesForPlans(
+      entitledPlanCodes(),
+      invitation.event.eventTypeKey,
+      'html',
+    );
+
+    return (
+      <FieldEditorApp
+        locale={locale}
+        messages={{
+          editor: messages.editor,
+          common: messages.common,
+          errors: messages.errors,
+          validation: messages.validation,
+        }}
+        config={config}
+        eventName={invitation.event.name}
+        revision={invitation.revision}
+        media={invitation.media}
+        document={invitation.html.document}
+        definitions={invitation.html.definitions}
+        values={invitation.html.values}
+        templateVersionId={invitation.html.versionId}
+        templateId={invitation.templateId}
+        templates={templates.map(toOption)}
+      />
+    );
+  }
+
+  const templates = await listTemplatesForPlans(
+    // Sve šablone vidi samo paket koji ih ima; ostali biraju iz besplatnih.
+    entitledPlanCodes(),
+    invitation.event.eventTypeKey,
+    'sections',
+  );
 
   // Tema šablona služi dugmetu „vrati temu šablona"; ako je šablon u
   // međuvremenu arhiviran, dugmeta jednostavno nema.
@@ -72,13 +119,7 @@ export default async function EditorPage({
         plans: messages.plans,
         validation: messages.validation,
       }}
-      config={{
-        eventId,
-        invitationId: invitation.invitationId,
-        publicSlug: invitation.publicSlug,
-        entitlements,
-        photoCount,
-      }}
+      config={config}
       document={invitation.document}
       revision={invitation.revision}
       media={invitation.media}
@@ -87,10 +128,24 @@ export default async function EditorPage({
       renderContext={renderContextFor(invitation.event, {}, 'preview')}
       templateTheme={templateTheme}
       templateId={invitation.templateId}
-      templates={templateOptions}
+      templates={templates.map(toOption)}
       issues={invitation.issues}
     />
   );
+}
+
+function toOption(template: {
+  id: string;
+  name: string;
+  description: string;
+  style: string;
+}): TemplateOption {
+  return {
+    id: template.id,
+    name: template.name,
+    description: template.description,
+    style: template.style,
+  };
 }
 
 /**

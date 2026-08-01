@@ -52,8 +52,9 @@ export const config = {
   matcher: [
     /*
      * Preskačemo statičke fajlove i Next interne rute - middleware na svakom
-     * zahtevu za sliku je čist trošak.
+     * zahtevu za sliku je čist trošak. `sabloni-fajlovi` su fajlovi uvezenih
+     * šablona: jedna pozivnica ih povuče desetak, a nijedan nije stranica.
      */
-    '/((?!_next/static|_next/image|favicon.ico|uploads|.*\\.(?:svg|png|jpg|jpeg|webp|avif|ico|woff2?)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|uploads|sabloni-fajlovi|.*\\.(?:svg|png|jpg|jpeg|webp|avif|ico|woff2?)$).*)',
   ],
 };

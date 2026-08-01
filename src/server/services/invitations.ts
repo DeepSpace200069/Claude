@@ -16,6 +16,12 @@ import {
   type EditorSection,
 } from '@/features/editor/document';
 import type { EventDetails } from '@/features/events/details';
+import {
+  defaultFieldValues,
+  validateFieldValues,
+  type FieldDefinitions,
+  type FieldValues,
+} from '@/features/templates/html-schema';
 import { getSectionDefinition } from '@/features/sections/registry';
 import type { InvitationRenderContext, MediaResolution } from '@/features/sections/types';
 import { defaultThemeTokens, type ThemeTokens } from '@/features/themes/tokens';
@@ -75,6 +81,26 @@ export type EditorEvent = {
   primaryLocale: Locale;
 };
 
+/**
+ * HTML deo pozivnice, kad je napravljena od uvezenog sajta (zahtev 39.4).
+ *
+ * Tri stanja, jer se razlikuju i za korisnika: `null` je obična pozivnica od
+ * sekcija; `ok` je HTML pozivnica koju uređivač prikazuje kao formu polja;
+ * `missing` je HTML pozivnica čija verzija šablona više ne postoji - definicije
+ * polja su tu, ali dokumenta nema, pa uređivač mora da kaže šta se desilo
+ * umesto da prikaže praznu listu sekcija.
+ */
+export type EditorHtmlTemplate =
+  | {
+      status: 'ok';
+      document: string;
+      definitions: FieldDefinitions;
+      values: FieldValues;
+      /** Id verzije šablona; od njega zavise adrese fajlova šablona. */
+      versionId: string;
+    }
+  | { status: 'missing' };
+
 export type EditorInvitation = {
   invitationId: string;
   publicSlug: string;
@@ -87,6 +113,8 @@ export type EditorInvitation = {
   media: MediaAsset[];
   /** Sekcije koje nisu mogle da se pročitaju - prikazuju se kao upozorenje. */
   issues: Array<{ sectionId: string; message: string }>;
+  /** `null` za pozivnice od sekcija; sve ostalo ide kroz istu stranicu. */
+  html: EditorHtmlTemplate | null;
 };
 
 export async function getInvitationForEditor(
@@ -101,6 +129,18 @@ export async function getInvitationForEditor(
       templateId: invitations.templateId,
       templateVersionId: invitations.templateVersionId,
       themeTokens: invitations.themeTokens,
+      fieldDefinitions: invitations.fieldDefinitions,
+      fieldValues: invitations.fieldValues,
+      /*
+       * Dokument HTML šablona se **ne** kopira u pozivnicu.
+       *
+       * Kopira se ono što korisnik menja (definicije polja i vrednosti); sam
+       * dokument je nepromenljiv i isti za sve pozivnice te verzije, pa bi
+       * kopija bila stotine kilobajta po pozivnici bez ijedne koristi. Verzija
+       * je nepromenljiva, tako da pravilo „izmena šablona ne dira postojeću
+       * pozivnicu” i dalje važi (zahtev 39.2).
+       */
+      htmlDocument: templateVersions.htmlDocument,
       eventId: events.id,
       name: events.name,
       startsAt: events.startsAt,
@@ -115,6 +155,10 @@ export async function getInvitationForEditor(
     .from(invitations)
     .innerJoin(events, eq(invitations.eventId, events.id))
     .innerJoin(eventTypes, eq(events.eventTypeId, eventTypes.id))
+    .leftJoin(
+      templateVersions,
+      eq(invitations.templateVersionId, templateVersions.id),
+    )
     .where(and(eq(events.id, eventId), isNull(events.deletedAt)))
     .limit(1);
 
@@ -163,6 +207,25 @@ export async function getInvitationForEditor(
     },
     media,
     issues,
+    html: htmlTemplateFrom(row),
+  };
+}
+
+function htmlTemplateFrom(row: {
+  fieldDefinitions: FieldDefinitions | null;
+  fieldValues: FieldValues | null;
+  htmlDocument: string | null;
+  templateVersionId: string | null;
+}): EditorHtmlTemplate | null {
+  if (!row.fieldDefinitions) return null;
+  if (!row.htmlDocument || !row.templateVersionId) return { status: 'missing' };
+
+  return {
+    status: 'ok',
+    document: row.htmlDocument,
+    definitions: row.fieldDefinitions,
+    values: row.fieldValues ?? {},
+    versionId: row.templateVersionId,
   };
 }
 
@@ -304,6 +367,123 @@ export async function saveInvitationDraft(
   });
 }
 
+/**
+ * Čuvanje vrednosti polja HTML pozivnice (zahtev 39.4).
+ *
+ * Namerno zasebna funkcija, a ne grana u `saveInvitationDraft`: jedina zajednička
+ * stvar su optimističko zaključavanje i snimak revizije. Sve ostalo se razlikuje
+ * - nema sekcija, nema teme, nema granica paketa po broju sekcija, a validacija
+ * ide u odnosu na definicije koje nosi sama pozivnica.
+ *
+ * Definicije se čitaju **iz pozivnice**, ne iz šablona: to je snimak napravljen
+ * pri kreiranju, pa kasnija izmena šablona ne može da učini postojeće vrednosti
+ * neispravnim.
+ */
+export async function saveInvitationFields(input: {
+  eventId: string;
+  userId: string;
+  baseRevision: number;
+  values: FieldValues;
+  /**
+   * Nov šablon, kad se čuvanje dešava zbog promene šablona.
+   *
+   * Definicije se tada upisuju **istim** `UPDATE`-om kojim i vrednosti: da je
+   * upis u dva koraka, sudar sa drugom sesijom bi ostavio pozivnicu sa novim
+   * definicijama i starim vrednostima.
+   */
+  template?: { id: string; versionId: string; definitions: FieldDefinitions };
+}): Promise<SaveDraftResult> {
+  const [invitation] = await db
+    .select({
+      id: invitations.id,
+      revision: invitations.revision,
+      slug: invitations.publicSlug,
+      themeTokens: invitations.themeTokens,
+      fieldDefinitions: invitations.fieldDefinitions,
+    })
+    .from(invitations)
+    .where(eq(invitations.eventId, input.eventId))
+    .limit(1);
+
+  if (!invitation) throw new NotFoundError('Pozivnica ne postoji.');
+
+  const definitions = input.template?.definitions ?? invitation.fieldDefinitions;
+  if (!definitions) {
+    throw new ValidationError('Ova pozivnica nije napravljena od HTML šablona.');
+  }
+
+  const checked = validateFieldValues(definitions, input.values);
+  if (Object.keys(checked.errors).length > 0) {
+    throw new ValidationError('Neka polja nisu ispravno popunjena.', checked.errors);
+  }
+
+  const savedAt = new Date();
+
+  return db.transaction(async (tx) => {
+    const updated = await tx
+      .update(invitations)
+      .set({
+        revision: invitation.revision + 1,
+        fieldValues: checked.values,
+        updatedAt: savedAt,
+        ...(input.template
+          ? {
+              templateId: input.template.id,
+              templateVersionId: input.template.versionId,
+              fieldDefinitions: input.template.definitions,
+            }
+          : {}),
+      })
+      .where(
+        and(
+          eq(invitations.id, invitation.id),
+          eq(invitations.revision, input.baseRevision),
+        ),
+      )
+      .returning({ revision: invitations.revision });
+
+    if (updated.length === 0) {
+      throw new ConflictError(
+        'Pozivnica je u međuvremenu izmenjena na drugom mestu.',
+        { currentRevision: invitation.revision },
+      );
+    }
+
+    await writeRevisionSnapshot(tx, {
+      invitationId: invitation.id,
+      revision: invitation.revision + 1,
+      userId: input.userId,
+      theme: invitation.themeTokens,
+      sections: [],
+      fieldValues: checked.values,
+      now: savedAt,
+    });
+
+    return { revision: invitation.revision + 1, savedAt, slug: invitation.slug };
+  });
+}
+
+/** Vrednosti polja iz starije revizije; pandan `loadRevisionDocument`. */
+export async function loadRevisionFieldValues(
+  invitationId: string,
+  revisionId: string,
+): Promise<FieldValues> {
+  const [row] = await db
+    .select({ fieldValues: invitationRevisions.fieldValues })
+    .from(invitationRevisions)
+    .where(
+      and(
+        eq(invitationRevisions.id, revisionId),
+        eq(invitationRevisions.invitationId, invitationId),
+      ),
+    )
+    .limit(1);
+
+  if (!row) throw new NotFoundError('Ta verzija pozivnice ne postoji.');
+
+  return row.fieldValues ?? {};
+}
+
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 /**
@@ -320,6 +500,8 @@ async function writeRevisionSnapshot(
     userId: string;
     theme: ThemeTokens;
     sections: readonly EditorSection[];
+    /** Popunjeno samo kod HTML pozivnica; kod sekcija ostaje `null` kao i do sada. */
+    fieldValues?: FieldValues;
     now: Date;
   },
 ): Promise<void> {
@@ -350,6 +532,7 @@ async function writeRevisionSnapshot(
         isVisible: section.isVisible,
         data: section.data,
       })),
+      fieldValues: input.fieldValues ?? null,
       createdById: input.userId,
     })
     /*
@@ -462,6 +645,7 @@ export async function switchInvitationTemplate(input: {
     const [snapshot] = await db
       .select({
         templateId: templates.id,
+        kind: templates.kind,
         versionId: templateVersions.id,
         themeTokens: templateVersions.themeTokens,
         sections: templateVersions.sections,
@@ -477,6 +661,17 @@ export async function switchInvitationTemplate(input: {
       .limit(1);
 
     if (!snapshot) throw new NotFoundError('Izabrani šablon nije dostupan.');
+
+    /*
+     * HTML šablon nema sekcije, pa ovaj put za njega ne postoji. Provera stoji
+     * na serveru, a ne samo u ponudi šablona: interfejs nudi ispravnu vrstu, ali
+     * zahtev može da stigne i mimo interfejsa (zahtev 39.5).
+     */
+    if (snapshot.kind !== 'sections') {
+      throw new ValidationError(
+        'Taj šablon je gotov sajt i ne može da zameni šablon od sekcija.',
+      );
+    }
 
     templateVersionId = snapshot.versionId;
     nextDocument = applyTemplateToDocument(input.document, {
@@ -499,6 +694,80 @@ export async function switchInvitationTemplate(input: {
     .where(eq(invitations.eventId, input.eventId));
 
   return { ...saved, document: nextDocument };
+}
+
+/**
+ * Prelazak na drugi HTML šablon (zahtev 39.4).
+ *
+ * Isto pravilo kao kod sekcija, koliko je moguće: **ono što se poklapa, ostaje.**
+ * Novi šablon donosi svoje definicije polja i podrazumevane vrednosti, a
+ * vrednosti koje je organizator uneo prenose se za svaki ključ koji i novi
+ * šablon ima. Imena polja su stvar autora šablona, pa se u praksi poklapaju
+ * retko - ali kad se poklope, prepisati ih tuđim podrazumevanim tekstom bilo bi
+ * gubljenje rada bez razloga.
+ *
+ * Prelazak sa sekcija na HTML (i obrnuto) se ne nudi: sadržaj nema zajednički
+ * oblik, pa bi svaki takav prelazak bio tiho brisanje svega unetog.
+ */
+export async function switchInvitationHtmlTemplate(input: {
+  eventId: string;
+  userId: string;
+  baseRevision: number;
+  templateId: string;
+  values: FieldValues;
+}): Promise<SaveDraftResult & { definitions: FieldDefinitions; values: FieldValues }> {
+  const [invitation] = await db
+    .select({ id: invitations.id, fieldDefinitions: invitations.fieldDefinitions })
+    .from(invitations)
+    .where(eq(invitations.eventId, input.eventId))
+    .limit(1);
+
+  if (!invitation) throw new NotFoundError('Pozivnica ne postoji.');
+  if (!invitation.fieldDefinitions) {
+    throw new ValidationError('Ova pozivnica nije napravljena od HTML šablona.');
+  }
+
+  const [snapshot] = await db
+    .select({
+      kind: templates.kind,
+      versionId: templateVersions.id,
+      fieldDefinitions: templateVersions.fieldDefinitions,
+    })
+    .from(templates)
+    .innerJoin(
+      templateVersions,
+      eq(templates.publishedVersionId, templateVersions.id),
+    )
+    .where(and(eq(templates.id, input.templateId), eq(templates.status, 'published')))
+    .limit(1);
+
+  if (!snapshot) throw new NotFoundError('Izabrani šablon nije dostupan.');
+  if (snapshot.kind !== 'html' || !snapshot.fieldDefinitions) {
+    throw new ValidationError('Taj šablon nije gotov sajt.');
+  }
+
+  const definitions = snapshot.fieldDefinitions;
+  const carried = { ...defaultFieldValues(definitions) };
+  for (const field of definitions.fields) {
+    const existing = input.values[field.key];
+    if (existing !== undefined && existing !== '') carried[field.key] = existing;
+  }
+
+  const checked = validateFieldValues(definitions, carried);
+
+  const saved = await saveInvitationFields({
+    eventId: input.eventId,
+    userId: input.userId,
+    baseRevision: input.baseRevision,
+    values: checked.values,
+    template: {
+      id: input.templateId,
+      versionId: snapshot.versionId,
+      definitions,
+    },
+  });
+
+  return { ...saved, definitions, values: checked.values };
 }
 
 // --- Revizije ---------------------------------------------------------------

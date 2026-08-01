@@ -629,6 +629,70 @@ verzije, a verzija je nepromenljiva — nema pitanja o invalidaciji keša.
 `jsdom` se koristi **samo** u uvozniku i ostaje `devDependency`; u aplikaciju ne
 ulazi.
 
+### Uređivač polja umesto uređivača sekcija
+
+Stranica `/app/dogadjaji/[id]/editor` se grana po vrsti šablona. Pozivnica od
+sekcija dobija uređivač sekcija; pozivnica od uvezenog sajta dobija **formu
+polja**. Grananje je na serveru, na jednom mestu — dva sasvim različita stanja u
+istoj klijentskoj celini značila bi da svaka strana u paket vuče i onu drugu.
+
+Forma nema listu sekcija, biblioteku ni temu, jer se ništa od toga ne menja.
+Nema ni „poništi/ponovi": tamo gde se menja **struktura** istorija poteza je
+jedina odbrana od slučajnog gubitka rada, a ovde je sadržaj ravan skup polja —
+poništavanje kucanja pregledač već ume, po polju, bolje nego što bismo mi umeli
+za celu formu odjednom. Ono što ovde zaista treba je **istorija verzija**, i nju
+uređivač polja ima, istu kao uređivač sekcija.
+
+Zajedničko je i sve ostalo što gradi poverenje da rad nije izgubljen: isti
+prikaz stanja čuvanja, isti autosave sa istim kašnjenjem, isto optimističko
+zaključavanje i isti izlaz iz sudara sa drugom sesijom (`save-status.tsx`).
+
+### Živi pregled bez ponovnog učitavanja
+
+Uvezen sajt se prikazuje u `<iframe>`-u — donosi svoj `<html>`, svoje stilove i
+svoje skripte, pa bi ubacivanje u stranicu uređivača pomešalo dva skupa stilova.
+
+Ponovno učitavanje pri svakom pritisnutom tasteru bilo bi tačno, ali bi svaki put
+vratilo animacije na početak — a animacije su ceo razlog zbog kog ovakav šablon
+postoji. Zato se pregled učita **jednom**, a izmene se posle toga unose tačno
+tamo gde pripadaju, preko istih selektora koje šablon nosi u definicijama polja.
+Tekst se upisuje kroz `textContent`, pa se ni u pregledu ništa ne tumači kao HTML.
+
+Polja koja ulaze u JavaScript šablona (odbrojavanje, koordinate) se tako ne mogu
+izmeniti — skripta je već odradila svoje. Za njih postoji dugme za osvežavanje, a
+uređivač kaže i zašto.
+
+`sandbox="allow-scripts allow-same-origin"` je izbor sa razlogom: `same-origin`
+je potreban da bi uređivač uopšte mogao da unosi izmene bez ponovnog učitavanja,
+a ono što `sandbox` i dalje brani je ono što ovde jeste rizik — pregled ne može
+da odvede korisnika sa stranice, da otvori novi prozor ni da pošalje formu. Sam
+sadržaj je šablon koji je uvezao administrator, isti kod koji se izvršava i na
+javnoj pozivnici.
+
+### Šta pozivnica pamti, a šta ne
+
+| Podatak | Gde stoji | Zašto |
+|---------|-----------|-------|
+| Definicije polja | kopija u pozivnici | Kasnija izmena šablona ne sme da učini već unete vrednosti neispravnim (zahtev 39.2). |
+| Vrednosti polja | pozivnica | To je ono što korisnik menja. |
+| Dokument šablona | verzija šablona | Nepromenljiv i isti za sve pozivnice te verzije; kopija bi bila stotine kilobajta po pozivnici bez ijedne koristi. |
+
+Vrednost polja tipa `image` je **ključ** otpremljene fotografije ili putanja
+slike iz samog šablona — nikad URL. Zahvaljujući tome promena skladišta ili
+domena ne traži prepisivanje sadržaja pozivnica.
+
+### Promena šablona
+
+Nudi se samo **ista vrsta**. Unutar HTML šablona važi isto pravilo kao kod
+sekcija — ono što se poklapa, ostaje: vrednost se prenosi za svaki ključ koji i
+novi šablon ima. Prelazak između vrsta se ne nudi, jer sadržaj nema zajednički
+oblik; takav prelazak bi bio tiho brisanje svega unetog, a ne ponuda. Vrsta se
+bira jednom, pri pravljenju pozivnice.
+
+Definicije i vrednosti se upisuju **istim** `UPDATE`-om: da je upis u dva koraka,
+sudar sa drugom sesijom bi ostavio pozivnicu sa novim definicijama i starim
+vrednostima.
+
 ---
 
 ## Javna pozivnica
@@ -1374,9 +1438,9 @@ pnpm test:e2e            # Playwright
 
 | Vrsta | Broj | Pokriva |
 |-------|------|---------|
-| Unit | 308 | Zod šeme sekcija, migracije verzija, slug, tokeni, dozvole, entitlements, prelazi stanja naplate, kontrast tema, i18n i množina, registri sekcija/renderera/editora, tokeni teme u CSS, grupisanje boja, demo kontekst, seed šabloni, operacije nad dokumentom uređivača, istorija poništi/ponovi, spajanje pri promeni šablona, uklanjanje EXIF-a iz JPEG/PNG/WebP, QR matrica i SVG/PNG izlaz, kraj dana u vremenskoj zoni i dan agregata, **CSV parser i generator (razdvajač, navodnici, prelom reda u polju, zaštita od formula, prepoznavanje kolona)**, **potpisani ključ obrasca (prebrzo slanje, istek, tuđi opseg, izmenjeno vreme)**, provera odgovora na svih šest tipova pitanja, **geometrija rasporeda (rotacija, granice stola, sto koji ostaje u sali, redni broj mesta, slobodan naziv)**, **idempotencija dev provajdera preživljava restart procesa (nova instanca, isti `providerRef`) i referenca ne otkriva ključ**, **pristanak: bez odluke se ne meri, pokvarena ili starija vrednost se odbacuje, spisak kolačića ima svrhu i trajanje za svaki upis** |
-| Integracioni | 220 | Kreiranje događaja u transakciji, jedinstvenost sluga, limiti paketa, meko brisanje, cascade pravila, `CHECK` ograničenja, snimak verzije šablona, čuvanje nacrta i sudar revizija, limiti i zaključane sekcije pri čuvanju, snimci verzija i orezivanje, otpremanje fotografija i odbijanje fajla sa EXIF-om, **objavljivanje i isključivanje linka**, **sva četiri režima privatnosti**, **istek do kraja dana**, **PIN i tokeni samo kao heš**, dnevni agregat i spisak kolona statistike, **gosti uz `eventId` (tuđi gost i tuđe domaćinstvo se ne vide)**, **meko brisanje gasi lični link**, **token i token za izmenu samo kao heš**, **jedan primalac = jedan odgovor**, **granica osoba sa linka domaćinstva**, **uvoz CSV-a i granica paketa**, moderacija knjige želja, **raspored: zaključana verzija odbija svaku izmenu, kapacitet zaustavlja gosta viška, jedan sto po gostu, kopija verzije ne deli redove sa originalom, brisanje vraća goste među neraspoređene, upozorenja o pravilima**, **paket po pozivnici (plaćeno venčanje ne otključava krštenje, plaćeni događaji van kvote nacrta)**, **naplata: dvostruki klik ne pravi drugu narudžbinu, ponovljen webhook vraća `duplicate`, zakasneli „pending” posle uspeha se odbacuje, propao pokušaj dozvoljava nov, promo kodovi i pun popust bez provajdera**, **administracija: ručna aktivacija uz razlog i trag u audit logu, odbijanje aktivacije bez razloga, validacija oblika paketa, arhiviranje prethodne verzije šablona**, **saradnici: token samo kao heš, tuđi nalog ne prihvata poziv, istekao poziv, limit paketa, opoziv ostaje u evidenciji**, **rate limit: isti paket testova nad oba skladišta, deset paralelnih zahteva ne probija granicu od pet, brojač važi između instanci**, **privatnost: izvoz bez tajni i bez tuđih podataka, brisanje anonimizuje i gasi sesije, narudžbina ostaje bez veze sa osobom, retencija ne dira sveže obrisano**, **obaveštenja: „nikad” ne šalje ništa, rezime se ne ponavlja u istom periodu, neuspelo slanje ne pomera granicu, meko obrisan događaj ne ulazi u rezime** |
-| E2E | 176 (88 × desktop/mobilni) | Marketing, prijava, zaštita ruta, čarobnjak sa izborom šablona, dashboard, izmena bez promene linka, brisanje uz potvrdu, profil, galerija i filteri, favoriti, demo na tri veličine ekrana, cenovnik, česta pitanja, sitemap, uređivač (živi pregled, autosave, biblioteka, redosled bez miša, kontrast, otpremanje fotografije), javna pozivnica (nacrt i istek se ne prikazuju, PIN kapija, indeksiranje po režimu, deljenje i QR, poništavanje keša), **spisak gostiju: dodavanje, oznake, lični link koji se vidi samo jednom, filtriranje kroz URL, izvoz kao CSV**, **gost šalje odgovor sa javne pozivnice i dobija link za izmenu**, **izmena odgovora ne pravi drugi odgovor**, lični link sa velikim slovima ostaje ispravan, **raspored sedenja: dodavanje stola i sedanje gostiju bez miša, kapacitet, zaključana verzija, CSV i prikaz za štampu**, **naplata: nacrt se ne objavljuje bez plaćenog paketa, narudžbina u čekanju ne daje prava, administrator je potvrđuje uz razlog, tek onda javni link radi; dvostruko pokretanje naplate ne pravi drugu narudžbinu**, **ceo scenario iz specifikacije u jednom testu: čarobnjak → uređivač → naplata → objavljivanje → gost odgovara → organizator vidi odgovor → raspored sedenja → izvoz**, **pristupačnost (`axe`, nivoi A i AA) nad javnim stranicama, aplikacijom, dijalogom i objavljenom pozivnicom**, **sigurnosna zaglavlja i CSP bez ijedne prijave u konzoli**, **privatnost: preuzimanje vraća JSON, neprijavljen dobija 401, brisanje traži ukucanu potvrdu**, **pristanak: dva ravnopravna dugmeta, ništa se ne upisuje pre odluke**, **font stek se stvarno primenjuje i nema zahteva ka tuđim domenima** |
+| Unit | 375 | Zod šeme sekcija, migracije verzija, slug, tokeni, dozvole, entitlements, prelazi stanja naplate, kontrast tema, i18n i množina, registri sekcija/renderera/editora, tokeni teme u CSS, grupisanje boja, demo kontekst, seed šabloni, operacije nad dokumentom uređivača, istorija poništi/ponovi, spajanje pri promeni šablona, uklanjanje EXIF-a iz JPEG/PNG/WebP, QR matrica i SVG/PNG izlaz, kraj dana u vremenskoj zoni i dan agregata, **CSV parser i generator (razdvajač, navodnici, prelom reda u polju, zaštita od formula, prepoznavanje kolona)**, **potpisani ključ obrasca (prebrzo slanje, istek, tuđi opseg, izmenjeno vreme)**, provera odgovora na svih šest tipova pitanja, **geometrija rasporeda (rotacija, granice stola, sto koji ostaje u sali, redni broj mesta, slobodan naziv)**, **idempotencija dev provajdera preživljava restart procesa (nova instanca, isti `providerRef`) i referenca ne otkriva ključ**, **pristanak: bez odluke se ne meri, pokvarena ili starija vrednost se odbacuje, spisak kolačića ima svrhu i trajanje za svaki upis**, **HTML šabloni: bekstvovanje po kontekstu kao pokušaji proboja, rastavljanje dokumenta i odbijanje dvosmislenog, provera spoljnih resursa sa izuzetkom `<a href>`, ceo tok uvoznika nad probnim sajtom (mapa, RSVP, ugrađivanje skripte, prikupljanje fajlova) i razrešavanje vrednosti polja** |
+| Integracioni | 235 | Kreiranje događaja u transakciji, jedinstvenost sluga, limiti paketa, meko brisanje, cascade pravila, `CHECK` ograničenja, snimak verzije šablona, čuvanje nacrta i sudar revizija, limiti i zaključane sekcije pri čuvanju, snimci verzija i orezivanje, otpremanje fotografija i odbijanje fajla sa EXIF-om, **objavljivanje i isključivanje linka**, **sva četiri režima privatnosti**, **istek do kraja dana**, **PIN i tokeni samo kao heš**, dnevni agregat i spisak kolona statistike, **gosti uz `eventId` (tuđi gost i tuđe domaćinstvo se ne vide)**, **meko brisanje gasi lični link**, **token i token za izmenu samo kao heš**, **jedan primalac = jedan odgovor**, **granica osoba sa linka domaćinstva**, **uvoz CSV-a i granica paketa**, moderacija knjige želja, **raspored: zaključana verzija odbija svaku izmenu, kapacitet zaustavlja gosta viška, jedan sto po gostu, kopija verzije ne deli redove sa originalom, brisanje vraća goste među neraspoređene, upozorenja o pravilima**, **paket po pozivnici (plaćeno venčanje ne otključava krštenje, plaćeni događaji van kvote nacrta)**, **naplata: dvostruki klik ne pravi drugu narudžbinu, ponovljen webhook vraća `duplicate`, zakasneli „pending” posle uspeha se odbacuje, propao pokušaj dozvoljava nov, promo kodovi i pun popust bez provajdera**, **administracija: ručna aktivacija uz razlog i trag u audit logu, odbijanje aktivacije bez razloga, validacija oblika paketa, arhiviranje prethodne verzije šablona**, **saradnici: token samo kao heš, tuđi nalog ne prihvata poziv, istekao poziv, limit paketa, opoziv ostaje u evidenciji**, **rate limit: isti paket testova nad oba skladišta, deset paralelnih zahteva ne probija granicu od pet, brojač važi između instanci**, **privatnost: izvoz bez tajni i bez tuđih podataka, brisanje anonimizuje i gasi sesije, narudžbina ostaje bez veze sa osobom, retencija ne dira sveže obrisano**, **obaveštenja: „nikad” ne šalje ništa, rezime se ne ponavlja u istom periodu, neuspelo slanje ne pomera granicu, meko obrisan događaj ne ulazi u rezime**, **uvoz HTML šablona: idempotentno po slug-u, fajlovi u skladištu pod adresom iz dokumenta, objavljena verzija se ne dira, šablon od sekcija se ne prepisuje**, **HTML pozivnica: kopija definicija polja pri kreiranju, provera obaveznih polja, sudar revizija, snimak revizije sa vrednostima, promena šablona zadržava poklopljena polja, prelazak između vrsta se odbija** |
+| E2E | 182 (91 × desktop/mobilni) | Marketing, prijava, zaštita ruta, čarobnjak sa izborom šablona, dashboard, izmena bez promene linka, brisanje uz potvrdu, profil, galerija i filteri, favoriti, demo na tri veličine ekrana, cenovnik, česta pitanja, sitemap, uređivač (živi pregled, autosave, biblioteka, redosled bez miša, kontrast, otpremanje fotografije), javna pozivnica (nacrt i istek se ne prikazuju, PIN kapija, indeksiranje po režimu, deljenje i QR, poništavanje keša), **spisak gostiju: dodavanje, oznake, lični link koji se vidi samo jednom, filtriranje kroz URL, izvoz kao CSV**, **gost šalje odgovor sa javne pozivnice i dobija link za izmenu**, **izmena odgovora ne pravi drugi odgovor**, lični link sa velikim slovima ostaje ispravan, **raspored sedenja: dodavanje stola i sedanje gostiju bez miša, kapacitet, zaključana verzija, CSV i prikaz za štampu**, **naplata: nacrt se ne objavljuje bez plaćenog paketa, narudžbina u čekanju ne daje prava, administrator je potvrđuje uz razlog, tek onda javni link radi; dvostruko pokretanje naplate ne pravi drugu narudžbinu**, **ceo scenario iz specifikacije u jednom testu: čarobnjak → uređivač → naplata → objavljivanje → gost odgovara → organizator vidi odgovor → raspored sedenja → izvoz**, **pristupačnost (`axe`, nivoi A i AA) nad javnim stranicama, aplikacijom, dijalogom i objavljenom pozivnicom**, **sigurnosna zaglavlja i CSP bez ijedne prijave u konzoli**, **privatnost: preuzimanje vraća JSON, neprijavljen dobija 401, brisanje traži ukucanu potvrdu**, **pristanak: dva ravnopravna dugmeta, ništa se ne upisuje pre odluke**, **font stek se stvarno primenjuje i nema zahteva ka tuđim domenima**, **gotov sajt kao pozivnica: čarobnjak nudi uvezen šablon, uređivač prikazuje formu polja, izmena se vidi u pregledu bez ponovnog učitavanja i sama se sačuva, vrednost polja ostaje tekst i kad izgleda kao HTML, nijedan zahtev ne ide van našeg domena** |
 
 ```bash
 pnpm test                # unit — bez baze

@@ -696,6 +696,24 @@ const messages: Messages = {
       emptyOptionHint: 'Keeps your content and restores the default colours.',
     },
 
+    html: {
+      title: 'A finished site as your invitation',
+      intro:
+        'This template is a finished site with its own animations. You change the field content; layout, colours and animations stay exactly as the author made them.',
+      noFields: 'This template has no editable fields.',
+      refreshPreview: 'Refresh preview',
+      scriptFieldHint:
+        'Some fields feed the template animations and only appear after the preview is refreshed.',
+      chooseImage: 'Choose a photo',
+      resetImage: 'Restore the template image',
+      pickerTitle: 'Photo for this field',
+      pickerDescription:
+        'Pick an uploaded photo or upload a new one. Location data is removed.',
+      onlyTemplate: 'There is no other finished site for this kind of celebration yet.',
+      changeDescription:
+        'Only finished sites are offered. Values of fields the new template also has are kept.',
+    },
+
     media: {
       choose: 'Choose photo',
       change: 'Change photo',

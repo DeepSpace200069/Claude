@@ -707,6 +707,24 @@ const messages = {
       emptyOptionHint: 'Zadržava vaš sadržaj i vraća podrazumevane boje.',
     },
 
+    html: {
+      title: 'Gotov sajt kao pozivnica',
+      intro:
+        'Ovaj šablon je gotov sajt sa svojim animacijama. Menjate sadržaj polja; raspored, boje i animacije ostaju onakvi kakve ih je autor napravio.',
+      noFields: 'Ovaj šablon nema polja koja se popunjavaju.',
+      refreshPreview: 'Osveži pregled',
+      scriptFieldHint:
+        'Neka polja ulaze u animacije šablona i vide se tek posle osvežavanja pregleda.',
+      chooseImage: 'Izaberi fotografiju',
+      resetImage: 'Vrati sliku iz šablona',
+      pickerTitle: 'Fotografija za ovo polje',
+      pickerDescription:
+        'Izaberite otpremljenu fotografiju ili otpremite novu. Podaci o lokaciji se uklanjaju.',
+      onlyTemplate: 'Za sada nema drugog gotovog sajta za ovu vrstu proslave.',
+      changeDescription:
+        'Nude se samo gotovi sajtovi. Vrednosti polja koja i novi šablon ima se zadržavaju.',
+    },
+
     media: {
       choose: 'Izaberi fotografiju',
       change: 'Promeni fotografiju',

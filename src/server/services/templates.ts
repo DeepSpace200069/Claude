@@ -160,6 +160,14 @@ export const listTemplateSlugs = cache(async (): Promise<string[]> => {
 export async function listTemplatesForPlans(
   planCodes: readonly string[],
   eventTypeKey?: string,
+  /**
+   * Vrsta šablona.
+   *
+   * Koristi je uređivač pri promeni šablona: nudi se samo ista vrsta, jer se
+   * sadržaj između vrsta ne prenosi - sekcije i polja nemaju zajednički oblik.
+   * Prelazak koji bi tiho obrisao sav uneti sadržaj nije ponuda nego zamka.
+   */
+  kind?: 'sections' | 'html',
 ): Promise<TemplateSummary[]> {
   const conditions: SQL[] = [
     eq(templates.status, 'published'),
@@ -167,6 +175,7 @@ export async function listTemplatesForPlans(
   ];
 
   if (eventTypeKey) conditions.push(eq(eventTypes.key, eventTypeKey));
+  if (kind) conditions.push(eq(templates.kind, kind));
 
   const rows = await db
     .select(summarySelection)

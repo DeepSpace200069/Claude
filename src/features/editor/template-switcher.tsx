@@ -139,7 +139,8 @@ export function TemplateSwitcher({
   );
 }
 
-function TemplateChoice({
+/** Jedan izbor u dijalogu; isti oblik koristi i uređivač HTML šablona. */
+export function TemplateChoice({
   title,
   description,
   selected,

@@ -1,19 +1,29 @@
 import { expect, test } from '@playwright/test';
 
-/** Galerija šablona, filteri i demo (zahtev 6 i 7). */
+/**
+ * Galerija šablona, filteri i demo (zahtev 6 i 7).
+ *
+ * Brojevi su namerno tačni, a ne „bar toliko": galerija koja prikaže šablon
+ * viška ili manjka je greška koju treba videti. E2E okruženje ima osam seed
+ * šablona i jedan uvezen HTML šablon, koji `global-setup` uveze pravim CLI-jem -
+ * dakle devet ukupno, od toga tri za venčanje.
+ */
+const SVI_SABLONI = 9;
+const VENCANJE_SABLONI = 3;
+
 test.describe('galerija šablona', () => {
   test('prikazuje šablone i broj rezultata', async ({ page }) => {
     await page.goto('/sabloni');
 
     await expect(page.getByRole('heading', { name: 'Galerija šablona' })).toBeVisible();
-    await expect(page.locator('[data-template-slug]')).toHaveCount(8);
+    await expect(page.locator('[data-template-slug]')).toHaveCount(SVI_SABLONI);
   });
 
   test('filtriranje po vrsti proslave sužava izbor', async ({ page }) => {
     await page.goto('/sabloni/vencanje');
 
     await expect(page.getByRole('heading', { level: 1, name: 'Venčanje' })).toBeVisible();
-    await expect(page.locator('[data-template-slug]')).toHaveCount(2);
+    await expect(page.locator('[data-template-slug]')).toHaveCount(VENCANJE_SABLONI);
   });
 
   test('filter se čuva u URL-u i može se podeliti linkom', async ({ page }) => {
@@ -33,7 +43,7 @@ test.describe('galerija šablona', () => {
     await page.getByRole('link', { name: 'Poništi filtere' }).click();
 
     await expect(page).toHaveURL(/\/sabloni$/);
-    await expect(page.locator('[data-template-slug]')).toHaveCount(8);
+    await expect(page.locator('[data-template-slug]')).toHaveCount(SVI_SABLONI);
   });
 
   test('omiljeni se pamte i filtriraju', async ({ page }) => {

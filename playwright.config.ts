@@ -18,6 +18,14 @@ const launchOverride = chromiumPath
 
 export default defineConfig({
   testDir: './tests/e2e',
+  /*
+   * Uvoz probnog HTML šablona pre nego što se digne server.
+   *
+   * Objavljivanje u pripremi ide SQL-om, a spisak šablona je keširan po tagu
+   * koji poništava admin akcija - pa šablon mora da postoji pre nego što server
+   * prvi put napuni keš.
+   */
+  globalSetup: './tests/e2e/global-setup.ts',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

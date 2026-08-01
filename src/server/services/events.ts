@@ -2,6 +2,7 @@ import 'server-only';
 
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 
+import { defaultFieldValues } from '@/features/templates/html-schema';
 import { defaultThemeTokens } from '@/features/themes/tokens';
 import { checkLimit } from '@/features/billing/entitlements';
 import {
@@ -161,6 +162,9 @@ export async function createEvent(
     ? await loadTemplateSnapshot(input.templateId)
     : null;
 
+  const htmlDefinitions =
+    templateSnapshot?.kind === 'html' ? templateSnapshot.fieldDefinitions : null;
+
   const { result, claim } = await insertWithUniqueSlug(name, async (slug) =>
     db.transaction(async (tx) => {
       const [event] = await tx
@@ -189,6 +193,14 @@ export async function createEvent(
           templateId: templateSnapshot?.templateId ?? null,
           templateVersionId: templateSnapshot?.versionId ?? null,
           themeTokens: templateSnapshot?.themeTokens ?? defaultThemeTokens,
+          /*
+           * HTML šablon: pozivnica kopira definicije polja i kreće od
+           * podrazumevanih vrednosti iz šablona. Zahvaljujući tome nova
+           * pozivnica odmah izgleda kao demo prikaz koji je korisnik i izabrao,
+           * umesto da bude prazna (zahtev 39.2 i 39.4).
+           */
+          fieldDefinitions: htmlDefinitions,
+          fieldValues: htmlDefinitions ? defaultFieldValues(htmlDefinitions) : null,
         })
         .returning({ id: invitations.id });
 
@@ -224,9 +236,12 @@ async function loadTemplateSnapshot(templateId: string) {
   const [row] = await db
     .select({
       templateId: templates.id,
+      kind: templates.kind,
       versionId: templateVersions.id,
       themeTokens: templateVersions.themeTokens,
       sections: templateVersions.sections,
+      /** Popunjeno samo za HTML šablone; kod sekcija ostaje `null`. */
+      fieldDefinitions: templateVersions.fieldDefinitions,
     })
     .from(templates)
     .innerJoin(

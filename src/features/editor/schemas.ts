@@ -54,6 +54,37 @@ export const loadRevisionSchema = z.object({
   revisionId: z.uuid(),
 });
 
+// --- HTML šabloni -----------------------------------------------------------
+
+/**
+ * Gornje granice zahteva sa vrednostima polja.
+ *
+ * Nisu poslovno pravilo - koliko sme da bude dugačko koje polje kaže sam šablon
+ * (`maxLength`), i to se proverava u servisu. Ovo je zaštita od zahteva koji bi
+ * opteretio server pre nego što se do te provere uopšte dođe.
+ */
+export const MAX_FIELDS_PER_REQUEST = 200;
+export const MAX_FIELD_VALUE_LENGTH = 10_000;
+
+export const saveInvitationFieldsSchema = z.object({
+  eventId: z.uuid(),
+  baseRevision: z.number().int().min(1),
+  values: z
+    .record(z.string().max(60), z.string().max(MAX_FIELD_VALUE_LENGTH))
+    .refine(
+      (values) => Object.keys(values).length <= MAX_FIELDS_PER_REQUEST,
+      `Najviše ${MAX_FIELDS_PER_REQUEST} polja u jednom zahtevu.`,
+    ),
+});
+
+export const switchHtmlTemplateSchema = z.object({
+  eventId: z.uuid(),
+  baseRevision: z.number().int().min(1),
+  /** `null` nije opcija: HTML pozivnica bez šablona nema šta da prikaže. */
+  templateId: z.uuid(),
+  values: z.record(z.string().max(60), z.string().max(MAX_FIELD_VALUE_LENGTH)),
+});
+
 // --- Fotografije ------------------------------------------------------------
 
 export const requestUploadSchema = z.object({
