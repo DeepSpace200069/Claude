@@ -1,6 +1,13 @@
 import type { Page } from '@playwright/test';
 
-import { expect, sql, test } from './fixtures';
+import {
+  createSignedInUser,
+  deleteUser,
+  expect,
+  signIn,
+  sql,
+  test,
+} from './fixtures';
 import { createPublishedHtmlInvitation } from './html-template-setup';
 
 /**
@@ -228,5 +235,80 @@ test.describe('gost otvara gotov sajt kao pozivnicu', () => {
     await expect(page.locator('#imena img')).toHaveCount(0);
     await expect(page.locator('#imena')).toContainText('<img src=x');
     expect(await page.evaluate(() => '__probijeno' in window)).toBe(false);
+  });
+});
+
+/**
+ * Administracija uvezenih šablona (zahtev 7.6 i 39.3).
+ *
+ * Šablon se objavljuje istim dugmetom kao i onaj od sekcija, ali se pre toga
+ * proverava drugačije: uvezen sajt se **gleda**, ne čita. Zato panel mora da
+ * kaže koje je vrste i da vodi na pregled nacrta - inače bi jedini put do
+ * pregleda bio da se šablon prvo objavi.
+ */
+test.describe('admin i uvezeni šabloni', () => {
+  test('panel prikazuje vrstu šablona i vodi na pregled nacrta', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    const admin = await createSignedInUser({ role: 'admin' });
+    await signIn(context, admin, baseURL ?? 'http://localhost:3000');
+
+    try {
+      await page.goto('/admin/sabloni');
+
+      const row = page.locator('li', { hasText: 'Probni sajt' }).first();
+      await expect(row.getByText('Gotov sajt')).toBeVisible();
+
+      // Uvoz je već objavljen, pa nacrta nema; vrsta se svejedno vidi.
+      await expect(row.getByText('Sekcije')).toHaveCount(0);
+    } finally {
+      await deleteUser(admin.id);
+    }
+  });
+
+  test('pregled nacrta nije dostupan bez administratora', async ({ page }) => {
+    const [version] = await sql<{ id: string }[]>`
+      select v.id from template_versions v
+      join templates t on t.id = v.template_id
+      where t.slug = 'proba-vencanje'
+      limit 1
+    `;
+
+    const response = await page.goto(`/nacrt-sajta/${version!.id}`);
+
+    // Neprijavljen posetilac ide na prijavu, a ne na sadržaj koji nije objavljen.
+    expect(page.url()).toContain('/login');
+    expect(response?.status()).toBeLessThan(400);
+  });
+
+  test('administrator vidi nacrt pre objavljivanja', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    const admin = await createSignedInUser({ role: 'admin' });
+    await signIn(context, admin, baseURL ?? 'http://localhost:3000');
+
+    try {
+      const [version] = await sql<{ id: string }[]>`
+        select v.id from template_versions v
+        join templates t on t.id = v.template_id
+        where t.slug = 'proba-vencanje'
+        limit 1
+      `;
+
+      await page.goto(`/nacrt-sajta/${version!.id}`);
+
+      // Sajt se prikazuje sa vrednostima iz samog šablona.
+      await expect(page.locator('#imena')).toHaveText('Ana i Marko');
+      await expect(page.locator('body')).toHaveClass(/tamna/);
+
+      // U pregledu nema forme kroz koju bi se poslao odgovor.
+      await expect(page.getByRole('button', { name: 'Pošalji odgovor' })).toHaveCount(0);
+    } finally {
+      await deleteUser(admin.id);
+    }
   });
 });

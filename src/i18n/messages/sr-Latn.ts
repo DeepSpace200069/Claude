@@ -1622,6 +1622,11 @@ const messages = {
     templatesEmpty: 'Još nema šablona.',
     templatesVersions: 'Verzija: {count}',
     templatesPublishDraft: 'Objavi nacrt verzije',
+    templatesKindSections: 'Sekcije',
+    templatesKindHtml: 'Gotov sajt',
+    templatesDraftContents: '{fields} polja · {assets} fajlova',
+    templatesPreviewDraft: 'Pogledaj nacrt',
+    templatesDraftPreviewNote: 'Pregled nacrta: {name}, verzija {version}. Nije objavljeno.',
     templatesNoDraft: 'Nema nacrta verzije',
     templatesPublished: 'Verzija je objavljena.',
     templatesHint:

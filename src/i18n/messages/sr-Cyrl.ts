@@ -1617,6 +1617,11 @@ const messages: Messages = {
     templatesEmpty: 'Још нема шаблона.',
     templatesVersions: 'Верзија: {count}',
     templatesPublishDraft: 'Објави нацрт верзије',
+    templatesKindSections: 'Секције',
+    templatesKindHtml: 'Готов сајт',
+    templatesDraftContents: '{fields} поља · {assets} фајлова',
+    templatesPreviewDraft: 'Погледај нацрт',
+    templatesDraftPreviewNote: 'Преглед нацрта: {name}, верзија {version}. Није објављено.',
     templatesNoDraft: 'Нема нацрта верзије',
     templatesPublished: 'Верзија је објављена.',
     templatesHint:

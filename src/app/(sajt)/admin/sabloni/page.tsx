@@ -64,23 +64,59 @@ export default async function AdminTemplatesPage() {
                         </span>
                         <span className="block text-xs text-muted-foreground">
                           {t('admin.templatesVersions', { count: template.versionCount })}
+                          {template.kind === 'html' && template.draftFieldCount !== null
+                            ? ` · ${t('admin.templatesDraftContents', {
+                                fields: template.draftFieldCount,
+                                assets: template.draftAssetCount ?? 0,
+                              })}`
+                            : null}
                         </span>
                       </span>
 
-                      <Badge
-                        variant={
-                          template.status === 'published'
-                            ? 'success'
-                            : template.status === 'draft'
-                              ? 'warning'
-                              : 'neutral'
-                        }
-                      >
-                        {statusLabels[template.status]}
-                      </Badge>
+                      <span className="flex items-center gap-2">
+                        {/*
+                          Vrsta šablona stoji uz status: uvezen sajt se objavljuje
+                          istim dugmetom, ali se pre toga proverava drugačije - ne
+                          čitanjem sekcija nego gledanjem.
+                        */}
+                        <Badge variant="neutral">
+                          {template.kind === 'html'
+                            ? t('admin.templatesKindHtml')
+                            : t('admin.templatesKindSections')}
+                        </Badge>
+
+                        <Badge
+                          variant={
+                            template.status === 'published'
+                              ? 'success'
+                              : template.status === 'draft'
+                                ? 'warning'
+                                : 'neutral'
+                          }
+                        >
+                          {statusLabels[template.status]}
+                        </Badge>
+                      </span>
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/*
+                        Uvezen sajt se pre objavljivanja gleda, a ne čita. Bez
+                        ovog linka bi jedini put do pregleda bio da se šablon
+                        prvo objavi - dakle da u galeriju ode nešto što niko nije
+                        video.
+                      */}
+                      {template.kind === 'html' && template.draftVersionId ? (
+                        <a
+                          href={`/nacrt-sajta/${template.draftVersionId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary underline-offset-4 hover:underline"
+                        >
+                          {t('admin.templatesPreviewDraft')}
+                        </a>
+                      ) : null}
+
                       {template.draftVersionId ? (
                         <AdminActionButton
                           label={t('admin.templatesPublishDraft')}

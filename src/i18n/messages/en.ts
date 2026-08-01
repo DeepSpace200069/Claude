@@ -1608,6 +1608,11 @@ const messages: Messages = {
     templatesEmpty: 'No templates yet.',
     templatesVersions: 'Versions: {count}',
     templatesPublishDraft: 'Publish draft version',
+    templatesKindSections: 'Sections',
+    templatesKindHtml: 'Finished site',
+    templatesDraftContents: '{fields} fields · {assets} files',
+    templatesPreviewDraft: 'Preview draft',
+    templatesDraftPreviewNote: 'Draft preview: {name}, version {version}. Not published.',
     templatesNoDraft: 'No draft version',
     templatesPublished: 'Version published.',
     templatesHint:

@@ -1629,6 +1629,11 @@ const messages: Messages = {
     templatesEmpty: 'Noch keine Vorlagen.',
     templatesVersions: 'Versionen: {count}',
     templatesPublishDraft: 'Entwurfsversion veröffentlichen',
+    templatesKindSections: 'Abschnitte',
+    templatesKindHtml: 'Fertige Website',
+    templatesDraftContents: '{fields} Felder · {assets} Dateien',
+    templatesPreviewDraft: 'Entwurf ansehen',
+    templatesDraftPreviewNote: 'Entwurfsvorschau: {name}, Version {version}. Nicht veröffentlicht.',
     templatesNoDraft: 'Keine Entwurfsversion',
     templatesPublished: 'Version veröffentlicht.',
     templatesHint:

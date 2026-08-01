@@ -25,6 +25,7 @@ import { parseManifest, type ImportManifest } from '@/server/import/manifest';
 import { assetUrlFor, newVersionId, saveTemplate } from '@/server/import/persist';
 import { vendorResources } from '@/server/import/vendor';
 import { createEvent } from '@/server/services/events';
+import { loadTemplateVersionPreview } from '@/server/services/template-preview';
 import {
   getInvitationForEditor,
   loadRevisionFieldValues,
@@ -96,8 +97,8 @@ const fakeFetch = (async (input: RequestInfo | URL) => {
   return new Response(new Uint8Array([0x77, 0x4f, 0x46, 0x32]));
 }) as typeof fetch;
 
-/** Uveze uzorak i odmah objavi šablon - kreiranje pozivnice traži objavljenu verziju. */
-async function importPublishedTemplate(
+/** Uveze uzorak; šablon ostaje radna verzija, kao posle pravog uvoza. */
+async function importDraftTemplate(
   overrides: Partial<ImportManifest> = {},
 ): Promise<{ templateId: string; versionId: string }> {
   const files = await readSiteFiles(FIXTURE);
@@ -121,17 +122,25 @@ async function importPublishedTemplate(
   });
 
   const saved = await saveTemplate({ manifest, built, versionId });
+  return { templateId: saved.templateId, versionId };
+}
+
+/** Uveze uzorak i objavi ga - kreiranje pozivnice traži objavljenu verziju. */
+async function importPublishedTemplate(
+  overrides: Partial<ImportManifest> = {},
+): Promise<{ templateId: string; versionId: string }> {
+  const imported = await importDraftTemplate(overrides);
 
   await db
     .update(templateVersions)
     .set({ status: 'published', publishedAt: new Date() })
-    .where(eq(templateVersions.id, versionId));
+    .where(eq(templateVersions.id, imported.versionId));
   await db
     .update(templates)
-    .set({ status: 'published', publishedVersionId: versionId })
-    .where(eq(templates.id, saved.templateId));
+    .set({ status: 'published', publishedVersionId: imported.versionId })
+    .where(eq(templates.id, imported.templateId));
 
-  return { templateId: saved.templateId, versionId };
+  return imported;
 }
 
 /**
@@ -388,5 +397,50 @@ describe.skipIf(!hasTestDatabase)('HTML pozivnica', () => {
         document: invitation!.document,
       }),
     ).rejects.toBeInstanceOf(ValidationError);
+  });
+});
+
+describe.skipIf(!hasTestDatabase)('pregled nacrta šablona', () => {
+  let weddingTypeId: string;
+
+  beforeEach(async () => {
+    await truncateAll();
+    ({ weddingTypeId } = await seedCatalog());
+    setStorageAdapter(new FakeStorage());
+  });
+
+  it('vraća dokument verzije, bez obzira na status šablona', async () => {
+    // Smisao pregleda je da administrator vidi **neobjavljen** šablon; da čita
+    // samo objavljene, ne bi imao šta da pregleda pre objavljivanja.
+    const { versionId } = await importDraftTemplate();
+    const preview = await loadTemplateVersionPreview(versionId);
+
+    expect(preview?.status).toBe('draft');
+    expect(preview?.document).toContain('{{text:imena}}');
+    expect(preview?.definitions.fields.length).toBeGreaterThan(0);
+  });
+
+  it('verzija šablona od sekcija nema šta da prikaže', async () => {
+    const [template] = await db
+      .insert(templates)
+      .values({
+        slug: 'sekcije-bez-dokumenta',
+        name: 'Sekcije',
+        eventTypeId: weddingTypeId,
+        kind: 'sections',
+      })
+      .returning({ id: templates.id });
+
+    const [version] = await db
+      .insert(templateVersions)
+      .values({
+        templateId: template!.id,
+        version: 1,
+        themeTokens: defaultThemeTokens,
+        sections: [],
+      })
+      .returning({ id: templateVersions.id });
+
+    expect(await loadTemplateVersionPreview(version!.id)).toBeNull();
   });
 });

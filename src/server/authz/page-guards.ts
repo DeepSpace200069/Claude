@@ -41,6 +41,24 @@ export async function requireUserPage(callbackUrl: string): Promise<CurrentUser>
   return user;
 }
 
+/**
+ * Administrator na stranici koja nije u panelu.
+ *
+ * Panel svoju proveru drži u layoutu, pa stranice ispod njega nemaju šta da
+ * ponavljaju. Administratorske stranice u drugim grupama (pregled nacrta
+ * šablona ima svoj korenski dokument, pa stoji u grupi `(pozivnica)`) tog
+ * layouta nemaju - bez ovoga bi neprijavljen posetilac umesto prijave dobio
+ * granicu greške.
+ */
+export async function requireAdminPage(callbackUrl: string): Promise<CurrentUser> {
+  const user = await requireUserPage(callbackUrl);
+
+  // 403, ne 404: stranica postoji, samo nije za svakoga (isto kao u panelu).
+  if (user.role !== 'admin') forbidden();
+
+  return user;
+}
+
 export async function requireEventPageAccess(
   eventId: string,
   permission: Permission,

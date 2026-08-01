@@ -352,12 +352,23 @@ export type AdminTemplateRow = {
   slug: string;
   name: string;
   status: 'draft' | 'published' | 'archived';
+  /** Sekcije ili uvezen gotov sajt; određuje i način pregleda pre objavljivanja. */
+  kind: 'sections' | 'html';
   eventTypeKey: string;
   requiredPlanCode: string;
   isFeatured: boolean;
   publishedVersionId: string | null;
   draftVersionId: string | null;
   versionCount: number;
+  /**
+   * Šta radna verzija nosi: polja i fajlovi.
+   *
+   * Kod uvezenog sajta je to jedini brojčani pokazatelj šta je uvoz zaista
+   * napravio - administrator pre objavljivanja vidi da li je nastalo ono što je
+   * očekivao, i tek onda otvara vizuelni pregled.
+   */
+  draftFieldCount: number | null;
+  draftAssetCount: number | null;
 };
 
 export async function listTemplatesForAdmin(): Promise<AdminTemplateRow[]> {
@@ -379,6 +390,21 @@ export async function listTemplatesForAdmin(): Promise<AdminTemplateRow[]> {
       versionCount: sql<number>`(
         select count(*)::int from template_versions v
         where v.template_id = templates.id
+      )`,
+      kind: templates.kind,
+      draftFieldCount: sql<number | null>`(
+        select jsonb_array_length(v.field_definitions -> 'fields')
+        from template_versions v
+        where v.template_id = templates.id and v.status = 'draft'
+          and v.field_definitions is not null
+        order by v.version desc limit 1
+      )`,
+      draftAssetCount: sql<number | null>`(
+        select jsonb_array_length(v.assets)
+        from template_versions v
+        where v.template_id = templates.id and v.status = 'draft'
+          and v.assets is not null
+        order by v.version desc limit 1
       )`,
     })
     .from(templates)
